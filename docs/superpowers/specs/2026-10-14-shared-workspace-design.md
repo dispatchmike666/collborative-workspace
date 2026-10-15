@@ -154,7 +154,8 @@ Each stage ends with checks that either pass or fail.
 
 ## 11. To settle before the stage that needs it
 
-- Stage 2: Is Max's computer Windows or Mac?
+- Settled 2026-10-15: Max is on Windows, same as Brennan, so version 1
+  needs a Windows helper only.
 - Stage 2: How will Max install the helper? Proposed: one command, with
   steps written for him.
 - Stage 4: How should the project list be created? Proposed: a "New
