@@ -1,0 +1,9 @@
+{"type":"system","subtype":"hook_started","hook_name":"SessionStart","session_id":"54d25f2e-748a-46c5-858c-3df38061ee1a"}
+{"type":"system","subtype":"init","cwd":"C:\\probe","session_id":"54d25f2e-748a-46c5-858c-3df38061ee1a","model":"claude-sonnet-5","permissionMode":"acceptEdits","apiKeySource":"none","claude_code_version":"2.1.235"}
+{"type":"system","subtype":"thinking_tokens","estimated_tokens":12,"session_id":"54d25f2e-748a-46c5-858c-3df38061ee1a"}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"thinking","thinking":"","signature":"abc"}]},"session_id":"54d25f2e-748a-46c5-858c-3df38061ee1a"}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_01","name":"Write","input":{"file_path":"C:\\probe\\hello.txt","content":"hi"}}]},"session_id":"54d25f2e-748a-46c5-858c-3df38061ee1a"}
+{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","rateLimitType":"five_hour"},"session_id":"54d25f2e-748a-46c5-858c-3df38061ee1a"}
+{"type":"user","message":{"role":"user","content":[{"tool_use_id":"toolu_01","type":"tool_result","content":"File created successfully at: C:\\probe\\hello.txt"}]},"session_id":"54d25f2e-748a-46c5-858c-3df38061ee1a"}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Done. Created `hello.txt` with \"hi\" in the probe folder."}]},"session_id":"54d25f2e-748a-46c5-858c-3df38061ee1a"}
+{"type":"result","subtype":"success","is_error":false,"duration_ms":6741,"num_turns":2,"result":"Done. Created `hello.txt` with \"hi\" in the probe folder.","session_id":"54d25f2e-748a-46c5-858c-3df38061ee1a","total_cost_usd":0.4013575}
