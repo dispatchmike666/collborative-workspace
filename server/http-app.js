@@ -45,6 +45,8 @@ export function createApp({ timeline, runner, publicDir, userName = 'You' }) {
   // The live feed. A reconnecting browser sends Last-Event-ID, so it only gets what it missed.
   function serveEvents(req, res) {
     res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
+    // Send the headers now, so the browser knows it is connected even before anything happens.
+    res.flushHeaders();
     const lastSeen = Number(req.headers['last-event-id'] ?? 0) || 0;
     const write = (event) => res.write(`id: ${event.id}\ndata: ${JSON.stringify(event)}\n\n`);
     for (const event of timeline.all()) {

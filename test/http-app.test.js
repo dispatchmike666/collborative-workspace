@@ -99,3 +99,12 @@ test('a reconnecting browser only gets what it missed', async (t) => {
   const events = await readEvents(`${base}/events`, (list) => list.length >= 1, { headers: { 'last-event-id': '1' } });
   assert.deepEqual(events.map((e) => e.text), ['two']);
 });
+
+test('the live feed answers right away, even before anything has happened', async (t) => {
+  const { base } = await start(t);
+  const controller = new AbortController();
+  const res = await fetch(`${base}/events`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(1500)]) });
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /text\/event-stream/);
+  controller.abort();
+});

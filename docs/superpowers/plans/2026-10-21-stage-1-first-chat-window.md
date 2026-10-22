@@ -1359,6 +1359,15 @@ test('a reconnecting browser only gets what it missed', async (t) => {
   const events = await readEvents(`${base}/events`, (list) => list.length >= 1, { headers: { 'last-event-id': '1' } });
   assert.deepEqual(events.map((e) => e.text), ['two']);
 });
+
+test('the live feed answers right away, even before anything has happened', async (t) => {
+  const { base } = await start(t);
+  const controller = new AbortController();
+  const res = await fetch(`${base}/events`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(1500)]) });
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /text\/event-stream/);
+  controller.abort();
+});
 ```
 
 - [ ] **Step 2: Run it and watch it fail**
@@ -1416,6 +1425,8 @@ export function createApp({ timeline, runner, publicDir, userName = 'You' }) {
   // The live feed. A reconnecting browser sends Last-Event-ID, so it only gets what it missed.
   function serveEvents(req, res) {
     res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
+    // Send the headers now, so the browser knows it is connected even before anything happens.
+    res.flushHeaders();
     const lastSeen = Number(req.headers['last-event-id'] ?? 0) || 0;
     const write = (event) => res.write(`id: ${event.id}\ndata: ${JSON.stringify(event)}\n\n`);
     for (const event of timeline.all()) {
@@ -1483,7 +1494,9 @@ export function createApp({ timeline, runner, publicDir, userName = 'You' }) {
 - [ ] **Step 4: Run it and watch it pass**
 
 Run: `node --test test/http-app.test.js`
-Expected: PASS, 8 tests.
+Expected: PASS, 9 tests.
+
+(Found while running this plan: the first version had no `res.flushHeaders()` and no ninth test, so the page's status badge stayed on "Connecting…" until the first message arrived. Both are now included above.)
 
 - [ ] **Step 5: Commit**
 
@@ -1726,7 +1739,7 @@ http.createServer(app).listen(config.port, '127.0.0.1', () => {
 - [ ] **Step 7: Run every test**
 
 Run: `npm test`
-Expected: PASS, 49 tests, 0 failures.
+Expected: PASS, 50 tests, 0 failures.
 
 - [ ] **Step 8: Check the server starts and serves the page**
 
