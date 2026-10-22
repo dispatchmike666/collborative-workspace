@@ -1791,7 +1791,9 @@ Claude works inside `workspace-data/demo`. To use another folder, set
 
 - It uses your Claude plan login. It never uses an API key, and it refuses to run if
   Claude says it is set up to bill per use.
-- Claude can create and edit files without asking. It cannot run commands yet.
+- Claude can create and edit files without asking, and can run simple harmless
+  commands. Anything riskier, like reaching the internet, is blocked. Claude will
+  say so, but there is no approve button yet.
 - Only this computer can reach the page.
 
 ## Run the tests
