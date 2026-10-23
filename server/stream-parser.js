@@ -21,6 +21,17 @@ function toolResultText(content) {
   return '';
 }
 
+// Commands Claude wanted to run but was not allowed to, in a simple shape for the window.
+function listDenials(denials) {
+  if (!Array.isArray(denials)) return [];
+  return denials.map((denial) => ({
+    tool: denial.tool_name,
+    id: denial.tool_use_id,
+    command: denial.tool_input?.command ?? null,
+    description: denial.tool_input?.description ?? null,
+  }));
+}
+
 // A short human description of what Claude is doing, e.g. "Write hello.txt".
 export function summarizeToolUse(name, input = {}) {
   switch (name) {
@@ -31,7 +42,8 @@ export function summarizeToolUse(name, input = {}) {
     case 'NotebookEdit':
       return `${name} ${fileName(input.notebook_path)}`;
     case 'Bash':
-      return `Bash: ${clip(input.command, 80)}`;
+    case 'PowerShell':
+      return `${name}: ${clip(input.command, 80)}`;
     case 'Glob':
     case 'Grep':
       return `${name} ${clip(input.pattern, 60)}`;
@@ -82,6 +94,7 @@ export function parseStreamLine(line) {
       sessionId: obj.session_id,
       durationMs: obj.duration_ms,
       costUsd: obj.total_cost_usd,
+      denials: listDenials(obj.permission_denials),
     }];
   }
 

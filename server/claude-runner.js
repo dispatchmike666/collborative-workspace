@@ -36,21 +36,24 @@ export class ClaudeRunner {
     return this.#busy;
   }
 
-  send(text, who) {
+  // options.extraArgs: extra Claude flags for this one message only (for example an approval).
+  send(text, who, options = {}) {
+    const job = { text, who, extraArgs: options.extraArgs ?? [] };
     if (this.#busy) {
-      this.#queue.push({ text, who });
+      this.#queue.push(job);
       this.#onEvent({ kind: 'status', state: 'queued', who, position: this.#queue.length });
       return;
     }
-    this.#run({ text, who });
+    this.#run(job);
   }
 
-  #run({ text, who }) {
+  #run({ text, who, extraArgs }) {
     this.#busy = true;
     this.#onEvent({ kind: 'status', state: 'working', who });
 
     // After the first message, keep talking in the same conversation.
-    const args = this.#sessionId ? [...this.#baseArgs, '--resume', this.#sessionId] : [...this.#baseArgs];
+    const resume = this.#sessionId ? ['--resume', this.#sessionId] : [];
+    const args = [...this.#baseArgs, ...resume, ...extraArgs];
     let finished = false;
     let reportedDone = false;
     let aborted = false;

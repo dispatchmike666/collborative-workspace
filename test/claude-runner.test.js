@@ -99,3 +99,13 @@ test('says so when Claude cannot be started at all', async (t) => {
   await waitFor(() => idleCount() === 1, { label: 'the failure' });
   assert.match(events.find((e) => e.kind === 'error').text, /Couldn't start Claude/);
 });
+
+test('extra arguments for one message are passed to Claude after the conversation id', async (t) => {
+  const { runner, events, idleCount } = makeRunner(t);
+  runner.send('first', 'Brennan');
+  await waitFor(() => idleCount() === 1, { label: 'first run' });
+  runner.send('ARGSCHECK', 'Brennan', { extraArgs: ['--allowedTools', 'Bash(echo hi)'] });
+  await waitFor(() => idleCount() === 2, { label: 'second run' });
+  const reply = events.filter((e) => e.kind === 'claude-text').at(-1).text;
+  assert.equal(reply, 'args:--resume|fake-session-1|--allowedTools|Bash(echo hi)');
+});

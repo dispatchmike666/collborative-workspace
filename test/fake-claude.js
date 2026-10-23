@@ -43,8 +43,21 @@ function run(prompt) {
 
   let text = resumeId ? `resumed:${resumeId}` : 'done';
   if (prompt.includes('ENVCHECK')) text = `key:${process.env.ANTHROPIC_API_KEY ?? 'absent'}`;
+  if (prompt.includes('ARGSCHECK')) text = `args:${args.join('|')}`;
   out(assistant({ type: 'text', text }));
-  out({ type: 'result', subtype: 'success', is_error: false, result: text, session_id: sessionId, duration_ms: 5, total_cost_usd: 0 });
+  const denials = prompt.includes('DENY')
+    ? [{ tool_name: 'Bash', tool_use_id: 't9', tool_input: { command: 'curl -s https://example.com', description: 'Check the site' } }]
+    : [];
+  out({
+    type: 'result',
+    subtype: 'success',
+    is_error: false,
+    result: text,
+    session_id: sessionId,
+    duration_ms: 5,
+    total_cost_usd: 0,
+    permission_denials: denials,
+  });
 }
 
 let prompt = '';

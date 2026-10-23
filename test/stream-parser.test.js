@@ -61,3 +61,27 @@ test('tool summaries are short and readable', () => {
   assert.equal(summarizeToolUse('Weird'), 'Weird');
   assert.ok(summarizeToolUse('Bash', { command: 'x'.repeat(500) }).length < 100);
 });
+
+test('PowerShell steps show their command', () => {
+  assert.equal(summarizeToolUse('PowerShell', { command: 'Get-ChildItem' }), 'PowerShell: Get-ChildItem');
+});
+
+test('blocked commands are listed on the finished run', () => {
+  const line = JSON.stringify({
+    type: 'result',
+    subtype: 'success',
+    is_error: false,
+    result: 'x',
+    session_id: 's',
+    permission_denials: [
+      { tool_name: 'Bash', tool_use_id: 'toolu_1', tool_input: { command: 'curl -s https://example.com', description: 'Check the site' } },
+    ],
+  });
+  const [done] = parseStreamLine(line);
+  assert.deepEqual(done.denials, [{ tool: 'Bash', id: 'toolu_1', command: 'curl -s https://example.com', description: 'Check the site' }]);
+});
+
+test('a run with nothing blocked has an empty denials list', () => {
+  const done = sample.flatMap(parseStreamLine).find((e) => e.kind === 'run-done');
+  assert.deepEqual(done.denials, []);
+});
