@@ -3,6 +3,9 @@
 // Special words in the message change what it does:
 //   WRITE:<name>  creates a file called <name> in the current folder
 //   ENVCHECK      reports whether ANTHROPIC_API_KEY reached it
+//   ARGSCHECK     reports the extra flags it was started with
+//   PROMPTCHECK   replies with the whole message it received
+//   DENY          finishes with one blocked command listed
 //   CRASH         exits with an error
 //   HANG          never finishes
 import fs from 'node:fs';
@@ -29,7 +32,8 @@ function run(prompt) {
 
   out({ type: 'system', subtype: 'init', session_id: sessionId, model: 'fake', apiKeySource: process.env.FAKE_API_KEY_SOURCE ?? 'none' });
 
-  const match = prompt.match(/WRITE:(\S+)/);
+  // The last WRITE: wins, because a recap at the top of the message may mention an older one.
+  const match = [...prompt.matchAll(/WRITE:(\S+)/g)].at(-1);
   if (match) {
     const file = path.join(process.cwd(), match[1]);
     fs.writeFileSync(file, 'hi');
@@ -44,6 +48,7 @@ function run(prompt) {
   let text = resumeId ? `resumed:${resumeId}` : 'done';
   if (prompt.includes('ENVCHECK')) text = `key:${process.env.ANTHROPIC_API_KEY ?? 'absent'}`;
   if (prompt.includes('ARGSCHECK')) text = `args:${args.join('|')}`;
+  if (prompt.includes('PROMPTCHECK')) text = `prompt:${prompt}`;
   out(assistant({ type: 'text', text }));
   const denials = prompt.includes('DENY')
     ? [{ tool_name: 'Bash', tool_use_id: 't9', tool_input: { command: 'curl -s https://example.com', description: 'Check the site' } }]
