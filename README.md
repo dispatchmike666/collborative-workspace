@@ -1,27 +1,81 @@
 # Shared workspace
 
-A web page where you type a message and your own Claude does the work in a
-project folder, while you watch every step appear live.
+A website where two people work on software projects together. Each person talks to their
+own Claude, runs on their own computer and their own Claude plan, and both watch every step
+live. The two Claudes share project files through GitHub and take turns quietly.
+
+## How it fits together
+
+- **The hub** is the website. People log in to it. It shows projects, chat, files, notes and a
+  preview, and it decides whose Claude runs next. It does not run any AI itself.
+- **A helper** runs on each person's own computer. It connects out to the hub, runs that
+  person's own Claude when the hub asks, and sends back every step. A person's message only
+  ever goes to their own helper.
+- **GitHub** holds each project's files, so both computers work on the same code.
 
 ## Start it
 
-1. Open a terminal in this folder.
-2. Run `npm start`.
-3. Open http://localhost:3000 in your browser.
-4. Type what you want, for example: Create a file called hello.txt containing the word hi.
+1. Add the people who can log in (once). Passwords go into private files, not onto the screen:
 
-Claude works inside `workspace-data/demo`. To use another folder, set
-`PROJECT_DIR` before starting. To stop it, press Ctrl+C in the terminal.
+   ```
+   npm run hub:add-user -- Brennan
+   npm run hub:add-user -- Max
+   ```
+
+2. Start the hub, then open http://localhost:3000 and log in: `npm run hub`
+3. Start your own helper in a second terminal. In PowerShell, using your helper token from your
+   private credentials file:
+
+   ```
+   $env:HUB_URL = "http://localhost:3000"
+   $env:HELPER_TOKEN = "your-helper-token"
+   npm run helper
+   ```
+
+4. For Max to join from his own computer, see `docs/hosting.md` (making the hub reachable) and
+   `docs/max-setup.md` (his steps).
+
+## Using it
+
+- **Projects.** The home page lists them. Create one with a name and, if the project's files
+  should be shared, its GitHub address (`https://github.com/owner/repo`). Everyone who works
+  on it needs access to that repository.
+- **Chat.** Under the timeline, "My Claude" sends your message to your own Claude. "Just Max"
+  sends a normal message to the other person that no AI ever sees.
+- **Taking turns.** One Claude works on a project at a time. A second request waits in line
+  and starts by itself. If someone's computer is off, their request waits without holding up
+  anyone else.
+- **Recap.** Each Claude is told what the other person asked and what their Claude did, so it
+  can answer "what did Max change?".
+- **Approve button.** When Claude is blocked from running a command, the window shows the
+  command with "Allow once". Only the person whose Claude it is can press it, and it allows
+  that one command only.
+- **Notes.** A shared page for each project. If two people save at the same moment, the second
+  is warned and nothing is overwritten.
+- **Preview.** If the project has an `index.html`, the window shows the page.
+- **Plan usage.** Every finished request says roughly how much of your Claude plan it used.
 
 ## What it will and won't do
 
-- It uses your Claude plan login. It never uses an API key, and it refuses to run if
-  Claude says it is set up to bill per use.
-- Claude can create and edit files without asking, and can run simple harmless
-  commands. Anything riskier, like reaching the internet, is blocked. Claude will
-  say so, but there is no approve button yet.
-- Only this computer can reach the page.
+- Each Claude runs on its own person's Claude plan login. It never uses an API key and refuses
+  to run if Claude says it is set up to bill per use.
+- Claude can create and edit files in the project folder and run simple harmless commands.
+  Anything riskier needs the approve button.
+- The hub only answers on the computer it runs on. To let someone else in, put a tunnel or a
+  web host in front of it (`docs/hosting.md`).
+- Whoever runs the hub decides what is sent to each helper, so Max is trusting Brennan with that.
+
+## Solo mode
+
+`npm start` runs the original single-person page at http://localhost:3000 (no logins, no
+helper). It was Stage 1 and is kept for quick tests.
 
 ## Run the tests
 
-`npm test` (they use a fake Claude, so they cost nothing).
+`npm test`. They use a stand-in for Claude, so they cost nothing and use no plan allowance.
+
+## More
+
+- `docs/superpowers/specs/2026-10-14-shared-workspace-design.md` is the design.
+- `docs/superpowers/stage-1-results.md` and `docs/superpowers/stages-2-to-5-results.md` say what
+  was measured and what is still untested.

@@ -1,7 +1,8 @@
 # Shared workspace - design
 
 Date: 2026-10-14
-Status: Draft, waiting for Brennan's review
+Status: Built. Stages 1 to 5 are done and tested (see docs/superpowers/stage-1-results.md and
+stages-2-to-5-results.md). Hosting for Max and his helper setup still need a person.
 Working name: "Shared workspace" (rename any time)
 
 ## 1. What this is
