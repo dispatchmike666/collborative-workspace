@@ -62,3 +62,46 @@ export async function readEvents(url, until, { headers = {} } = {}) {
   }
   return events;
 }
+
+// Opens a live stream (the browser feed or a helper's job feed) and keeps what arrives.
+// Resolves once the server has answered, so you know the connection is up.
+export async function openStream(url, { headers = {} } = {}) {
+  const controller = new AbortController();
+  const res = await fetch(url, { headers, signal: controller.signal });
+  const messages = [];
+  if (res.ok && res.body) {
+    (async () => {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      try {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop();
+          for (const part of parts) {
+            const message = { event: 'message', id: null, data: null };
+            for (const line of part.split('\n')) {
+              if (line.startsWith('event: ')) message.event = line.slice(7);
+              else if (line.startsWith('id: ')) message.id = Number(line.slice(4));
+              else if (line.startsWith('data: ')) message.data = JSON.parse(line.slice(6));
+            }
+            if (message.data !== null) messages.push(message);
+          }
+        }
+      } catch {
+        // The stream was closed on purpose.
+      }
+    })();
+  } else {
+    await res.body?.cancel();
+  }
+  return {
+    status: res.status,
+    messages,
+    close: () => controller.abort(),
+    waitFor: (predicate, label = 'a stream message') => waitFor(() => messages.find(predicate), { label }),
+  };
+}
