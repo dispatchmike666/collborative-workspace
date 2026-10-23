@@ -10,8 +10,11 @@ function setup(t, options = {}) {
   const dispatcher = new Dispatcher({ store, users: () => ['Brennan', 'Max'], ...options });
   const helpers = {};
   const connect = (name) => {
-    const helper = { name, jobs: [] };
-    helper.disconnect = dispatcher.registerHelper(name, (message) => helper.jobs.push(message.job));
+    const helper = { name, jobs: [], other: [] };
+    helper.disconnect = dispatcher.registerHelper(name, (message) => {
+      if (message.type === 'job') helper.jobs.push(message.job);
+      else helper.other.push(message);
+    });
     helpers[name] = helper;
     return helper;
   };
@@ -50,10 +53,10 @@ test('helper events land on the timeline stamped with the owner, and hub-only ki
     { kind: 'claude-text', text: 'done', owner: 'Brennan' },
     { kind: 'mystery', text: 'nope' },
   ]);
-  assert.deepEqual(kinds(), ['status:working', 'claude-step', 'claude-text']);
+  assert.deepEqual(kinds(), ['user', 'status:working', 'claude-step', 'claude-text']);
   const stored = store.events(project.id);
-  assert.equal(stored[1].owner, 'Max');
-  assert.equal(stored[2].owner, 'Max');
+  assert.equal(stored.find((e) => e.kind === 'claude-step').owner, 'Max');
+  assert.equal(stored.find((e) => e.kind === 'claude-text').owner, 'Max');
 });
 
 test('finishing a run frees the project and says it is idle', (t) => {
@@ -61,7 +64,7 @@ test('finishing a run frees the project and says it is idle', (t) => {
   const max = connect('Max');
   dispatcher.submit({ projectId: project.id, user: 'Max', text: 'hi' });
   dispatcher.helperDone('Max', max.jobs[0].jobId, true);
-  assert.deepEqual(kinds(), ['status:working', 'status:idle']);
+  assert.deepEqual(kinds(), ['user', 'status:working', 'status:idle']);
   dispatcher.submit({ projectId: project.id, user: 'Max', text: 'again' });
   assert.equal(max.jobs.length, 2);
 });
@@ -202,6 +205,7 @@ test('a run that never reports back is failed after the time limit', async (t) =
   dispatcher.submit({ projectId: project.id, user: 'Max', text: 'stuck' });
   await waitFor(() => store.events(project.id).some((e) => e.kind === 'error'), { label: 'the timeout' });
   assert.match(store.events(project.id).find((e) => e.kind === 'error').text, /took too long/);
+  assert.deepEqual(max.other, [{ type: 'cancel', jobId: max.jobs[0].jobId }]);
   dispatcher.submit({ projectId: project.id, user: 'Max', text: 'after' });
   assert.equal(max.jobs.length, 2);
 });
