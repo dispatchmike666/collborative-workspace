@@ -109,3 +109,16 @@ test('extra arguments for one message are passed to Claude after the conversatio
   const reply = events.filter((e) => e.kind === 'claude-text').at(-1).text;
   assert.equal(reply, 'args:--resume|fake-session-1|--allowedTools|Bash(echo hi)');
 });
+
+test('a run can be stopped on request, and the next one still works', async (t) => {
+  const { runner, events, idleCount } = makeRunner(t);
+  runner.send('HANG', 'Brennan');
+  await waitFor(() => events.some((e) => e.state === 'working'), { label: 'the run to start' });
+  runner.cancel();
+  await waitFor(() => idleCount() === 1, { label: 'the stop' });
+  assert.match(events.find((e) => e.kind === 'error').text, /was stopped/);
+
+  runner.send('hello', 'Brennan');
+  await waitFor(() => idleCount() === 2, { label: 'the next run' });
+  assert.ok(events.some((e) => e.kind === 'run-done'));
+});
