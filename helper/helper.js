@@ -57,6 +57,7 @@ export class Helper {
   #git;
   #fetch;
   #log;
+  #onFatal;
   #sseOptions;
   #runnerTimeoutMs;
   #connection = null;
@@ -75,9 +76,11 @@ export class Helper {
     gitSync = new GitSync(),
     fetchImpl = fetch,
     log = () => {},
+    onFatal = () => {},
     sseOptions = {},
     runnerTimeoutMs,
   }) {
+    this.#onFatal = onFatal;
     this.#hubUrl = hubUrl.replace(/\/+$/, '');
     this.#token = token;
     this.#root = workspaceRoot;
@@ -103,7 +106,10 @@ export class Helper {
       onMessage: (message) => this.#onMessage(message),
       onOpen: () => this.#log('Connected to the hub. Waiting for work.'),
       onClose: (error) => this.#log(`Lost the connection to the hub (${error.message}). Trying again…`),
-      onFatal: (message) => this.#log(message),
+      onFatal: (message) => {
+        this.#log(message);
+        this.#onFatal(message);
+      },
       ...this.#sseOptions,
     });
   }
@@ -121,7 +127,16 @@ export class Helper {
       return;
     }
     if (event === 'job') this.#handleJob(payload.job).catch((error) => this.#log(`Something went wrong: ${error.message}`));
-    else if (event === 'cancel') this.#runners.get(this.#active.get(payload.jobId)?.projectId)?.cancel();
+    else if (event === 'cancel') this.#cancel(payload.jobId);
+  }
+
+  // The hub gave up on a run. Remember that, even if Claude has not started yet,
+  // so it never starts afterwards; and stop it now if it is already going.
+  #cancel(jobId) {
+    const entry = this.#active.get(jobId);
+    if (!entry) return;
+    entry.cancelled = true;
+    this.#runners.get(entry.projectId)?.cancel();
   }
 
   async #post(route, body) {
@@ -216,7 +231,7 @@ export class Helper {
       return;
     }
 
-    this.#active.set(job.jobId, { projectId: job.projectId });
+    this.#active.set(job.jobId, { projectId: job.projectId, cancelled: false });
     const sender = this.#makeSender(job.jobId);
     const projectDir = path.join(this.#root, job.projectId);
     this.#log(`Starting a job for ${job.who}: ${oneLine(job.text, 60)}`);
@@ -240,6 +255,7 @@ export class Helper {
   }
 
   async #runClaude(job, projectDir, sender) {
+    if (this.#active.get(job.jobId)?.cancelled) throw new Error('This run was stopped before it started.');
     const runner = this.#runnerFor(job.projectId, projectDir);
     const finished = new Promise((resolve) => {
       this.#contexts.set(job.projectId, { sender, finish: resolve });

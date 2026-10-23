@@ -11,7 +11,7 @@ import { startHub } from './hub-fixture.js';
 const identity = ['user.name=Test Person', 'user.email=test@example.com'];
 
 // A helper wired to the fake Claude, connected to the test hub.
-async function startHelper(t, hub, name, { configOverrides = [] } = {}) {
+async function startHelper(t, hub, name, { configOverrides = [], gitSync } = {}) {
   const workspaceRoot = tempDir(t);
   const helper = new Helper({
     hubUrl: hub.base,
@@ -19,7 +19,7 @@ async function startHelper(t, hub, name, { configOverrides = [] } = {}) {
     workspaceRoot,
     claudeCommand: process.execPath,
     claudeArgs: [FAKE_CLAUDE],
-    gitSync: new GitSync({ configOverrides: [...identity, ...configOverrides] }),
+    gitSync: gitSync ?? new GitSync({ configOverrides: [...identity, ...configOverrides] }),
     sseOptions: { minDelayMs: 20, maxDelayMs: 50 },
   });
   helper.start();
@@ -154,4 +154,24 @@ test('when the hub gives up on a run, the helper stops it and is ready for the n
 
   await hub.as(max)(`/api/projects/${project.id}/send`, hub.json({ text: 'hello', to: 'ai' }));
   await waitFor(() => hub.store.events(project.id).some((e) => e.kind === 'run-done'), { label: 'the next run' });
+});
+
+test('a stop that arrives before Claude has started still prevents the run', async (t) => {
+  const hub = await startHub(t, {}, { jobTimeoutMs: 200 });
+  const max = await hub.login('Max');
+  const project = await hub.makeProject(max);
+  // Getting the files ready takes a while here, so the hub gives up first.
+  const slowGit = {
+    prepare: async ({ projectDir }) => {
+      fs.mkdirSync(projectDir, { recursive: true });
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    },
+    finish: async () => ({ changed: [], committed: false, pushed: false }),
+  };
+  const { helper, workspaceRoot } = await startHelper(t, hub, 'Max', { gitSync: slowGit });
+
+  await hub.as(max)(`/api/projects/${project.id}/send`, hub.json({ text: 'WRITE:started.txt', to: 'ai' }));
+  await waitFor(() => hub.store.events(project.id).some((e) => e.kind === 'error' && /took too long/.test(e.text)), { label: 'the hub timeout' });
+  await waitFor(() => helper.activeJobs === 0, { label: 'the helper to finish with the job' });
+  assert.equal(fs.existsSync(path.join(workspaceRoot, project.id, 'started.txt')), false, 'Claude must not run after a stop');
 });

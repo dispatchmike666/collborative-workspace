@@ -1,11 +1,17 @@
 {
   "name": "shared-workspace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
     "start": "node server/index.js",
+    "hub": "node hub/index.js",
+    "hub:add-user": "node hub/cli.js add-user",
+    "hub:new-password": "node hub/cli.js new-password",
+    "hub:new-token": "node hub/cli.js new-token",
+    "hub:list": "node hub/cli.js list",
+    "helper": "node helper/index.js",
     "test": "node --test \"test/**/*.test.js\""
   }
 }

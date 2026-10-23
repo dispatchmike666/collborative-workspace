@@ -9,7 +9,7 @@ export const FAKE_CLAUDE = path.join(import.meta.dirname, 'fake-claude.js');
 // Windows won't delete a folder a program is still using, so we retry for a moment.
 export function tempDir(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ws-test-'));
-  t.after(() => fs.rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true, maxRetries: 50, retryDelay: 200 }));
   return dir;
 }
 

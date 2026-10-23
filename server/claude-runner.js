@@ -22,6 +22,7 @@ export class ClaudeRunner {
   #queue = [];
   #busy = false;
   #sessionId = null;
+  #cancelRun = null;
 
   constructor({ command, baseArgs = [], cwd, env = process.env, onEvent, timeoutMs = 15 * 60 * 1000 }) {
     this.#command = command;
@@ -34,6 +35,11 @@ export class ClaudeRunner {
 
   get busy() {
     return this.#busy;
+  }
+
+  // Stops the run that is happening now, if any. Messages waiting in line still run afterwards.
+  cancel() {
+    this.#cancelRun?.();
   }
 
   // options.extraArgs: extra Claude flags for this one message only (for example an approval).
@@ -58,13 +64,19 @@ export class ClaudeRunner {
     let reportedDone = false;
     let aborted = false;
     let timedOut = false;
+    let cancelled = false;
     let stderrTail = '';
     let timer = null;
     let child = null;
+    this.#cancelRun = () => {
+      cancelled = true;
+      child?.kill();
+    };
 
     const finish = () => {
       if (finished) return;
       finished = true;
+      this.#cancelRun = null;
       if (timer) clearTimeout(timer);
       this.#busy = false;
       this.#onEvent({ kind: 'status', state: 'idle' });
@@ -124,7 +136,9 @@ export class ClaudeRunner {
 
     child.on('close', (code) => {
       if (finished) return;
-      if (timedOut) {
+      if (cancelled) {
+        this.#onEvent({ kind: 'error', text: 'This run was stopped.' });
+      } else if (timedOut) {
         this.#onEvent({ kind: 'error', text: `Claude took too long (over ${describeDuration(this.#timeoutMs)}) and was stopped.` });
       } else if (!reportedDone && !aborted) {
         const detail = stderrTail.trim() ? ` ${stderrTail.trim()}` : '';

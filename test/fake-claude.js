@@ -6,6 +6,7 @@
 //   ARGSCHECK     reports the extra flags it was started with
 //   PROMPTCHECK   replies with the whole message it received
 //   DENY          finishes with one blocked command listed
+//   SLEEP<ms>     waits that long before answering (for example SLEEP800)
 //   CRASH         exits with an error
 //   HANG          never finishes
 import fs from 'node:fs';
@@ -19,7 +20,7 @@ const sessionId = resumeId ?? 'fake-session-1';
 const out = (obj) => process.stdout.write(`${JSON.stringify(obj)}\n`);
 const assistant = (block) => ({ type: 'assistant', message: { role: 'assistant', content: [block] }, session_id: sessionId });
 
-function run(prompt) {
+async function run(prompt) {
   if (prompt.includes('HANG')) {
     setInterval(() => {}, 1000);
     return;
@@ -29,6 +30,9 @@ function run(prompt) {
     process.exitCode = 2;
     return;
   }
+
+  const sleep = prompt.match(/SLEEP(\d+)/);
+  if (sleep) await new Promise((resolve) => setTimeout(resolve, Number(sleep[1])));
 
   out({ type: 'system', subtype: 'init', session_id: sessionId, model: 'fake', apiKeySource: process.env.FAKE_API_KEY_SOURCE ?? 'none' });
 
