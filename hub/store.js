@@ -165,6 +165,15 @@ export class Store {
     return this.#part(projectId, 'sources', (file) => new Sources(file));
   }
 
+  // Tell everyone watching the project that the board or the brief changed.
+  boardChanged(projectId) {
+    this.broadcast(projectId, { kind: 'board', cards: this.board(projectId).list() });
+  }
+
+  knowledgeChanged(projectId) {
+    this.broadcast(projectId, { kind: 'knowledge', ...this.knowledge(projectId).get() });
+  }
+
   // The shelf of quick prompts is shared by every project.
   prompts() {
     this.#prompts ??= new Prompts(path.join(this.#dir, 'prompts.json'));

@@ -225,3 +225,84 @@ test('unknown projects and users are refused', (t) => {
   assert.throws(() => dispatcher.submit({ projectId: 'nope', user: 'Max', text: 'x' }), /No such project/);
   assert.throws(() => dispatcher.submit({ projectId: project.id, user: 'Stranger', text: 'x' }), /Unknown user/);
 });
+
+test('every job carries the project brief, the settled decisions, and the notes if they are shared', (t) => {
+  const { project, store, dispatcher, connect } = setup(t);
+  const max = connect('Max');
+  store.knowledge(project.id).saveBrief({ text: 'Plain English. Keep it simple.', baseVersion: 0, user: 'Brennan' });
+  store.knowledge(project.id).addDecision({ text: 'Blue buttons', by: 'Brennan' });
+  store.knowledge(project.id).addDecision({ text: 'No new packages', by: 'Max' });
+  store.saveNotes(project.id, { text: 'Remember the footer', baseVersion: 0, user: 'Max' });
+
+  dispatcher.submit({ projectId: project.id, user: 'Max', text: 'go' });
+  assert.deepEqual(max.jobs[0].context, {
+    brief: 'Plain English. Keep it simple.',
+    decisions: ['Blue buttons', 'No new packages'],
+    notes: 'Remember the footer',
+  });
+
+  dispatcher.helperDone('Max', max.jobs[0].jobId);
+  store.knowledge(project.id).setShareNotes(false);
+  dispatcher.submit({ projectId: project.id, user: 'Max', text: 'again' });
+  assert.equal(max.jobs[1].context.notes, '', 'notes stay private when sharing is off');
+});
+
+test('only the newest decisions and a limited amount of notes are sent', (t) => {
+  const { project, store, dispatcher, connect } = setup(t);
+  const max = connect('Max');
+  for (let i = 0; i < 25; i += 1) store.knowledge(project.id).addDecision({ text: `Decision ${i}`, by: 'Max' });
+  store.saveNotes(project.id, { text: 'n'.repeat(5000), baseVersion: 0, user: 'Max' });
+  dispatcher.submit({ projectId: project.id, user: 'Max', text: 'go' });
+  const { context } = max.jobs[0];
+  assert.equal(context.decisions.length, 20);
+  assert.equal(context.decisions[0], 'Decision 5');
+  assert.equal(context.decisions.at(-1), 'Decision 24');
+  assert.equal(context.notes.length, 3000);
+});
+
+test('a board card handed to Claude moves to Done after a clean run', (t) => {
+  const { project, store, dispatcher, connect } = setup(t);
+  const max = connect('Max');
+  const card = store.board(project.id).add({ title: 'Add a footer', by: 'Max' });
+  store.board(project.id).update(card.id, { column: 'doing', assignee: 'Max' });
+  const heard = [];
+  store.subscribe(project.id, (e) => heard.push(e));
+
+  dispatcher.submit({ projectId: project.id, user: 'Max', text: 'work on the card', cardId: card.id });
+  dispatcher.helperEvents('Max', max.jobs[0].jobId, [{ kind: 'run-done', ok: true, text: 'done' }]);
+  dispatcher.helperDone('Max', max.jobs[0].jobId);
+
+  assert.equal(store.board(project.id).list()[0].column, 'done');
+  const moved = store.events(project.id).find((e) => e.kind === 'board-card');
+  assert.deepEqual([moved.who, moved.action, moved.title, moved.column], ['Max', 'moved', 'Add a footer', 'done']);
+  assert.ok(heard.some((e) => e.kind === 'board' && e.cards[0].column === 'done'), 'the board is broadcast');
+});
+
+test('a card stays in Doing when the run had a problem', (t) => {
+  const { project, store, dispatcher, connect } = setup(t);
+  const max = connect('Max');
+  const card = store.board(project.id).add({ title: 'Hard thing', column: 'doing', by: 'Max' });
+  dispatcher.submit({ projectId: project.id, user: 'Max', text: 'try it', cardId: card.id });
+  dispatcher.helperEvents('Max', max.jobs[0].jobId, [{ kind: 'error', text: 'Claude stopped' }]);
+  dispatcher.helperDone('Max', max.jobs[0].jobId);
+  assert.equal(store.board(project.id).list()[0].column, 'doing');
+});
+
+test('a card stays in Doing when the run is stopped from outside', (t) => {
+  const { project, store, dispatcher, connect } = setup(t);
+  const max = connect('Max');
+  const card = store.board(project.id).add({ title: 'Interrupted', column: 'doing', by: 'Max' });
+  dispatcher.submit({ projectId: project.id, user: 'Max', text: 'try it', cardId: card.id });
+  max.disconnect();
+  assert.equal(store.board(project.id).list()[0].column, 'doing');
+});
+
+test('a card that was deleted during the run does not break anything', (t) => {
+  const { project, store, dispatcher, connect } = setup(t);
+  const max = connect('Max');
+  const card = store.board(project.id).add({ title: 'Short lived', column: 'doing', by: 'Max' });
+  dispatcher.submit({ projectId: project.id, user: 'Max', text: 'go', cardId: card.id });
+  store.board(project.id).remove(card.id);
+  dispatcher.helperEvents('Max', max.jobs[0].jobId, [{ kind: 'run-done', ok: true }]);
+  assert.doesNotThrow(() => dispatcher.helperDone('Max', max.jobs[0].jobId));
+});

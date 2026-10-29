@@ -7,6 +7,8 @@ const APPROVABLE_TOOLS = new Set(['Bash', 'PowerShell']);
 // A command with these in it could widen what an approval allows, so it cannot be approved with a button.
 const UNSAFE_COMMAND = /[*()\r\n\u0000]/;
 const MAX_COMMAND_CHARS = 500;
+const MAX_CONTEXT_DECISIONS = 20;
+const MAX_CONTEXT_NOTES = 3000;
 
 const sameName = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
 
@@ -58,10 +60,10 @@ export class Dispatcher {
   // ---- jobs ----
 
   // A person asks their Claude to do something. Returns the job.
-  submit({ projectId, user, text, kind = 'message', allowedTools = [] }) {
+  submit({ projectId, user, text, kind = 'message', allowedTools = [], cardId = null }) {
     const name = this.#canonical(user);
     if (!this.#store.getProject(projectId)) throw new Error(`No such project: ${projectId}`);
-    const job = { id: crypto.randomBytes(8).toString('hex'), projectId, user: name, text, kind, allowedTools };
+    const job = { id: crypto.randomBytes(8).toString('hex'), projectId, user: name, text, kind, allowedTools, cardId, failed: false };
     if (kind === 'message') this.#store.addEvent(projectId, { kind: 'user', who: name, text });
 
     const state = this.#state(projectId);
@@ -85,6 +87,7 @@ export class Dispatcher {
     const job = this.#ownedJob(userName, jobId);
     for (const event of events ?? []) {
       if (!event || !HELPER_EVENT_KINDS.has(event.kind)) continue;
+      if (event.kind === 'error' || (event.kind === 'run-done' && !event.ok)) job.failed = true;
       const { denials, ...rest } = event;
       this.#store.addEvent(job.projectId, { ...rest, owner: job.user });
       if (event.kind === 'run-done') {
@@ -175,6 +178,7 @@ export class Dispatcher {
           kind: job.kind,
           text: job.text,
           recap,
+          context: this.#contextFor(projectId),
           allowedTools: job.allowedTools,
         },
       });
@@ -193,8 +197,32 @@ export class Dispatcher {
     job.timer.unref?.();
   }
 
+  // What every run on this project should know: its brief, its settled decisions, and (if shared) the notes.
+  #contextFor(projectId) {
+    const knowledge = this.#store.knowledge(projectId).get();
+    const notes = knowledge.shareNotes ? this.#store.getNotes(projectId).text.slice(0, MAX_CONTEXT_NOTES) : '';
+    return {
+      brief: knowledge.brief.text,
+      decisions: knowledge.decisions.slice(-MAX_CONTEXT_DECISIONS).map((decision) => decision.text),
+      notes,
+    };
+  }
+
+  // When a run started from a board card ends cleanly, the card moves to Done.
+  #finishCard(job) {
+    if (!job.cardId || job.failed) return;
+    try {
+      const card = this.#store.board(job.projectId).update(job.cardId, { column: 'done' });
+      this.#store.addEvent(job.projectId, { kind: 'board-card', who: job.user, action: 'moved', title: card.title, column: 'done' });
+      this.#store.boardChanged(job.projectId);
+    } catch {
+      // The card was deleted while the run was going. Nothing to move.
+    }
+  }
+
   #timeOut(job) {
     if (this.#jobs.get(job.id) !== job) return;
+    job.failed = true;
     this.#store.addEvent(job.projectId, { kind: 'error', owner: job.user, text: `${job.user}'s Claude took too long and was stopped.` });
     try {
       this.#helpers.get(job.user.toLowerCase())?.send({ type: 'cancel', jobId: job.id });
@@ -207,6 +235,7 @@ export class Dispatcher {
   #failActiveJobsOf(name, message) {
     for (const job of [...this.#jobs.values()]) {
       if (!sameName(job.user, name)) continue;
+      job.failed = true;
       this.#store.addEvent(job.projectId, { kind: 'error', owner: job.user, text: message });
       this.#finish(job);
     }
@@ -217,6 +246,7 @@ export class Dispatcher {
     this.#jobs.delete(job.id);
     const state = this.#state(job.projectId);
     if (state.active === job) state.active = null;
+    this.#finishCard(job);
     this.#store.addEvent(job.projectId, { kind: 'status', state: 'idle' });
     this.#dispatch(job.projectId);
   }

@@ -1,19 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseCookies } from './auth.js';
+import { HttpError, MAX_HELPER_BODY_BYTES, checkMessageText, errorStatus, readJsonBody, sendJson } from './http-util.js';
+import { createWorkspaceRoutes } from './routes-workspace.js';
 
 const COOKIE_NAME = 'ws_session';
-const MAX_BODY_BYTES = 64 * 1024;
-const MAX_HELPER_BODY_BYTES = 8 * 1024 * 1024;
-const MAX_MESSAGE_CHARS = 8000;
 const MAX_HELPER_EVENTS = 200;
 
-// Only these files are ever served from the pages folder.
-const ASSETS = {
-  '/assets/app.js': ['app.js', 'text/javascript; charset=utf-8'],
-  '/assets/render.js': ['render.js', 'text/javascript; charset=utf-8'],
-  '/assets/login.js': ['login.js', 'text/javascript; charset=utf-8'],
-  '/assets/styles.css': ['styles.css', 'text/css; charset=utf-8'],
+// Page scripts, styles and pictures: plain file names only, taken from the pages folder.
+const ASSET = /^\/assets\/([a-z0-9][a-z0-9._-]*\.(js|css|svg))$/;
+const ASSET_TYPES = {
+  js: 'text/javascript; charset=utf-8',
+  css: 'text/css; charset=utf-8',
+  svg: 'image/svg+xml',
 };
 
 const PAGE_HEADERS = {
@@ -34,56 +33,9 @@ const PAGE_HEADERS = {
   ].join('; '),
 };
 
-class HttpError extends Error {
-  constructor(status, message) {
-    super(message);
-    this.status = status;
-  }
-}
-
-function sendJson(res, status, body, headers = {}) {
-  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers });
-  res.end(JSON.stringify(body));
-}
-
 function redirect(res, location) {
   res.writeHead(302, { location, 'cache-control': 'no-store' });
   res.end();
-}
-
-async function readJsonBody(req, limit = MAX_BODY_BYTES) {
-  if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) throw new HttpError(415, 'Send JSON.');
-  const chunks = [];
-  let size = 0;
-  for await (const chunk of req) {
-    size += chunk.length;
-    if (size > limit) throw new HttpError(413, 'That is too large to send.');
-    chunks.push(chunk);
-  }
-  try {
-    const value = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-    if (value === null || typeof value !== 'object') throw new Error('not an object');
-    return value;
-  } catch {
-    throw new HttpError(400, 'That was not valid JSON.');
-  }
-}
-
-function checkMessageText(value) {
-  const text = typeof value === 'string' ? value.trim() : '';
-  if (!text || text.length > MAX_MESSAGE_CHARS) {
-    throw new HttpError(400, `Write a message of 1 to ${MAX_MESSAGE_CHARS} characters.`);
-  }
-  return text;
-}
-
-function errorStatus(error) {
-  if (error instanceof HttpError) return error.status;
-  if (/^Only /.test(error.message)) return 403;
-  if (/no longer available|No such project/.test(error.message)) return 404;
-  if (/already used/.test(error.message)) return 409;
-  if (/not yours/.test(error.message)) return 403;
-  return 400;
 }
 
 // The hub: pages, login, project API, live streams, and the endpoints helpers call.
@@ -99,6 +51,8 @@ export function createHubApp({
   secureCookies = false,
   trustProxy = false,
 }) {
+  const workspace = createWorkspaceRoutes({ store, dispatcher });
+
   function sessionUser(req) {
     const id = sessions.verify(parseCookies(req.headers.cookie)[COOKIE_NAME]);
     if (!id) return null;
@@ -133,6 +87,11 @@ export function createHubApp({
     } catch {
       sendJson(res, 500, { error: 'A page file is missing.' });
     }
+  }
+
+  function sendAsset(res, name, extension) {
+    if (!fs.existsSync(path.join(publicDir, name))) return sendJson(res, 404, { error: 'Not found.' });
+    return sendFile(res, name, ASSET_TYPES[extension]);
   }
 
   function startStream(res) {
@@ -219,6 +178,9 @@ export function createHubApp({
     write({ kind: 'presence', online: dispatcher.presence() });
     write({ kind: 'files', ...store.getFiles(projectId) });
     write({ kind: 'preview', version: store.getPreviewVersion(projectId) });
+    write({ kind: 'board', cards: store.board(projectId).list() });
+    write({ kind: 'knowledge', ...store.knowledge(projectId).get() });
+    write({ kind: 'sources', paths: store.sources(projectId).paths() });
     const unsubscribe = store.subscribe(projectId, write);
     const ping = setInterval(() => res.write(': ping\n\n'), 15_000);
     ping.unref();
@@ -340,6 +302,20 @@ export function createHubApp({
     return sendJson(res, 200, { ok: true, ...info });
   }
 
+  async function handleHelperSources(req, res) {
+    const body = await readJsonBody(req, MAX_HELPER_BODY_BYTES);
+    const projectId = String(body.projectId ?? '');
+    requireProject(projectId);
+    let info;
+    try {
+      info = store.sources(projectId).set(body.files);
+    } catch (error) {
+      throw new HttpError(400, error.message);
+    }
+    store.broadcast(projectId, { kind: 'sources', paths: store.sources(projectId).paths() });
+    return sendJson(res, 200, { ok: true, ...info });
+  }
+
   // ---- routing ----
 
   return async function handle(req, res) {
@@ -360,7 +336,8 @@ export function createHubApp({
       if (method === 'GET' && pathname === '/') {
         return sessionUser(req) ? sendFile(res, 'app.html', 'text/html; charset=utf-8') : redirect(res, '/login');
       }
-      if (method === 'GET' && ASSETS[pathname]) return sendFile(res, ASSETS[pathname][0], ASSETS[pathname][1]);
+      const asset = ASSET.exec(pathname);
+      if (method === 'GET' && asset) return sendAsset(res, asset[1], asset[2]);
 
       // Previews (the link itself carries a signed token, because the sandboxed page cannot send cookies)
       const preview = /^\/preview\/([a-z0-9-]+)\/([^/]+)(\/.*)?$/.exec(pathname);
@@ -374,6 +351,7 @@ export function createHubApp({
         if (method === 'POST' && pathname === '/helper/done') return await handleHelperDone(req, res, user);
         if (method === 'POST' && pathname === '/helper/files') return await handleHelperFiles(req, res);
         if (method === 'POST' && pathname === '/helper/preview') return await handleHelperPreview(req, res);
+        if (method === 'POST' && pathname === '/helper/sources') return await handleHelperSources(req, res);
         return sendJson(res, 404, { error: 'Not found.' });
       }
 
@@ -394,6 +372,7 @@ export function createHubApp({
           if (method === 'GET') return sendJson(res, 200, store.listProjects());
           if (method === 'POST') return await handleCreateProject(req, res, user);
         }
+        if (await workspace({ req, res, pathname, method, user })) return undefined;
         const route = /^\/api\/projects\/([a-z0-9-]+)(?:\/(stream|send|notes|approve))?$/.exec(pathname);
         if (route) {
           const [, projectId, action] = route;
