@@ -9,12 +9,17 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
 ## How it is built
 
 - `hub/` is the website (login, projects, live streams, queue and turn-taking, approvals,
-  notes, preview). No AI runs there.
-- `helper/` runs on each person's own computer and runs that person's own Claude.
+  notes, preview, board, project brief and decisions, quick prompts, home numbers). No AI runs
+  there. `hub/public/` is the page code: no inline scripts or styles (strict content policy),
+  plain modules, one stylesheet. The design is "two-colour print": sticker cards, hard shadows,
+  the crew creatures (`crew.js`), light / dark / auto and five accent colours.
+- `helper/` runs on each person's own computer and runs that person's own Claude. It puts the
+  project's brief, last decisions and (if shared) notes at the top of every request to Claude.
 - `server/` is the Stage 1 single-person page. Its parser, runner and settings are reused by
   the helper.
-- Plans: docs/superpowers/plans/. Results: docs/superpowers/stage-1-results.md and
-  stages-2-to-5-results.md.
+- Plans: docs/superpowers/plans/. Results: docs/superpowers/stage-1-results.md,
+  stages-2-to-5-results.md and glow-up-results.md.
+- New modules under `hub/` each have their own test file in `test/`. Keep screens plain English.
 
 ## Standing constraints
 

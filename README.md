@@ -37,9 +37,27 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 
 ## Using it
 
-- **Projects.** The home page lists them. Create one with a name and, if the project's files
-  should be shared, its GitHub address (`https://github.com/owner/repo`). Everyone who works
-  on it needs access to that repository.
+- **Home (Pulse).** The first page shows who is online, how much your team's Claudes did this
+  week (requests, rough plan use, files saved), a feed of what just happened, and your projects.
+- **The crew.** Each person has a little creature in the top bar. It sleeps when their helper
+  is off, wakes when it is on, works while their Claude is running, and hops when a job ends well.
+- **Projects.** Create one with a name and, if the project's files should be shared, its GitHub
+  address (`https://github.com/owner/repo`). Everyone who works on it needs access to that
+  repository.
+- **Project brief and decisions.** The Brief tab holds standing instructions ("always use plain
+  words", "never touch the login page") and a list of settled decisions. Claude is given both at
+  the start of every request, for both people. Notes can be shared with Claude too, by a switch.
+- **Board.** Four lanes: Ideas, To do, Doing, Done. Drag cards between lanes. "Give to my
+  Claude" turns a card into a request, and the card moves to Done by itself when the run ends well.
+- **Quick prompts.** A shelf above the message box with one-click requests ("Find bugs", "Make
+  it prettier"). You can save your own, and they are shared with your teammate.
+- **Reactions and typing.** Hover a message to react with an emoji. You see when the other
+  person is typing.
+- **Files.** The Files tab lists the project's files and shows any text file when you click it.
+- **Jump menu.** Press Ctrl+K anywhere to jump to a project, a tab, the settings or a new project.
+  Press `/` to jump to the message box.
+- **Look and feel.** Light, dark or match your computer; five accent colours; confetti and soft
+  sounds if you want them (settings, the palette icon in the top bar). Phones are supported.
 - **Chat.** Under the timeline, "My Claude" sends your message to your own Claude. "Just Max"
   sends a normal message to the other person that no AI ever sees.
 - **Taking turns.** One Claude works on a project at a time. A second request waits in line
@@ -77,5 +95,7 @@ helper). It was Stage 1 and is kept for quick tests.
 ## More
 
 - `docs/superpowers/specs/2026-10-14-shared-workspace-design.md` is the design.
-- `docs/superpowers/stage-1-results.md` and `docs/superpowers/stages-2-to-5-results.md` say what
-  was measured and what is still untested.
+- `docs/superpowers/stage-1-results.md`, `docs/superpowers/stages-2-to-5-results.md` and
+  `docs/superpowers/glow-up-results.md` say what was measured and what is still untested.
+- If Claude says its sign-in expired, open a terminal, run `claude`, type `/login`, and sign in
+  again. The helper shows this in plain words.
