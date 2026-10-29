@@ -306,7 +306,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
     typingEl,
     bannerEl,
     el('div', { class: 'composer' }, shelfEl, addBox,
-      el('div', { class: 'segmented', role: 'group', 'aria-label': 'Send to' }, segments, promptsToggle),
+      el('div', { class: 'composer-top' }, el('div', { class: 'segmented', role: 'group', 'aria-label': 'Send to' }, segments), promptsToggle),
       el('div', { class: 'composer-line' }, input, el('button', { type: 'button', class: 'btn primary', text: 'Send', onclick: send }))));
 
   const tiles = createTiles({

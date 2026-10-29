@@ -12,7 +12,7 @@ instructions that Claude reads on every request.
 
 | Area | What it does |
 |---|---|
-| New look | "Clear glass": light, airy frosted panes with one clear blue accent, sharp and plain; a graphite dark mode too. Redone several times after feedback (cartoonish, gold, four recolours, dark navy); Brennan chose the structure from pictures and asked for lighter and calmer |
+| New look | macOS-style "glass": soft coloured wallpaper, frosted panes with a lit rim and glow, a slim menu bar, window dots, and a dock of coloured icons that magnify on hover. Light by default, graphite dark mode too. Redone several times after feedback (cartoonish, gold, four recolours, dark navy, plain light); Brennan chose the structure from pictures |
 | Presence | A glass orb with each person's initial. Dimmed when offline, green dot when online, turning ring while their Claude works |
 | Pulse (home) | Greeting, who is online, 7-day numbers (requests, rough plan use, files saved), a feed of what just happened, project cards |
 | Project brief | Standing instructions (up to 4,000 characters, versioned so two saves at once are caught) plus a list of settled decisions. Sent to Claude at the start of every request, for both people |
@@ -22,7 +22,7 @@ instructions that Claude reads on every request.
 | Reactions and typing | Emoji reactions on messages and a "someone is typing" line |
 | File viewer | Click a file to read it (text files only, up to 200 KB each) |
 | Jump menu | Ctrl+K from anywhere; `/` jumps to the message box |
-| Tiles, windows and dock | Chat in the middle with Board on the left and Preview on the right by default; Files, Brief and Notes open from the dock. Tiles drag out into resizable windows, the layout is remembered per project, and on phones the dock is a tab bar |
+| Tiles, windows and dock | Chat in the middle with Board on the left and Preview on the right by default; Files, Brief and Notes open from the dock. Red dot hides, yellow pops out or docks back, green fills the stage. Layout is remembered per project; on phones the dock is a tab bar |
 | Phone layout | One narrow top bar, a project strip, and a Chat / "Board, files and more" switch |
 | Sign-in help | If Claude's sign-in has expired, the helper says so in plain words and how to fix it |
 

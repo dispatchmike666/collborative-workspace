@@ -50,8 +50,9 @@ live. The two Claudes share project files through GitHub and take turns quietly.
   the start of every request, for both people. Notes can be shared with Claude too, by a switch.
 - **The tiles.** A project is one calm screen: Chat in the middle as the main thing, Board on its left and
   Preview on its right. Files, Brief and Notes wait in the dock at the bottom and slide in on either side
-  when opened. Drag a tile by its title bar to pull it out into a floating window, drag the bottom-right
-  corner to resize it, double-click a title bar to put it back. The dock's last three buttons tidy
+  when opened. Each tile is a window with Mac-style dots: red hides it, yellow pops it out into a
+  floating window (or docks it back), green fills the whole stage with it (Escape goes back). Drag a
+  title bar to move a window, drag the bottom-right corner to resize. The dock's last three buttons tidy
   everything into place, float everything, or reset. Your arrangement is remembered per project. On a
   phone the dock becomes a tab bar and shows one tile at a time.
 - **Board.** Four lanes: Ideas, To do, Doing, Done. Drag cards between lanes. "Give to my
@@ -61,9 +62,10 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **Reactions and typing.** Hover a message to react with an emoji. You see when the other
   person is typing.
 - **Files.** The Files tab lists the project's files and shows any text file when you click it.
-- **Look and feel.** Light, airy glass by default with a clear blue accent, a calm graphite dark mode, or match
-  your computer. Five accent colours (Azure, Rose, Teal, Amber, Violet) and soft sounds in the
-  settings (the half-moon icon). An optional celebration when a run finishes is off by default.
+- **Look and feel.** Frosted glass over a soft coloured wallpaper, with a menu bar, window dots and a dock
+  whose icons grow as the mouse passes over them. Light by default, a graphite dark mode, or match your
+  computer. Five accent colours (Azure, Rose, Teal, Amber, Violet) and soft sounds in the settings
+  (the half-moon icon). An optional celebration when a run finishes is off by default.
 - **Jump menu.** Press Ctrl+K anywhere to jump to a project, a tab, the settings or a new project.
   Press `/` to jump to the message box.
 - **Chat.** Under the timeline, "My Claude" sends your message to your own Claude. "Just Max"

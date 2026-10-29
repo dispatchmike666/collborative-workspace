@@ -110,6 +110,6 @@ window.addEventListener('hashchange', route);
   await route();
   if (!prefs.get('welcomed', false)) {
     prefs.set('welcomed', true);
-    toast('Tip: press Ctrl+K any time to jump around.', '');
+    if (window.matchMedia('(hover: hover)').matches) toast('Tip: press Ctrl+K any time to jump around.', '');
   }
 })();

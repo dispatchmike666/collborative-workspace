@@ -15,11 +15,13 @@ export function createTiles({ projectId, defs }) {
   const narrowQuery = window.matchMedia(NARROW);
   let activeNarrow = 'chat';
   let disposed = false;
+  let zoomed = null;
 
   const stage = el('div', { class: 'stage' });
   const emptyNote = el('p', { class: 'stage-empty', text: 'Nothing is open. Use the dock below to bring a tile back.', hidden: true });
   const tileEls = new Map();
   const popButtons = new Map();
+  const zoomButtons = new Map();
   const counters = new Map();
   const dockItems = new Map();
   const badges = new Map();
@@ -52,22 +54,22 @@ export function createTiles({ projectId, defs }) {
 
   for (const def of defs) {
     const counter = el('span', { class: 'tile-count', hidden: true });
-    const popButton = el('button', { type: 'button', class: 'tile-btn', onclick: () => togglePop(def.id) });
-    const closeButton = el('button', { type: 'button', class: 'tile-btn', 'aria-label': `Hide ${def.title}`, title: `Hide ${def.title}`, onclick: () => setMode(def.id, 'closed') }, icon('close', 15));
+    const closeLight = el('button', { type: 'button', class: 'light red', 'aria-label': `Hide ${def.title}`, title: `Hide ${def.title}`, onclick: () => setMode(def.id, 'closed') }, icon('close', 8, 3));
+    const popLight = el('button', { type: 'button', class: 'light yellow', onclick: () => togglePop(def.id) });
+    const zoomLight = el('button', { type: 'button', class: 'light green', onclick: () => toggleZoom(def.id) });
     const head = el('header', { class: 'tile-head', tabindex: '0', 'aria-label': `${def.title} bar. Arrow keys move a window, Shift and arrows resize it.` },
-      el('span', { class: 'tile-icon' }, icon(def.icon, 16)),
+      el('div', { class: 'lights' }, closeLight, popLight, zoomLight),
       el('h3', { class: 'tile-title', text: def.title }),
       counter,
-      el('span', { class: 'spacer' }),
-      popButton,
-      closeButton);
+      el('span', { class: 'lights-balance', 'aria-hidden': 'true' }));
     const tile = el('section', { class: 'tile', 'data-tile': def.id, 'aria-label': def.title }, head, el('div', { class: 'tile-body' }, def.element), el('span', { class: 'tile-resize', 'aria-hidden': 'true' }));
     tileEls.set(def.id, tile);
-    popButtons.set(def.id, popButton);
+    popButtons.set(def.id, popLight);
+    zoomButtons.set(def.id, zoomLight);
     counters.set(def.id, counter);
 
     head.addEventListener('pointerdown', (event) => {
-      if (event.button !== 0 || event.target.closest('.tile-btn') || narrow()) return;
+      if (event.button !== 0 || event.target.closest('.light') || narrow()) return;
       if (layout.tiles[def.id].mode === 'float') {
         bringFront(def.id);
         beginDrag(def.id, event, 'move', head);
@@ -95,7 +97,7 @@ export function createTiles({ projectId, defs }) {
       head.addEventListener('pointercancel', stopWatching);
     });
     head.addEventListener('dblclick', (event) => {
-      if (!event.target.closest('.tile-btn') && !narrow()) togglePop(def.id);
+      if (!event.target.closest('.light') && !narrow()) togglePop(def.id);
     });
     head.addEventListener('keydown', (event) => {
       const state = layout.tiles[def.id];
@@ -190,6 +192,8 @@ export function createTiles({ projectId, defs }) {
         for (const prop of ['left', 'top', 'width', 'height', 'z-index', 'grid-column', 'grid-row']) tile.style.removeProperty(prop);
       }
       emptyNote.hidden = true;
+      zoomed = null;
+      applyZoom();
       refreshChrome();
       return;
     }
@@ -242,13 +246,14 @@ export function createTiles({ projectId, defs }) {
     }
     emptyNote.hidden = TILE_IDS.some((id) => layout.tiles[id].mode !== 'closed');
     refreshChrome();
+    applyZoom();
   }
 
   function refreshChrome() {
     const isNarrow = narrow();
     for (const [id, button] of popButtons) {
       const floating = layout.tiles[id].mode === 'float';
-      button.replaceChildren(icon(floating ? 'dockin' : 'pop', 15));
+      button.replaceChildren(icon(floating ? 'dockin' : 'pop', 8, 2.8));
       const label = floating ? `Dock ${titleOf[id]} back into the wall` : `Pop ${titleOf[id]} out into a window`;
       button.setAttribute('aria-label', label);
       button.title = label;
@@ -278,6 +283,7 @@ export function createTiles({ projectId, defs }) {
       bringFront(id);
     }
     state.mode = mode;
+    if (mode === 'closed' && zoomed === id) zoomed = null;
     save();
     apply();
   }
@@ -292,9 +298,15 @@ export function createTiles({ projectId, defs }) {
       apply();
       return;
     }
+    if (zoomed && zoomed !== id) zoomed = null;
     const state = layout.tiles[id];
     if (state.mode === 'closed') {
       setMode(id, layout.arrange === 'windows' ? 'float' : 'tiled');
+      const item = dockItems.get(id);
+      item.classList.remove('bounce');
+      void item.offsetWidth;
+      item.classList.add('bounce');
+      setTimeout(() => item.classList.remove('bounce'), 700);
     } else if (state.mode === 'float') {
       bringFront(id);
       save();
@@ -305,6 +317,23 @@ export function createTiles({ projectId, defs }) {
     void tile.offsetWidth;
     tile.classList.add('flash');
     setTimeout(() => tile.classList.remove('flash'), 1000);
+  }
+
+  // The green light fills the whole stage with one tile, like full screen on a Mac. Escape or a second press goes back.
+  function toggleZoom(id) {
+    zoomed = zoomed === id ? null : id;
+    applyZoom();
+  }
+
+  function applyZoom() {
+    for (const [id, tile] of tileEls) tile.classList.toggle('zoomed', id === zoomed);
+    stage.classList.toggle('has-zoom', zoomed !== null);
+    for (const [id, button] of zoomButtons) {
+      const label = zoomed === id ? `Leave the full view of ${titleOf[id]}` : `Fill the whole stage with ${titleOf[id]}`;
+      button.replaceChildren(icon(zoomed === id ? 'shrink' : 'expand', 8, 2.8));
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    }
   }
 
   function setArrange(mode) {
@@ -345,6 +374,13 @@ export function createTiles({ projectId, defs }) {
   const observer = new ResizeObserver(() => requestAnimationFrame(apply));
   observer.observe(stage);
   const onMedia = () => apply();
+  const onKey = (event) => {
+    if (event.key === 'Escape' && zoomed) {
+      zoomed = null;
+      applyZoom();
+    }
+  };
+  document.addEventListener('keydown', onKey);
   narrowQuery.addEventListener('change', onMedia);
   apply();
 
@@ -360,6 +396,7 @@ export function createTiles({ projectId, defs }) {
       disposed = true;
       observer.disconnect();
       narrowQuery.removeEventListener('change', onMedia);
+      document.removeEventListener('keydown', onKey);
     },
   };
 }
