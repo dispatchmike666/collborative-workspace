@@ -4,7 +4,7 @@ import { approvalUsedText, eventToView, statusText, timeAgo } from '../hub/publi
 
 test('messages, team chat and Claude\'s words say who is speaking', () => {
   assert.deepEqual(eventToView({ kind: 'user', who: 'Max', text: 'hi' }), { cls: 'user', label: 'Max', text: 'hi' });
-  assert.deepEqual(eventToView({ kind: 'team-chat', who: 'Max', to: 'Brennan', text: 'lunch?' }), { cls: 'chat', label: 'Max to Brennan', text: 'lunch?' });
+  assert.deepEqual(eventToView({ kind: 'team-chat', who: 'Max', to: 'Brennan', text: 'lunch?' }), { cls: 'teamchat', label: 'Max to Brennan', text: 'lunch?' });
   assert.deepEqual(eventToView({ kind: 'claude-text', owner: 'Max', text: 'done' }), { cls: 'claude', label: "Max's Claude", text: 'done' });
 });
 

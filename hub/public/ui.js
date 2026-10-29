@@ -210,7 +210,9 @@ export function openSettings() {
       }))),
     toggle('Confetti when my Claude finishes something', 'confetti', true),
     toggle('Soft sounds for new messages and finished runs', 'sound', false),
-    el('div', { class: 'row-actions' }, el('button', { type: 'button', class: 'btn primary', text: 'Done', onclick: () => dialog.close() }))));
+    el('div', { class: 'row-actions' },
+      el('button', { type: 'button', class: 'btn primary', text: 'Done', onclick: () => dialog.close() }),
+      el('button', { type: 'button', class: 'btn ghost', text: 'Log out', onclick: () => document.getElementById('logout')?.click() }))));
   dialog.addEventListener('close', () => dialog.remove());
   document.body.append(dialog);
   dialog.showModal();

@@ -38,7 +38,7 @@ export function eventToView(event, { me } = {}) {
     case 'user':
       return { cls: 'user', label: event.who, text: event.text };
     case 'team-chat':
-      return { cls: 'chat', label: `${event.who} to ${event.to}`, text: event.text };
+      return { cls: 'teamchat', label: `${event.who} to ${event.to}`, text: event.text };
     case 'claude-text':
       return { cls: 'claude', label: `${event.owner}'s Claude`, text: event.text };
     case 'claude-step':

@@ -195,7 +195,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
       segment.classList.toggle('active', on);
       segment.setAttribute('aria-pressed', String(on));
     }
-    input.placeholder = to === 'ai' ? 'Tell your Claude what to do…  (Enter sends, Shift+Enter adds a line)' : `Message ${to}. No AI will see this.`;
+    input.placeholder = to === 'ai' ? 'Tell your Claude what to do…' : `Message ${to}. No AI will see this.`;
   }
   for (const segment of segments) segment.addEventListener('click', () => setTarget(segment.dataset.to));
   setTarget('ai');
@@ -303,7 +303,8 @@ export async function showProject(viewEl, { me, users, projectId }) {
     bannerEl,
     el('div', { class: 'composer' }, shelfEl, addBox,
       el('div', { class: 'segmented', role: 'group', 'aria-label': 'Send to' }, segments),
-      el('div', { class: 'composer-line' }, input, el('button', { type: 'button', class: 'btn primary', text: 'Send', onclick: send }))));
+      el('div', { class: 'composer-line' }, input, el('button', { type: 'button', class: 'btn primary', text: 'Send', onclick: send })),
+      el('p', { class: 'hint muted small' }, el('kbd', { text: 'Enter' }), ' sends  ·  ', el('kbd', { text: 'Shift' }), '+', el('kbd', { text: 'Enter' }), ' adds a line  ·  ', el('kbd', { text: '/' }), ' jumps here from anywhere')));
 
   const sidebar = el('nav', { class: 'sidebar', 'aria-label': 'Projects' },
     el('a', { class: 'side-link', href: '#/', text: '← Home' }),
