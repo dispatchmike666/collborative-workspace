@@ -180,12 +180,50 @@ test('a saved layout is repaired before use, and a missing one gets the usual st
   const { normalizeLayout, TILE_IDS } = await import('../hub/public/logic.js');
   const fresh = normalizeLayout(null);
   assert.deepEqual(TILE_IDS.filter((id) => fresh.tiles[id].mode === 'closed'), ['files', 'brief', 'notes']);
-  assert.equal(fresh.arrange, 'tiles');
+  assert.equal(fresh.arrange, 'windows');
+  assert.deepEqual(['chat', 'board', 'preview'].map((id) => fresh.tiles[id].mode), ['float', 'float', 'float']);
+  assert.equal(fresh.tiles.chat.auto, true);
   const messy = normalizeLayout({ arrange: 'sideways', z: 'x', tiles: { chat: { mode: 'float', rect: { x: 1, y: 2, w: 300, h: 200 }, z: 4 }, board: { mode: 'banana', rect: { x: 'a' } } } });
-  assert.equal(messy.arrange, 'tiles');
+  assert.equal(messy.arrange, 'windows');
   assert.equal(messy.tiles.chat.mode, 'float');
   assert.deepEqual(messy.tiles.chat.rect, { x: 1, y: 2, w: 300, h: 200 });
-  assert.equal(messy.tiles.board.mode, 'tiled');
+  assert.equal(messy.tiles.board.mode, 'float');
   assert.equal(messy.tiles.board.rect, null);
   assert.equal(messy.z, 4);
+});
+
+test('a window can be dragged partly off the stage but never lost', async () => {
+  const { keepReachable } = await import('../hub/public/logic.js');
+  const bounds = { w: 1000, h: 600 };
+  assert.deepEqual(keepReachable({ x: 900, y: 590, w: 400, h: 300 }, bounds), { x: 860, y: 560, w: 400, h: 300 });
+  assert.deepEqual(keepReachable({ x: -900, y: -50, w: 400, h: 300 }, bounds), { x: -260, y: 0, w: 400, h: 300 });
+  assert.deepEqual(keepReachable({ x: 10, y: 10, w: 50, h: 50 }, bounds), { x: 10, y: 10, w: 300, h: 200 });
+});
+
+test('a window can be resized from any edge or corner, and the opposite edge stays put', async () => {
+  const { resizeRect } = await import('../hub/public/logic.js');
+  const start = { x: 100, y: 100, w: 400, h: 300 };
+  assert.deepEqual(resizeRect(start, 'se', 50, 20), { x: 100, y: 100, w: 450, h: 320 });
+  assert.deepEqual(resizeRect(start, 'nw', 40, 30), { x: 140, y: 130, w: 360, h: 270 });
+  assert.deepEqual(resizeRect(start, 'e', -30, 99), { x: 100, y: 100, w: 370, h: 300 });
+  assert.deepEqual(resizeRect(start, 'w', -60, 0), { x: 40, y: 100, w: 460, h: 300 });
+  const squeezed = resizeRect(start, 'nw', 390, 290);
+  assert.equal(squeezed.w, 300);
+  assert.equal(squeezed.h, 200);
+  assert.equal(squeezed.x + squeezed.w, 500, 'the right edge did not move');
+  assert.equal(squeezed.y + squeezed.h, 400, 'the bottom edge did not move');
+});
+
+test('windows start side by side with the chat in the middle', async () => {
+  const { startRect } = await import('../hub/public/logic.js');
+  const bounds = { w: 1500, h: 800 };
+  const board = startRect('board', bounds);
+  const chat = startRect('chat', bounds);
+  const preview = startRect('preview', bounds);
+  assert.ok(board.x + board.w <= chat.x && chat.x + chat.w <= preview.x, 'left to right with no overlap');
+  assert.ok(chat.w > board.w && chat.w > preview.w, 'the chat is the widest');
+  assert.ok(Math.abs((chat.x + chat.w / 2) - bounds.w / 2) < 6, 'the chat is in the middle');
+  const files = startRect('files', bounds, 0);
+  const notes = startRect('notes', bounds, 1);
+  assert.ok(notes.x > files.x && notes.y > files.y, 'extra windows are staggered');
 });

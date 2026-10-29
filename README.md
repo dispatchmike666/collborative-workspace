@@ -48,13 +48,13 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **Project brief and decisions.** The Brief tab holds standing instructions ("always use plain
   words", "never touch the login page") and a list of settled decisions. Claude is given both at
   the start of every request, for both people. Notes can be shared with Claude too, by a switch.
-- **The tiles.** A project is one calm screen: Chat in the middle as the main thing, Board on its left and
-  Preview on its right. Files, Brief and Notes wait in the dock at the bottom and slide in on either side
-  when opened. Each tile is a window with Mac-style dots: red hides it, yellow pops it out into a
-  floating window (or docks it back), green fills the whole stage with it (Escape goes back). Drag a
-  title bar to move a window, drag the bottom-right corner to resize. The dock's last three buttons tidy
-  everything into place, float everything, or reset. Your arrangement is remembered per project. On a
-  phone the dock becomes a tab bar and shows one tile at a time.
+- **The windows.** A project is one calm screen of free windows: Chat in the middle as the main thing,
+  Board on its left and Preview on its right. Files, Brief and Notes wait in the dock at the bottom and
+  open as extra windows. Drag a title bar to move a window anywhere (even partly off the edge), drag any
+  edge or corner to resize it. Red dot hides a window, yellow snaps it into a tidy wall (and back), green
+  fills the whole stage (Escape goes back). The dock's last three buttons tidy everything into a wall,
+  float everything, or reset. Your arrangement is remembered per project. On a phone the dock becomes a
+  tab bar and shows one window at a time.
 - **Board.** Four lanes: Ideas, To do, Doing, Done. Drag cards between lanes. "Give to my
   Claude" turns a card into a request, and the card moves to Done by itself when the run ends well.
 - **Quick prompts.** A shelf above the message box with one-click requests ("Find bugs", "Make
@@ -62,8 +62,8 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **Reactions and typing.** Hover a message to react with an emoji. You see when the other
   person is typing.
 - **Files.** The Files tab lists the project's files and shows any text file when you click it.
-- **Look and feel.** Frosted glass over a soft coloured wallpaper, with a menu bar, window dots and a dock
-  whose icons grow as the mouse passes over them. Light by default, a graphite dark mode, or match your
+- **Look and feel.** Frosted glass on a clean neutral backdrop, with a glow that lights up the edges of
+  windows and cards as your mouse gets near. Light by default, a graphite dark mode, or match your
   computer. Five accent colours (Azure, Rose, Teal, Amber, Violet) and soft sounds in the settings
   (the half-moon icon). An optional celebration when a run finishes is off by default.
 - **Jump menu.** Press Ctrl+K anywhere to jump to a project, a tab, the settings or a new project.

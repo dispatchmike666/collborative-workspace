@@ -1,7 +1,8 @@
 import { brandMark } from './crew.js';
-import { applyLook } from './ui.js';
+import { applyLook, enableProximityGlow } from './ui.js';
 
 applyLook();
+enableProximityGlow();
 
 document.getElementById('crew').append(brandMark());
 

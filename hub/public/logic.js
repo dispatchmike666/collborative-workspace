@@ -185,6 +185,63 @@ export function clampRect(rect, bounds, min = FLOAT_MIN) {
   };
 }
 
+// Windows can be dragged partly off the stage, as long as enough of them stays on it to grab again.
+const KEEP = 140;
+const BAR = 40;
+export function keepReachable(rect, bounds, min = FLOAT_MIN) {
+  const w = Math.round(Math.max(min.w, Math.min(rect.w, bounds.w * 1.5)));
+  const h = Math.round(Math.max(min.h, Math.min(rect.h, bounds.h * 1.5)));
+  return {
+    w,
+    h,
+    x: Math.round(Math.max(KEEP - w, Math.min(rect.x, bounds.w - KEEP))),
+    y: Math.round(Math.max(0, Math.min(rect.y, bounds.h - BAR))),
+  };
+}
+
+// Resizing from any edge or corner. `dir` is some of n, s, e, w, such as "se" or "w".
+export function resizeRect(rect, dir, dx, dy, min = FLOAT_MIN) {
+  let { x, y, w, h } = rect;
+  if (dir.includes('e')) w = rect.w + dx;
+  if (dir.includes('s')) h = rect.h + dy;
+  if (dir.includes('w')) {
+    w = rect.w - dx;
+    x = rect.x + dx;
+  }
+  if (dir.includes('n')) {
+    h = rect.h - dy;
+    y = rect.y + dy;
+  }
+  if (w < min.w) {
+    if (dir.includes('w')) x -= min.w - w;
+    w = min.w;
+  }
+  if (h < min.h) {
+    if (dir.includes('n')) y -= min.h - h;
+    h = min.h;
+  }
+  return { x, y, w, h };
+}
+
+// Where each window starts: board, chat and preview side by side with chat in the middle, the rest staggered near the edges.
+export function startRect(id, bounds, index = 0) {
+  const gap = 14;
+  const tall = Math.max(bounds.h - 6, 240);
+  const side = Math.round(Math.min(Math.max(bounds.w * 0.25, 280), 420));
+  const middle = Math.round(Math.min(Math.max(bounds.w - 2 * side - 2 * gap, 440), 860));
+  const left = Math.max(0, Math.round((bounds.w - (side * 2 + middle + gap * 2)) / 2));
+  const slots = {
+    board: { x: left, y: 0, w: side, h: tall },
+    chat: { x: left + side + gap, y: 0, w: middle, h: tall },
+    preview: { x: left + side + gap + middle + gap, y: 0, w: side, h: tall },
+  };
+  if (slots[id]) return keepReachable(slots[id], bounds);
+  const wide = Math.round(Math.min(Math.max(bounds.w * 0.28, 300), 440));
+  const high = Math.round(Math.min(Math.max(bounds.h * 0.6, 260), 560));
+  const x = id === 'brief' ? bounds.w - wide - 24 - index * 30 : 24 + index * 30;
+  return keepReachable({ x, y: 36 + index * 30, w: wide, h: high }, bounds);
+}
+
 // Where the next window goes when nothing says otherwise: staggered down and to the right.
 export function cascadeRect(index, bounds) {
   const w = Math.round(bounds.w * 0.44);
@@ -193,7 +250,7 @@ export function cascadeRect(index, bounds) {
   return clampRect({ x: 40 + step, y: 24 + step, w, h }, bounds);
 }
 
-const DEFAULT_MODES = { chat: 'tiled', board: 'tiled', preview: 'tiled', files: 'closed', brief: 'closed', notes: 'closed' };
+const DEFAULT_MODES = { chat: 'float', board: 'float', preview: 'float', files: 'closed', brief: 'closed', notes: 'closed' };
 const MODES = new Set(['tiled', 'float', 'closed']);
 
 // Turns whatever was saved last time (or nothing) into a layout that is safe to use.
@@ -204,8 +261,8 @@ export function normalizeLayout(saved) {
     const old = source.tiles?.[id];
     const mode = MODES.has(old?.mode) ? old.mode : DEFAULT_MODES[id];
     const rect = old?.rect && ['x', 'y', 'w', 'h'].every((key) => Number.isFinite(old.rect[key])) ? { x: old.rect.x, y: old.rect.y, w: old.rect.w, h: old.rect.h } : null;
-    tiles[id] = { mode, rect, z: Number.isFinite(old?.z) ? old.z : 0 };
+    tiles[id] = { mode, rect, auto: !rect || old?.auto === true, z: Number.isFinite(old?.z) ? old.z : 0 };
   }
   const top = Math.max(0, ...Object.values(tiles).map((tile) => tile.z));
-  return { arrange: source.arrange === 'windows' ? 'windows' : 'tiles', z: Math.max(top, Number.isFinite(source.z) ? source.z : 0), tiles };
+  return { arrange: source.arrange === 'tiles' ? 'tiles' : 'windows', z: Math.max(top, Number.isFinite(source.z) ? source.z : 0), tiles };
 }

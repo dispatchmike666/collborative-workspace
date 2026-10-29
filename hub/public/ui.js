@@ -223,3 +223,41 @@ export function openSettings() {
   document.body.append(dialog);
   dialog.showModal();
 }
+
+// ---------- the glow that finds your mouse ----------
+
+// Windows, cards and the dock light up along their edges as the pointer gets close, and brightest where it is.
+export function enableProximityGlow() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  const SURFACES = '.tile, .sticker, .dock';
+  const REACH = 240;
+  let pointer = null;
+  let frame = 0;
+  const paint = () => {
+    frame = 0;
+    for (const node of document.querySelectorAll(SURFACES)) {
+      if (!pointer) {
+        node.style.setProperty('--near', '0');
+        continue;
+      }
+      const box = node.getBoundingClientRect();
+      const gap = Math.hypot(Math.max(box.left - pointer.x, 0, pointer.x - box.right), Math.max(box.top - pointer.y, 0, pointer.y - box.bottom));
+      const closeness = Math.max(0, 1 - gap / REACH);
+      node.style.setProperty('--near', (closeness * closeness * (3 - 2 * closeness)).toFixed(3));
+      node.style.setProperty('--mx', `${pointer.x - box.left}px`);
+      node.style.setProperty('--my', `${pointer.y - box.top}px`);
+    }
+  };
+  const schedule = () => {
+    if (!frame) frame = requestAnimationFrame(paint);
+  };
+  document.addEventListener('pointermove', (event) => {
+    if (event.pointerType !== 'mouse') return;
+    pointer = { x: event.clientX, y: event.clientY };
+    schedule();
+  }, { passive: true });
+  document.documentElement.addEventListener('mouseleave', () => {
+    pointer = null;
+    schedule();
+  });
+}

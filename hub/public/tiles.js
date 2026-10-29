@@ -1,16 +1,16 @@
 import { icon } from './icons.js';
-import { cascadeRect, clampRect, normalizeLayout, packSides, TILE_IDS, WALL_ORDER } from './logic.js';
+import { cascadeRect, keepReachable, normalizeLayout, packSides, resizeRect, startRect, TILE_IDS, WALL_ORDER } from './logic.js';
 import { el, prefs } from './ui.js';
 
 const NARROW = '(max-width: 760px)';
 const WIDE_AT = 1000;
 const DRAG_FROM = 6;
 
-// The project screen's tiles. Chat sits in the middle; the other tiles sit on either side of it, float as
-// windows, or stay hidden. A dock at the bottom brings tiles back and switches between wall and windows.
+// The project screen's tiles. They start as free windows (chat in the middle, board and preview beside it),
+// can be snapped into a tidy wall, or hidden. A dock at the bottom brings them back.
 // defs: [{ id, title, icon, element }]. The tiles keep their own elements, so nothing reloads when they move.
 export function createTiles({ projectId, defs }) {
-  const storeKey = `layout2.${projectId}`;
+  const storeKey = `layout3.${projectId}`;
   let layout = normalizeLayout(prefs.get(storeKey, null));
   const narrowQuery = window.matchMedia(NARROW);
   let activeNarrow = 'chat';
@@ -62,7 +62,16 @@ export function createTiles({ projectId, defs }) {
       el('h3', { class: 'tile-title', text: def.title }),
       counter,
       el('span', { class: 'lights-balance', 'aria-hidden': 'true' }));
-    const tile = el('section', { class: 'tile', 'data-tile': def.id, 'aria-label': def.title }, head, el('div', { class: 'tile-body' }, def.element), el('span', { class: 'tile-resize', 'aria-hidden': 'true' }));
+    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map((dir) => {
+      const handle = el('span', { class: `rz rz-${dir}`, 'aria-hidden': 'true' });
+      handle.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0 || layout.tiles[def.id].mode !== 'float') return;
+        bringFront(def.id);
+        beginDrag(def.id, event, `resize-${dir}`, handle);
+      });
+      return handle;
+    });
+    const tile = el('section', { class: 'tile', 'data-tile': def.id, 'aria-label': def.title }, head, el('div', { class: 'tile-body' }, def.element), ...handles);
     tileEls.set(def.id, tile);
     popButtons.set(def.id, popLight);
     zoomButtons.set(def.id, zoomLight);
@@ -108,18 +117,14 @@ export function createTiles({ projectId, defs }) {
       const next = event.shiftKey
         ? { ...state.rect, w: state.rect.w + arrows[0] * step, h: state.rect.h + arrows[1] * step }
         : { ...state.rect, x: state.rect.x + arrows[0] * step, y: state.rect.y + arrows[1] * step };
-      state.rect = clampRect(next, bounds());
+      state.rect = keepReachable(next, bounds());
+      state.auto = false;
       placeRect(tile, state.rect);
       save();
     });
     tile.addEventListener('pointerdown', () => {
       if (layout.tiles[def.id].mode === 'float') bringFront(def.id);
     }, true);
-    tile.querySelector('.tile-resize').addEventListener('pointerdown', (event) => {
-      if (event.button !== 0 || layout.tiles[def.id].mode !== 'float') return;
-      bringFront(def.id);
-      beginDrag(def.id, event, 'resize', event.currentTarget);
-    });
     stage.append(tile);
   }
   stage.append(emptyNote);
@@ -132,13 +137,14 @@ export function createTiles({ projectId, defs }) {
     const origin = { x: event.clientX, y: event.clientY, rect: { ...state.rect } };
     tile.classList.add('dragging');
     handle.setPointerCapture?.(event.pointerId);
+    state.auto = false;
     const move = (next) => {
       const dx = next.clientX - origin.x;
       const dy = next.clientY - origin.y;
       const frame = bounds();
       state.rect = kind === 'move'
-        ? clampRect({ ...origin.rect, x: origin.rect.x + dx, y: origin.rect.y + dy }, frame)
-        : clampRect({ ...origin.rect, w: Math.min(origin.rect.w + dx, frame.w - origin.rect.x), h: Math.min(origin.rect.h + dy, frame.h - origin.rect.y) }, frame);
+        ? keepReachable({ ...origin.rect, x: origin.rect.x + dx, y: origin.rect.y + dy }, frame)
+        : keepReachable(resizeRect(origin.rect, kind.slice(7), dx, dy), frame);
       placeRect(tile, state.rect);
     };
     const end = () => {
@@ -226,7 +232,12 @@ export function createTiles({ projectId, defs }) {
       tile.hidden = state.mode === 'closed';
       tile.classList.toggle('float', state.mode === 'float');
       if (state.mode === 'float') {
-        state.rect = clampRect(state.rect ?? cascadeRect(floating, frame), frame);
+        if (state.auto || !state.rect) {
+          state.rect = startRect(id, frame, floating);
+          state.auto = true;
+        } else {
+          state.rect = keepReachable(state.rect, frame);
+        }
         floating += 1;
         placeRect(tile, state.rect);
         tile.style.zIndex = String(10 + state.z);
@@ -277,9 +288,15 @@ export function createTiles({ projectId, defs }) {
   function setMode(id, mode, { offset = 24 } = {}) {
     const state = layout.tiles[id];
     if (mode === 'float' && state.mode !== 'float') {
-      const frame = bounds();
-      const where = tileEls.get(id).hidden ? null : measure(id);
-      state.rect = clampRect(where && where.w > 50 ? { ...where, x: where.x + offset, y: where.y + offset } : cascadeRect(TILE_IDS.filter((other) => layout.tiles[other].mode === 'float').length, frame), frame);
+      const visible = !tileEls.get(id).hidden;
+      const where = visible ? measure(id) : null;
+      if (where && where.w > 50) {
+        state.rect = keepReachable({ ...where, x: where.x + offset, y: where.y + offset }, bounds());
+        state.auto = false;
+      } else {
+        state.rect = null;
+        state.auto = true;
+      }
       bringFront(id);
     }
     state.mode = mode;
@@ -302,11 +319,6 @@ export function createTiles({ projectId, defs }) {
     const state = layout.tiles[id];
     if (state.mode === 'closed') {
       setMode(id, layout.arrange === 'windows' ? 'float' : 'tiled');
-      const item = dockItems.get(id);
-      item.classList.remove('bounce');
-      void item.offsetWidth;
-      item.classList.add('bounce');
-      setTimeout(() => item.classList.remove('bounce'), 700);
     } else if (state.mode === 'float') {
       bringFront(id);
       save();
@@ -344,7 +356,10 @@ export function createTiles({ projectId, defs }) {
     for (const id of open) {
       const state = layout.tiles[id];
       if (mode === 'windows') {
-        if (state.mode !== 'float') state.rect = clampRect(spots[id], bounds());
+        if (state.mode !== 'float') {
+          state.rect = keepReachable(spots[id], bounds());
+          state.auto = false;
+        }
         state.mode = 'float';
         layout.z += 1;
         state.z = layout.z;
