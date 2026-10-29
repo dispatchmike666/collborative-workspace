@@ -3,9 +3,10 @@ import { createPalette } from './palette.js';
 import { showHome } from './home.js';
 import { projectActions, showProject } from './project.js';
 import { memberState, onCrewChange, setPresence, setUsers } from './state.js';
-import { ACCENTS, ACCENT_LABELS, api, applyLook, el, openSettings, prefs, toast } from './ui.js';
+import { ACCENTS, ACCENT_LABELS, api, applyLook, el, enableSpotlight, openSettings, prefs, toast } from './ui.js';
 
 applyLook();
+enableSpotlight();
 
 const viewEl = document.getElementById('view');
 let me = null;

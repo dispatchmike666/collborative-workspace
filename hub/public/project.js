@@ -295,7 +295,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
     el('button', { type: 'button', class: 'chip', 'data-pane': 'tools', text: 'Board, files and more' }));
 
   const chat = el('section', { class: 'chat', 'aria-label': 'Chat' },
-    el('div', { class: 'chat-head' }, el('h2', { text: details.project.name }), statusEl),
+    el('div', { class: 'chat-head' }, el('div', {}, el('p', { class: 'eyebrow', text: 'Project' }), el('h2', { text: details.project.name })), statusEl),
     el('p', { class: 'head-note muted small', text: note }),
     paneSwitch,
     timelineEl,

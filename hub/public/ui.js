@@ -223,3 +223,26 @@ export function openSettings() {
   document.body.append(dialog);
   dialog.showModal();
 }
+
+// ---------- glass that catches the light ----------
+
+// The pointer lights the cut edge of whatever pane it is over. Mouse only, and only where hovering exists.
+export function enableSpotlight() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  const SURFACES = '.sticker, .ticket, .topbar, .sidebar, .chat, .tools';
+  let pending = null;
+  let frame = 0;
+  document.addEventListener('pointermove', (event) => {
+    if (event.pointerType !== 'mouse' || !(event.target instanceof Element)) return;
+    pending = event;
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      for (let node = pending.target.closest(SURFACES); node; node = node.parentElement?.closest(SURFACES)) {
+        const box = node.getBoundingClientRect();
+        node.style.setProperty('--mx', `${pending.clientX - box.left}px`);
+        node.style.setProperty('--my', `${pending.clientY - box.top}px`);
+      }
+    });
+  }, { passive: true });
+}

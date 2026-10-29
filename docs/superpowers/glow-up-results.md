@@ -12,7 +12,7 @@ instructions that Claude reads on every request.
 
 | Area | What it does |
 |---|---|
-| New look | "Night glass": frosted panels over a dark midnight backdrop with slow drifting light, serif headings, champagne accent. Pale "pearl" light mode, or match the computer. Five accents. Motion switches itself off if the computer asks for less. (The first version was cartoonish, with sticker cards and little creatures; Brennan asked for glass and fancy, so it was redone the same day.) |
+| New look | "Night glass": frosted panels over a dark midnight backdrop with slow drifting light, serif headings, champagne accent. Gold-foil headings with an italic name in the greeting, fine film grain, a slow turning aurora, glass edges that light up under the mouse pointer, a sweep of light on the main buttons, a glint on the gem, ornamental rules under section titles, and staggered entrances. Pale "pearl" light mode, or match the computer. Five accents. Motion switches itself off if the computer asks for less. (The first version was cartoonish, with sticker cards and little creatures; Brennan asked for glass and fancy, so it was redone the same day.) |
 | Presence | A glass orb with each person's initial. Dimmed when offline, green dot when online, turning ring while their Claude works, soft glow when a run ends well |
 | Pulse (home) | Greeting, who is online, 7-day numbers (requests, rough plan use, files saved), a feed of what just happened, project cards |
 | Project brief | Standing instructions (up to 4,000 characters, versioned so two saves at once are caught) plus a list of settled decisions. Sent to Claude at the start of every request, for both people |

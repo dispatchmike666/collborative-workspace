@@ -24,8 +24,12 @@ export async function showHome(viewEl, { me, users }) {
   renderCrew();
   const stopListening = onCrewChange(renderCrew);
 
+  const hello = greeting(new Date(), me);
+  const cut = hello.lastIndexOf(me);
+  const title = cut >= 0 ? el('h1', {}, hello.slice(0, cut), el('em', { text: me }), hello.slice(cut + me.length)) : el('h1', { text: hello });
+  const eyebrow = el('p', { class: 'eyebrow', text: new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) });
   const hero = el('section', { class: 'hero' },
-    el('div', { class: 'hero-text' }, el('h1', { text: greeting(new Date(), me) }), subtitle),
+    el('div', { class: 'hero-text' }, eyebrow, title, subtitle),
     el('div', { class: 'crew-row', 'aria-label': 'The crew' }, members.map((member) => member.element)));
 
   // ---- numbers ----
