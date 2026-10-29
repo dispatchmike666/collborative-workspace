@@ -12,7 +12,7 @@ instructions that Claude reads on every request.
 
 | Area | What it does |
 |---|---|
-| New look | "Slate glass": dark graphite and blue frosted panes, one accent, sharp and plain (a light mode too). Redone three times after feedback: cartoonish, then gold and ornate, then four looks that only changed colour. Final structure and look were picked by Brennan from pictures |
+| New look | "Clear glass": light, airy frosted panes with one clear blue accent, sharp and plain; a graphite dark mode too. Redone several times after feedback (cartoonish, gold, four recolours, dark navy); Brennan chose the structure from pictures and asked for lighter and calmer |
 | Presence | A glass orb with each person's initial. Dimmed when offline, green dot when online, turning ring while their Claude works |
 | Pulse (home) | Greeting, who is online, 7-day numbers (requests, rough plan use, files saved), a feed of what just happened, project cards |
 | Project brief | Standing instructions (up to 4,000 characters, versioned so two saves at once are caught) plus a list of settled decisions. Sent to Claude at the start of every request, for both people |
@@ -22,7 +22,7 @@ instructions that Claude reads on every request.
 | Reactions and typing | Emoji reactions on messages and a "someone is typing" line |
 | File viewer | Click a file to read it (text files only, up to 200 KB each) |
 | Jump menu | Ctrl+K from anywhere; `/` jumps to the message box |
-| Tile wall, windows and dock | The project screen is a wall of tiles (chat, board, preview, files, brief, notes). Tiles drag out into resizable windows, the dock opens and hides them, and the layout is remembered per project. On phones the dock is a tab bar |
+| Tiles, windows and dock | Chat in the middle with Board on the left and Preview on the right by default; Files, Brief and Notes open from the dock. Tiles drag out into resizable windows, the layout is remembered per project, and on phones the dock is a tab bar |
 | Phone layout | One narrow top bar, a project strip, and a Chat / "Board, files and more" switch |
 | Sign-in help | If Claude's sign-in has expired, the helper says so in plain words and how to fix it |
 

@@ -1,16 +1,16 @@
 import { icon } from './icons.js';
-import { cascadeRect, clampRect, normalizeLayout, packTiles, TILE_IDS, WALL_ORDER } from './logic.js';
+import { cascadeRect, clampRect, normalizeLayout, packSides, TILE_IDS, WALL_ORDER } from './logic.js';
 import { el, prefs } from './ui.js';
 
 const NARROW = '(max-width: 760px)';
-const WIDE_AT = 960;
+const WIDE_AT = 1000;
 const DRAG_FROM = 6;
 
-// The project screen's tile wall. Every tile is docked in the wall, floating as a window, or hidden.
-// A dock at the bottom brings tiles back and switches the whole screen between wall and windows.
+// The project screen's tiles. Chat sits in the middle; the other tiles sit on either side of it, float as
+// windows, or stay hidden. A dock at the bottom brings tiles back and switches between wall and windows.
 // defs: [{ id, title, icon, element }]. The tiles keep their own elements, so nothing reloads when they move.
 export function createTiles({ projectId, defs }) {
-  const storeKey = `layout.${projectId}`;
+  const storeKey = `layout2.${projectId}`;
   let layout = normalizeLayout(prefs.get(storeKey, null));
   const narrowQuery = window.matchMedia(NARROW);
   let activeNarrow = 'chat';
@@ -156,18 +156,18 @@ export function createTiles({ projectId, defs }) {
   const dock = el('nav', { class: 'dock', 'aria-label': 'Workspace dock' });
   for (const def of defs) {
     const badge = el('span', { class: 'dock-badge', hidden: true });
-    const item = el('button', { type: 'button', class: 'dock-item', title: def.title, 'data-tile': def.id, onclick: () => focus(def.id) },
+    const item = el('button', { type: 'button', class: 'dock-item', 'aria-label': def.title, 'data-label': def.title, 'data-tile': def.id, onclick: () => focus(def.id) },
       el('span', { class: 'dock-icon' }, icon(def.icon, 20), badge),
       el('span', { class: 'dock-label', text: def.title }));
     dockItems.set(def.id, item);
     badges.set(def.id, badge);
     dock.append(item);
   }
-  const tilesButton = el('button', { type: 'button', class: 'dock-item dock-mode', title: 'Tidy everything into the wall', onclick: () => setArrange('tiles') },
+  const tilesButton = el('button', { type: 'button', class: 'dock-item dock-mode', 'aria-label': 'Tidy everything into place', 'data-label': 'Tile everything', onclick: () => setArrange('tiles') },
     el('span', { class: 'dock-icon' }, icon('tiles', 20)), el('span', { class: 'dock-label', text: 'Tiles' }));
-  const windowsButton = el('button', { type: 'button', class: 'dock-item dock-mode', title: 'Turn everything into floating windows', onclick: () => setArrange('windows') },
+  const windowsButton = el('button', { type: 'button', class: 'dock-item dock-mode', 'aria-label': 'Turn everything into floating windows', 'data-label': 'Float everything', onclick: () => setArrange('windows') },
     el('span', { class: 'dock-icon' }, icon('windows', 20)), el('span', { class: 'dock-label', text: 'Windows' }));
-  const resetButton = el('button', { type: 'button', class: 'dock-item dock-mode', title: 'Put everything back the way it started', onclick: resetLayout },
+  const resetButton = el('button', { type: 'button', class: 'dock-item dock-mode', 'aria-label': 'Put everything back the way it started', 'data-label': 'Reset', onclick: resetLayout },
     el('span', { class: 'dock-icon' }, icon('reset', 20)), el('span', { class: 'dock-label', text: 'Reset' }));
   dock.append(el('span', { class: 'dock-sep', 'aria-hidden': 'true' }), tilesButton, windowsButton, resetButton);
 
@@ -194,13 +194,26 @@ export function createTiles({ projectId, defs }) {
       return;
     }
 
-    const wallCols = stage.dataset.mode === 'wide' ? 2 : 1;
+    const merge = stage.dataset.mode !== 'wide';
     const docked = WALL_ORDER.filter((id) => layout.tiles[id].mode === 'tiled');
-    const { rows, placements } = packTiles(docked, wallCols);
+    const { rows, hasLeft, hasRight, placements } = packSides(docked, merge);
     const chatDocked = layout.tiles.chat.mode === 'tiled';
-    const offset = chatDocked ? 1 : 0;
-    stage.style.gridTemplateColumns = chatDocked ? `minmax(340px, 1.15fr) repeat(${wallCols}, minmax(0, 1fr))` : `repeat(${wallCols}, minmax(0, 1fr))`;
-    stage.style.gridTemplateRows = `repeat(${Math.max(rows, 1)}, minmax(190px, 1fr))`;
+    const columns = [];
+    const column = {};
+    if (hasLeft) {
+      column.left = columns.length + 1;
+      columns.push('minmax(260px, 1fr)');
+    }
+    if (chatDocked) {
+      column.chat = columns.length + 1;
+      columns.push(merge ? 'minmax(340px, 1.4fr)' : 'minmax(420px, 1.7fr)');
+    }
+    if (hasRight) {
+      column.right = columns.length + 1;
+      columns.push(merge ? 'minmax(260px, 1fr)' : 'minmax(260px, 1fr)');
+    }
+    stage.style.gridTemplateColumns = columns.length ? columns.join(' ') : '1fr';
+    stage.style.gridTemplateRows = `repeat(${rows}, minmax(36px, 1fr))`;
 
     let floating = 0;
     for (const [id, tile] of tileEls) {
@@ -218,11 +231,11 @@ export function createTiles({ projectId, defs }) {
       } else if (state.mode === 'tiled') {
         for (const prop of ['left', 'top', 'width', 'height', 'z-index']) tile.style.removeProperty(prop);
         if (id === 'chat') {
-          tile.style.gridColumn = '1';
-          tile.style.gridRow = `1 / span ${Math.max(rows, 1)}`;
+          tile.style.gridColumn = String(column.chat);
+          tile.style.gridRow = `1 / span ${rows}`;
         } else {
           const place = placements[id];
-          tile.style.gridColumn = `${place.col + offset} / span ${place.colSpan}`;
+          tile.style.gridColumn = String(column[place.side]);
           tile.style.gridRow = `${place.row} / span ${place.rowSpan}`;
         }
       }

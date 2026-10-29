@@ -238,7 +238,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
 
   // ---------- the prompt shelf ----------
 
-  const shelfEl = el('div', { class: 'shelf', role: 'group', 'aria-label': 'Quick prompts' });
+  const shelfEl = el('div', { class: 'shelf', role: 'group', 'aria-label': 'Quick prompts', hidden: true });
   const addBox = el('form', { class: 'add-prompt sticker', hidden: true });
   function insert(text) {
     setTarget('ai');
@@ -288,6 +288,14 @@ export async function showProject(viewEl, { me, users, projectId }) {
     }
   });
   renderShelf();
+  const promptsToggle = el('button', {
+    type: 'button', class: 'chip prompts-toggle', 'aria-expanded': 'false', text: '✦ Prompts',
+    onclick: () => {
+      shelfEl.hidden = !shelfEl.hidden;
+      promptsToggle.setAttribute('aria-expanded', String(!shelfEl.hidden));
+      if (shelfEl.hidden) addBox.hidden = true;
+    },
+  });
 
   // ---------- layout ----------
 
@@ -298,7 +306,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
     typingEl,
     bannerEl,
     el('div', { class: 'composer' }, shelfEl, addBox,
-      el('div', { class: 'segmented', role: 'group', 'aria-label': 'Send to' }, segments),
+      el('div', { class: 'segmented', role: 'group', 'aria-label': 'Send to' }, segments, promptsToggle),
       el('div', { class: 'composer-line' }, input, el('button', { type: 'button', class: 'btn primary', text: 'Send', onclick: send }))));
 
   const tiles = createTiles({
@@ -318,7 +326,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
       el('span', { class: `swatch c-${projectColor(project.id)}` }), el('span', { text: project.name }))),
     el('a', { class: 'menu-item', role: 'menuitem', href: '#/' }, icon('home', 15), el('span', { text: 'All projects' })));
   const switchButton = el('button', {
-    type: 'button', class: 'project-switch', 'aria-haspopup': 'menu', 'aria-expanded': 'false',
+    type: 'button', class: 'project-switch', 'aria-haspopup': 'menu', 'aria-expanded': 'false', title: note,
     onclick: () => { menu.hidden = !menu.hidden; switchButton.setAttribute('aria-expanded', String(!menu.hidden)); },
   }, el('span', { class: 'project-name', text: details.project.name }), icon('chevron', 16));
   const closeSwitcher = () => { menu.hidden = true; switchButton.setAttribute('aria-expanded', 'false'); };
@@ -326,7 +334,6 @@ export async function showProject(viewEl, { me, users, projectId }) {
     el('a', { class: 'crumb', href: '#/', 'aria-label': 'All projects', title: 'All projects' }, icon('home', 16)),
     el('span', { class: 'crumb-sep', 'aria-hidden': 'true', text: '/' }),
     el('div', { class: 'switch-wrap' }, switchButton, menu),
-    el('span', { class: 'project-note', text: note, title: note }),
     el('span', { class: 'spacer' }),
     statusEl);
 

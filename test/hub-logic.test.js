@@ -117,44 +117,52 @@ test('a project keeps the same colour every time', async () => {
   assert.ok(seen.size >= 3, 'different projects get a mix of colours');
 });
 
-test('docked tiles fill the wall: board across the top, preview tall on the left, small ones stacked beside it', async () => {
-  const { packTiles } = await import('../hub/public/logic.js');
-  const full = packTiles(['board', 'preview', 'files', 'brief'], 2);
-  assert.equal(full.rows, 3);
-  assert.deepEqual(full.placements.board, { col: 1, row: 1, colSpan: 2, rowSpan: 1 });
-  assert.deepEqual(full.placements.preview, { col: 1, row: 2, colSpan: 1, rowSpan: 2 });
-  assert.deepEqual(full.placements.files, { col: 2, row: 2, colSpan: 1, rowSpan: 1 });
-  assert.deepEqual(full.placements.brief, { col: 2, row: 3, colSpan: 1, rowSpan: 1 });
+test('docked tiles go on either side of the chat, stacked with equal heights', async () => {
+  const { packSides } = await import('../hub/public/logic.js');
+  const usual = packSides(['board', 'preview']);
+  assert.equal(usual.hasLeft && usual.hasRight, true);
+  assert.deepEqual(usual.placements.board, { side: 'left', row: 1, rowSpan: 12 });
+  assert.deepEqual(usual.placements.preview, { side: 'right', row: 1, rowSpan: 12 });
+  const more = packSides(['board', 'preview', 'files', 'brief', 'notes']);
+  assert.deepEqual([more.placements.board, more.placements.files, more.placements.notes].map((place) => [place.side, place.row, place.rowSpan]),
+    [['left', 1, 4], ['left', 5, 4], ['left', 9, 4]]);
+  assert.deepEqual([more.placements.preview, more.placements.brief].map((place) => [place.side, place.row, place.rowSpan]),
+    [['right', 1, 6], ['right', 7, 6]]);
 });
 
-test('a tile left alone stretches to fill the space, and nothing overlaps', async () => {
-  const { packTiles } = await import('../hub/public/logic.js');
-  assert.deepEqual(packTiles(['preview'], 2).placements.preview, { col: 1, row: 1, colSpan: 2, rowSpan: 2 });
-  const noBoard = packTiles(['preview', 'files'], 2);
-  assert.deepEqual(noBoard.placements.preview, { col: 1, row: 1, colSpan: 1, rowSpan: 2 });
-  assert.deepEqual(noBoard.placements.files, { col: 2, row: 1, colSpan: 1, rowSpan: 2 });
-  assert.equal(packTiles([], 2).rows, 0);
-  for (const columns of [1, 2]) {
-    const result = packTiles(['board', 'preview', 'files', 'brief', 'notes'], columns);
-    const seen = new Set();
-    for (const place of Object.values(result.placements)) {
-      for (let r = 0; r < place.rowSpan; r += 1) {
-        for (let c = 0; c < place.colSpan; c += 1) {
-          const cell = `${place.row + r},${place.col + c}`;
-          assert.ok(!seen.has(cell), `cell ${cell} used twice with ${columns} columns`);
-          assert.ok(place.col + c <= columns);
-          seen.add(cell);
+test('an empty side disappears, and a lone tile takes its whole side', async () => {
+  const { packSides } = await import('../hub/public/logic.js');
+  const onlyPreview = packSides(['preview']);
+  assert.equal(onlyPreview.hasLeft, false);
+  assert.equal(onlyPreview.hasRight, true);
+  assert.deepEqual(onlyPreview.placements.preview, { side: 'right', row: 1, rowSpan: 12 });
+  const none = packSides([]);
+  assert.equal(none.hasLeft || none.hasRight, false);
+});
+
+test('notes go to whichever side has fewer tiles, and no two tiles overlap', async () => {
+  const { packSides } = await import('../hub/public/logic.js');
+  assert.equal(packSides(['board', 'files', 'preview', 'notes']).placements.notes.side, 'right');
+  for (const ids of [['board'], ['board', 'files', 'notes'], ['preview', 'brief', 'files', 'board', 'notes']]) {
+    const result = packSides(ids);
+    for (const side of ['left', 'right']) {
+      const used = new Set();
+      for (const place of Object.values(result.placements).filter((candidate) => candidate.side === side)) {
+        for (let row = place.row; row < place.row + place.rowSpan; row += 1) {
+          assert.ok(!used.has(row), `row ${row} used twice on the ${side}`);
+          used.add(row);
         }
       }
+      if (used.size) assert.equal(used.size, 12, 'a side that has tiles uses every row');
     }
   }
 });
 
-test('on a narrow wall every tile gets its own row', async () => {
-  const { packTiles } = await import('../hub/public/logic.js');
-  const one = packTiles(['board', 'files', 'notes'], 1);
-  assert.deepEqual(Object.values(one.placements).map((place) => place.col), [1, 1, 1]);
-  assert.equal(one.rows, 3);
+test('in a narrower window everything shares one stack beside the chat', async () => {
+  const { packSides } = await import('../hub/public/logic.js');
+  const merged = packSides(['board', 'preview', 'files'], true);
+  assert.equal(merged.hasLeft, false);
+  assert.deepEqual(Object.values(merged.placements).map((place) => [place.side, place.rowSpan]), [['right', 4], ['right', 4], ['right', 4]]);
 });
 
 test('a floating window stays inside the stage and keeps a usable size', async () => {
@@ -171,7 +179,7 @@ test('a floating window stays inside the stage and keeps a usable size', async (
 test('a saved layout is repaired before use, and a missing one gets the usual start', async () => {
   const { normalizeLayout, TILE_IDS } = await import('../hub/public/logic.js');
   const fresh = normalizeLayout(null);
-  assert.deepEqual(TILE_IDS.filter((id) => fresh.tiles[id].mode === 'closed'), ['notes']);
+  assert.deepEqual(TILE_IDS.filter((id) => fresh.tiles[id].mode === 'closed'), ['files', 'brief', 'notes']);
   assert.equal(fresh.arrange, 'tiles');
   const messy = normalizeLayout({ arrange: 'sideways', z: 'x', tiles: { chat: { mode: 'float', rect: { x: 1, y: 2, w: 300, h: 200 }, z: 4 }, board: { mode: 'banana', rect: { x: 'a' } } } });
   assert.equal(messy.arrange, 'tiles');

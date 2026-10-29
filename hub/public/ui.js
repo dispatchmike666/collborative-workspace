@@ -74,7 +74,7 @@ export const ACCENT_LABELS = { blue: 'Azure', pink: 'Rose', mint: 'Teal', tanger
 
 export function applyLook() {
   const root = document.documentElement;
-  root.setAttribute('data-mode', prefs.get('mode', 'dark'));
+  root.setAttribute('data-mode', prefs.get('mode', 'light'));
   root.setAttribute('data-accent', prefs.get('accent', 'blue'));
 }
 
@@ -189,7 +189,7 @@ export function openSettings() {
       openSettings();
     },
   });
-  const mode = prefs.get('mode', 'dark');
+  const mode = prefs.get('mode', 'light');
   const accent = prefs.get('accent', 'blue');
   const toggle = (label, key, fallback) => {
     const box = el('input', { type: 'checkbox' });

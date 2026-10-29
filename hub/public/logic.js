@@ -138,58 +138,39 @@ export function projectColor(projectId) {
 
 // ---- the tile wall ----
 
-// Every piece of the project screen is a tile. Chat is always in the left column; the others share the wall.
+// Every piece of the project screen is a tile. Chat sits in the middle; the others go on either side of it.
 export const TILE_IDS = ['chat', 'board', 'preview', 'files', 'brief', 'notes'];
 export const WALL_ORDER = ['board', 'preview', 'files', 'brief', 'notes'];
-// How big each tile likes to be on the wall: [columns wide, rows tall].
-const WALL_SIZES = { board: [2, 1], preview: [1, 2], files: [1, 1], brief: [1, 1], notes: [1, 1] };
 const FLOAT_MIN = { w: 300, h: 200 };
+const SIDE_ROWS = 12;
+// Which side of the chat each tile prefers. Anything else goes to whichever side has fewer.
+const SIDE_OF = { board: 'left', files: 'left', preview: 'right', brief: 'right' };
 
-// Fits the docked tiles onto a grid that is `columns` wide, then stretches tiles into any empty cells
-// beside or below them. Positions start at 1, like CSS grid lines.
-export function packTiles(ids, columns = 2) {
-  const wanted = WALL_ORDER.filter((id) => ids.includes(id));
-  const taken = new Set();
-  const fits = (row, col, wide, tall) => {
-    for (let r = 0; r < tall; r += 1) {
-      for (let c = 0; c < wide; c += 1) {
-        if (col + c > columns || taken.has(`${row + r},${col + c}`)) return false;
-      }
-    }
-    return true;
-  };
-  const mark = (place) => {
-    for (let r = 0; r < place.rowSpan; r += 1) for (let c = 0; c < place.colSpan; c += 1) taken.add(`${place.row + r},${place.col + c}`);
-  };
+// Splits `total` rows between `count` tiles as evenly as possible.
+function shareRows(count, total) {
+  const base = Math.floor(total / count);
+  const extra = total % count;
+  return Array.from({ length: count }, (_, index) => base + (index < extra ? 1 : 0));
+}
+
+// Puts the docked tiles on either side of the chat, stacked top to bottom with equal heights.
+// With `merge` (a narrower window) they all share one stack on the right instead.
+export function packSides(ids, merge = false) {
+  const left = [];
+  const right = [];
+  for (const id of WALL_ORDER.filter((candidate) => ids.includes(candidate))) {
+    const side = merge ? 'right' : (SIDE_OF[id] ?? (left.length <= right.length ? 'left' : 'right'));
+    (side === 'left' ? left : right).push(id);
+  }
   const placements = {};
-  for (const id of wanted) {
-    const wide = Math.min(WALL_SIZES[id][0], columns);
-    const tall = WALL_SIZES[id][1];
-    let placed = null;
-    for (let row = 1; !placed; row += 1) {
-      for (let col = 1; col <= columns - wide + 1 && !placed; col += 1) {
-        if (fits(row, col, wide, tall)) placed = { col, row, colSpan: wide, rowSpan: tall };
-      }
-    }
-    placements[id] = placed;
-    mark(placed);
+  for (const [side, list] of [['left', left], ['right', right]]) {
+    let row = 1;
+    shareRows(list.length || 1, SIDE_ROWS).slice(0, list.length).forEach((span, index) => {
+      placements[list[index]] = { side, row, rowSpan: span };
+      row += span;
+    });
   }
-  const rows = Object.values(placements).reduce((most, place) => Math.max(most, place.row + place.rowSpan - 1), 0);
-  const isFree = (row, col) => row >= 1 && row <= rows && col >= 1 && col <= columns && !taken.has(`${row},${col}`);
-  for (const id of wanted) {
-    const place = placements[id];
-    const rowCells = (col) => Array.from({ length: place.rowSpan }, (_, r) => isFree(place.row + r, col));
-    while (place.col + place.colSpan <= columns && rowCells(place.col + place.colSpan).every(Boolean)) {
-      for (let r = 0; r < place.rowSpan; r += 1) taken.add(`${place.row + r},${place.col + place.colSpan}`);
-      place.colSpan += 1;
-    }
-    const belowFree = () => Array.from({ length: place.colSpan }, (_, c) => isFree(place.row + place.rowSpan, place.col + c)).every(Boolean);
-    while (place.row + place.rowSpan <= rows && belowFree()) {
-      for (let c = 0; c < place.colSpan; c += 1) taken.add(`${place.row + place.rowSpan},${place.col + c}`);
-      place.rowSpan += 1;
-    }
-  }
-  return { rows, placements };
+  return { rows: SIDE_ROWS, hasLeft: left.length > 0, hasRight: right.length > 0, placements };
 }
 
 // Keeps a floating window inside the stage and no smaller than it can usefully be.
@@ -212,7 +193,7 @@ export function cascadeRect(index, bounds) {
   return clampRect({ x: 40 + step, y: 24 + step, w, h }, bounds);
 }
 
-const DEFAULT_MODES = { chat: 'tiled', board: 'tiled', preview: 'tiled', files: 'tiled', brief: 'tiled', notes: 'closed' };
+const DEFAULT_MODES = { chat: 'tiled', board: 'tiled', preview: 'tiled', files: 'closed', brief: 'closed', notes: 'closed' };
 const MODES = new Set(['tiled', 'float', 'closed']);
 
 // Turns whatever was saved last time (or nothing) into a layout that is safe to use.
