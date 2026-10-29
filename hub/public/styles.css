@@ -545,140 +545,248 @@ canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-
 .empty.sticker { padding: 32px 18px; }
 .stat-sub { overflow-wrap: anywhere; }
 
-/* ---------- finery ---------- */
+/* ---------- looks ---------- */
+/* Four looks to choose from: night (the calm glass base above), gold (night plus finery),
+   liquid (bright glass) and paper (matte and plain). Pick one, then the others get deleted. */
 
 @property --lit { syntax: "<number>"; inherits: false; initial-value: 0; }
 @property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes aurora { to { transform: rotate(360deg); } }
+@keyframes foil { 0% { background-position: 0% 0; } 100% { background-position: -220% 0; } }
+@keyframes glint { 0%, 78%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); } 88% { opacity: 1; transform: scale(1) rotate(45deg); } }
+@keyframes edge-orbit { to { --spin: 360deg; } }
+@keyframes pane-in { from { opacity: 0; transform: translateY(10px) scale(0.975); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
-:root {
+.eyebrow { font: 650 11px var(--font-body); letter-spacing: 0.26em; text-transform: uppercase; color: var(--ink-soft); }
+.chat-head .eyebrow { margin-bottom: 4px; }
+.hero-text h1 em { font-style: normal; }
+.stat { overflow: hidden; }
+.ticket { position: relative; }
+.crew .orb { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.4), inset 0 -6px 12px rgb(0 0 0 / 0.2), 0 10px 26px -8px color-mix(in srgb, var(--crew) 85%, transparent); }
+.brand-mark { position: relative; overflow: visible; }
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog[open] { animation: pane-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  dialog[open]::backdrop { animation: fade-in 0.3s ease-out; }
+}
+
+/* ===== GOLD: night plus foil type, pointer-lit glass, grain, aurora, ornaments ===== */
+
+:root[data-theme="gold"] {
   --foil-hi: color-mix(in srgb, var(--accent) 52%, #fff);
   --foil-lo: var(--accent);
   --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .2 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
-:root[data-mode="light"] {
-  --foil-hi: color-mix(in srgb, var(--accent) 78%, #fff);
-  --foil-lo: color-mix(in srgb, var(--accent) 78%, #000);
-}
-@media (prefers-color-scheme: light) {
-  :root[data-mode="auto"] {
+
+  &[data-mode="light"] {
     --foil-hi: color-mix(in srgb, var(--accent) 78%, #fff);
     --foil-lo: color-mix(in srgb, var(--accent) 78%, #000);
   }
+  @media (prefers-color-scheme: light) {
+    &[data-mode="auto"] {
+      --foil-hi: color-mix(in srgb, var(--accent) 78%, #fff);
+      --foil-lo: color-mix(in srgb, var(--accent) 78%, #000);
+    }
+  }
+
+  ::selection { background: color-mix(in srgb, var(--accent) 38%, transparent); }
+  h1, h2, h3, .stat-value { text-rendering: optimizeLegibility; font-feature-settings: "kern", "liga"; }
+
+  body::before {
+    background-image: var(--grain), radial-gradient(46vmax 40vmax at 10% 0%, var(--glow-1), transparent 62%), radial-gradient(44vmax 38vmax at 96% 8%, var(--glow-2), transparent 62%), radial-gradient(48vmax 44vmax at 78% 108%, var(--glow-3), transparent 62%), radial-gradient(60vmax 30vmax at 45% 52%, var(--glow-5), transparent 70%), radial-gradient(40vmax 36vmax at 0% 100%, var(--glow-4), transparent 62%);
+    background-size: 180px 180px, auto, auto, auto, auto, auto;
+    background-blend-mode: soft-light, normal, normal, normal, normal, normal;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: -40%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.5;
+    background: radial-gradient(34% 30% at 76% 28%, var(--glow-1), transparent 70%), radial-gradient(32% 28% at 24% 72%, var(--glow-2), transparent 70%), radial-gradient(30% 26% at 62% 86%, var(--glow-3), transparent 70%);
+    will-change: transform;
+  }
+
+  .foil, .hero-text h1 em, .stat-value, .brand-name, .login-card h1 {
+    background: linear-gradient(100deg, var(--foil-lo) 0%, var(--foil-hi) 32%, var(--foil-lo) 54%, var(--foil-hi) 78%, var(--foil-lo) 100%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-text h1 em { font-style: italic; font-weight: 500; padding-right: 0.06em; }
+  .eyebrow { display: flex; align-items: center; gap: 14px; letter-spacing: 0.3em; }
+  .eyebrow::before { content: ""; width: 34px; height: 1px; background: linear-gradient(90deg, transparent, var(--accent)); }
+  .chat-head .eyebrow { margin-bottom: 6px; }
+  .chat-head .eyebrow::before { width: 22px; }
+
+  .section-head { position: relative; padding-bottom: 14px; margin-bottom: 18px; }
+  .section-head::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, var(--accent), var(--line-strong) 28%, transparent 85%); }
+  .section-head::before { content: ""; position: absolute; left: -1px; bottom: -3px; width: 7px; height: 7px; background: var(--accent); transform: rotate(45deg); box-shadow: 0 0 12px var(--accent); }
+  .section-head h2 { font-size: 23px; }
+
+  .sticker, .ticket, .topbar, .sidebar, .chat, .tools { --mx: 50%; --my: 0%; }
+  .sticker:hover, .ticket:hover, .topbar:hover, .sidebar:hover, .chat:hover, .tools:hover { --lit: 1; }
+  .sticker::before, .topbar::before, .sidebar::before, .chat::before, .tools::before {
+    background:
+      radial-gradient(240px circle at var(--mx) var(--my), color-mix(in srgb, var(--accent) 80%, #fff) calc(var(--lit) * 55%), transparent calc(var(--lit) * 100%)),
+      linear-gradient(135deg, var(--edge-a), var(--edge-b) 38%, transparent 62%, color-mix(in srgb, var(--accent) 45%, transparent));
+    transition: --lit 0.35s ease;
+  }
+  .sticker::after, .ticket::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--lit);
+    background: radial-gradient(380px circle at var(--mx) var(--my), rgb(255 255 255 / 0.09), transparent 62%);
+    transition: opacity 0.35s ease;
+  }
+  &[data-mode="light"] .sticker::after, &[data-mode="light"] .ticket::after { background: radial-gradient(380px circle at var(--mx) var(--my), rgb(255 255 255 / 0.7), transparent 62%); }
+  @media (prefers-color-scheme: light) {
+    &[data-mode="auto"] .sticker::after, &[data-mode="auto"] .ticket::after { background: radial-gradient(380px circle at var(--mx) var(--my), rgb(255 255 255 / 0.7), transparent 62%); }
+  }
+
+  .btn.primary { position: relative; overflow: hidden; isolation: isolate; }
+  .btn.primary::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(110deg, transparent 32%, rgb(255 255 255 / 0.55) 50%, transparent 68%); transform: translateX(-130%); transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .btn.primary:hover::after { transform: translateX(130%); }
+
+  .brand-mark::after { content: ""; position: absolute; top: -5px; right: -6px; width: 11px; height: 11px; background: #fff; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); opacity: 0; filter: drop-shadow(0 0 4px #fff); }
+  .login-card .brand-mark::after { width: 16px; height: 16px; top: -8px; right: -9px; }
+
+  .row.claude .text { border-left: 2px solid var(--accent); }
+  .row.claude .who-line { color: color-mix(in srgb, var(--accent) 75%, var(--ink)); }
+  .bar-part.blue { background: linear-gradient(180deg, color-mix(in srgb, var(--blue) 65%, #fff), var(--blue)); }
+  .bar-part.pink { background: linear-gradient(180deg, color-mix(in srgb, var(--pink) 65%, #fff), var(--pink)); }
+  .bar-part.mint { background: linear-gradient(180deg, color-mix(in srgb, var(--mint) 65%, #fff), var(--mint)); }
+  .bar-part.tangerine { background: linear-gradient(180deg, color-mix(in srgb, var(--tangerine) 65%, #fff), var(--tangerine)); }
+  .bar-part.grape { background: linear-gradient(180deg, color-mix(in srgb, var(--grape) 65%, #fff), var(--grape)); }
+  .hero .crew.big .ring { inset: -8px; border-color: color-mix(in srgb, var(--crew) 40%, transparent); }
+  .hero .crew.big::before { content: ""; position: absolute; inset: -22px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--crew) 28%, transparent), transparent); z-index: -1; }
+  .login-card { padding-top: 42px; }
+  .login-card h1 { font-size: 40px; font-style: italic; }
+  .login-card .brand-mark { width: 62px; height: 62px; margin: 0 auto 4px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    body::after { animation: aurora 180s linear infinite; }
+    .hero-text h1 em, .brand-name, .login-card h1 { animation: foil 9s ease-in-out infinite alternate; }
+    .brand-mark::after { animation: glint 7s ease-in-out infinite; }
+    .login-card::before { background: conic-gradient(from var(--spin), var(--edge-b) 0deg, var(--accent) 40deg, var(--edge-a) 70deg, var(--edge-b) 130deg, var(--edge-b) 360deg); animation: edge-orbit 8s linear infinite; }
+    .home > * { animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+    .home > :nth-child(2) { animation-delay: 0.08s; }
+    .home > :nth-child(3) { animation-delay: 0.16s; }
+    .stats > .stat:nth-child(2), .projects > :nth-child(2) { animation-delay: 0.08s; }
+    .stats > .stat:nth-child(3), .projects > :nth-child(3) { animation-delay: 0.16s; }
+    .projects > :nth-child(4) { animation-delay: 0.24s; }
+  }
 }
 
-::selection { background: color-mix(in srgb, var(--accent) 38%, transparent); }
-h1, h2, h3, .stat-value { text-rendering: optimizeLegibility; font-feature-settings: "kern", "liga"; }
+/* ===== LIQUID: bright, rounded, vivid glass with a sans-serif face ===== */
 
-/* Fine film grain over the backdrop, and a slow turning aurora under it. */
-body::before {
-  background-image: var(--grain), radial-gradient(46vmax 40vmax at 10% 0%, var(--glow-1), transparent 62%), radial-gradient(44vmax 38vmax at 96% 8%, var(--glow-2), transparent 62%), radial-gradient(48vmax 44vmax at 78% 108%, var(--glow-3), transparent 62%), radial-gradient(60vmax 30vmax at 45% 52%, var(--glow-5), transparent 70%), radial-gradient(40vmax 36vmax at 0% 100%, var(--glow-4), transparent 62%);
-  background-size: 180px 180px, auto, auto, auto, auto, auto;
-  background-blend-mode: soft-light, normal, normal, normal, normal, normal;
+:root:root[data-theme="liquid"] {
+  color-scheme: light;
+  --bg: #dbe7ff;
+  --glow-1: rgb(255 176 128 / 0.85);
+  --glow-2: rgb(104 148 255 / 0.90);
+  --glow-3: rgb(214 120 255 / 0.70);
+  --glow-4: rgb(80 214 232 / 0.70);
+  --glow-5: rgb(255 255 255 / 0.55);
+  --ink: #0e1a38;
+  --ink-soft: rgb(14 26 56 / 0.68);
+  --ink-faint: rgb(14 26 56 / 0.46);
+  --on-accent: #ffffff;
+  --glass: linear-gradient(155deg, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0.30));
+  --glass-flat: rgb(255 255 255 / 0.42);
+  --glass-hover: rgb(255 255 255 / 0.72);
+  --glass-solid: rgb(244 248 255 / 0.97);
+  --field: rgb(255 255 255 / 0.6);
+  --line: rgb(255 255 255 / 0.65);
+  --line-strong: rgb(14 26 56 / 0.16);
+  --edge-a: #ffffff;
+  --edge-b: rgb(255 255 255 / 0.25);
+  --shade: rgb(40 70 170 / 0.30);
+  --scrim: rgb(200 218 255 / 0.55);
+  --blue: #0a6cff;
+  --pink: #ff2d78;
+  --sun: #e08a00;
+  --mint: #00a884;
+  --tangerine: #f27a00;
+  --grape: #7a4dff;
+  --bad: #d11f48;
+  --good: #0a8f5a;
+  --radius: 28px;
+  --radius-sm: 16px;
+  --blur: blur(30px) saturate(1.9);
+  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
-body::after {
-  content: "";
-  position: fixed;
-  inset: -40%;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.5;
-  background: radial-gradient(34% 30% at 76% 28%, var(--glow-1), transparent 70%), radial-gradient(32% 28% at 24% 72%, var(--glow-2), transparent 70%), radial-gradient(30% 26% at 62% 86%, var(--glow-3), transparent 70%);
-  will-change: transform;
+:root[data-theme="liquid"] body { background: linear-gradient(160deg, #c9dcff 0%, #e2d6ff 52%, #ffddd0 100%); }
+:root[data-theme="liquid"] h1, :root[data-theme="liquid"] h2, :root[data-theme="liquid"] h3 { font-weight: 680; letter-spacing: -0.03em; }
+:root[data-theme="liquid"] .stat-value { font-weight: 650; letter-spacing: -0.04em; }
+:root[data-theme="liquid"] .sticker, :root[data-theme="liquid"] .topbar, :root[data-theme="liquid"] .sidebar, :root[data-theme="liquid"] .chat, :root[data-theme="liquid"] .tools {
+  box-shadow: 0 30px 60px -30px var(--shade), inset 0 1.5px 1px rgb(255 255 255 / 0.95), inset 0 -1px 1px rgb(255 255 255 / 0.4);
 }
+:root[data-theme="liquid"] .topbar { border-radius: 26px; }
+:root[data-theme="liquid"] .btn { border-radius: 14px; }
+:root[data-theme="liquid"] .composer { background: none; }
+:root[data-theme="liquid"] .row.claude .text { background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 14%, rgb(255 255 255 / 0.5)), rgb(255 255 255 / 0.35)); }
 
-/* Gold foil type. */
-.foil, .hero-text h1 em, .stat-value, .brand-name, .login-card h1 {
-  background: linear-gradient(100deg, var(--foil-lo) 0%, var(--foil-hi) 32%, var(--foil-lo) 54%, var(--foil-hi) 78%, var(--foil-lo) 100%);
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+/* ===== PAPER: matte, plain, no glass ===== */
+
+:root:root[data-theme="paper"] {
+  color-scheme: light;
+  --bg: #f5f5f2;
+  --glow-1: transparent;
+  --glow-2: transparent;
+  --glow-3: transparent;
+  --glow-4: transparent;
+  --glow-5: transparent;
+  --ink: #171714;
+  --ink-soft: rgb(23 23 20 / 0.66);
+  --ink-faint: rgb(23 23 20 / 0.44);
+  --on-accent: #ffffff;
+  --glass: #ffffff;
+  --glass-flat: #f4f4f1;
+  --glass-hover: #ebebe6;
+  --glass-solid: #ffffff;
+  --field: #ffffff;
+  --line: rgb(23 23 20 / 0.10);
+  --line-strong: rgb(23 23 20 / 0.20);
+  --edge-a: transparent;
+  --edge-b: transparent;
+  --shade: rgb(23 23 20 / 0.16);
+  --scrim: rgb(245 245 242 / 0.72);
+  --blue: #2b59ff;
+  --pink: #e0306f;
+  --sun: #b87800;
+  --mint: #0b8f73;
+  --tangerine: #d9680f;
+  --grape: #6b44e6;
+  --bad: #c0233f;
+  --good: #12794f;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --blur: none;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
-.hero-text h1 em { font-style: italic; font-weight: 500; padding-right: 0.06em; }
-.eyebrow { display: flex; align-items: center; gap: 14px; font: 650 11px var(--font-body); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink-soft); }
-.eyebrow::before { content: ""; width: 34px; height: 1px; background: linear-gradient(90deg, transparent, var(--accent)); }
-.chat-head .eyebrow { margin-bottom: 6px; }
-.chat-head .eyebrow::before { width: 22px; }
+:root[data-theme="paper"] body::before { display: none; }
+:root[data-theme="paper"] h1, :root[data-theme="paper"] h2, :root[data-theme="paper"] h3 { font-weight: 640; letter-spacing: -0.02em; }
+:root[data-theme="paper"] .stat-value { font-weight: 600; letter-spacing: -0.03em; }
+:root[data-theme="paper"] .sticker::before, :root[data-theme="paper"] .topbar::before, :root[data-theme="paper"] .sidebar::before,
+:root[data-theme="paper"] .chat::before, :root[data-theme="paper"] .tools::before { display: none; }
+:root[data-theme="paper"] .sticker, :root[data-theme="paper"] .sidebar, :root[data-theme="paper"] .chat, :root[data-theme="paper"] .tools { box-shadow: 0 1px 2px rgb(23 23 20 / 0.06), 0 10px 28px -18px var(--shade); }
+:root[data-theme="paper"] .topbar { box-shadow: 0 1px 2px rgb(23 23 20 / 0.06); }
+:root[data-theme="paper"] .btn.primary { background: var(--accent); border-color: var(--accent); box-shadow: none; }
+:root[data-theme="paper"] .btn.primary:hover { box-shadow: 0 6px 16px -8px var(--accent); }
+:root[data-theme="paper"] .composer { background: none; }
+:root[data-theme="paper"] .row.claude .text { background: var(--glass-flat); box-shadow: none; }
+:root[data-theme="paper"] .side-link.current { background: var(--glass-flat); border-color: var(--line-strong); }
+:root[data-theme="paper"] .chip.active { box-shadow: none; }
+:root[data-theme="paper"] .brand-mark { filter: none; }
 
-/* Ornamental rules under section titles. */
-.section-head { position: relative; padding-bottom: 14px; margin-bottom: 18px; }
-.section-head::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, var(--accent), var(--line-strong) 28%, transparent 85%); }
-.section-head::before { content: ""; position: absolute; left: -1px; bottom: -3px; width: 7px; height: 7px; background: var(--accent); transform: rotate(45deg); box-shadow: 0 0 12px var(--accent); }
-.section-head h2 { font-size: 23px; }
-
-/* The cut-glass edge lights up where the pointer is. */
-.sticker, .ticket, .topbar, .sidebar, .chat, .tools { --mx: 50%; --my: 0%; }
-.sticker:hover, .ticket:hover, .topbar:hover, .sidebar:hover, .chat:hover, .tools:hover { --lit: 1; }
-.sticker::before, .topbar::before, .sidebar::before, .chat::before, .tools::before {
-  background:
-    radial-gradient(240px circle at var(--mx) var(--my), color-mix(in srgb, var(--accent) 80%, #fff) calc(var(--lit) * 55%), transparent calc(var(--lit) * 100%)),
-    linear-gradient(135deg, var(--edge-a), var(--edge-b) 38%, transparent 62%, color-mix(in srgb, var(--accent) 45%, transparent));
-  transition: --lit 0.35s ease;
-}
-.sticker::after, .ticket::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: var(--lit);
-  background: radial-gradient(380px circle at var(--mx) var(--my), rgb(255 255 255 / 0.09), transparent 62%);
-  transition: opacity 0.35s ease;
-}
-.ticket { position: relative; }
-:root[data-mode="light"] .sticker::after, :root[data-mode="light"] .ticket::after { background: radial-gradient(380px circle at var(--mx) var(--my), rgb(255 255 255 / 0.7), transparent 62%); }
-@media (prefers-color-scheme: light) {
-  :root[data-mode="auto"] .sticker::after, :root[data-mode="auto"] .ticket::after { background: radial-gradient(380px circle at var(--mx) var(--my), rgb(255 255 255 / 0.7), transparent 62%); }
-}
-
-/* A sweep of light across the main button. */
-.btn.primary { position: relative; overflow: hidden; isolation: isolate; }
-.btn.primary::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(110deg, transparent 32%, rgb(255 255 255 / 0.55) 50%, transparent 68%); transform: translateX(-130%); transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); }
-.btn.primary:hover::after { transform: translateX(130%); }
-
-/* A tiny star that glints on the gem. */
-.brand-mark { position: relative; overflow: visible; }
-.brand-mark::after { content: ""; position: absolute; top: -5px; right: -6px; width: 11px; height: 11px; background: #fff; clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); opacity: 0; filter: drop-shadow(0 0 4px #fff); }
-.login-card .brand-mark::after { width: 16px; height: 16px; top: -8px; right: -9px; }
-
-/* Chat details. */
-.row.claude .text { border-left: 2px solid var(--accent); }
-.row.claude .who-line { color: color-mix(in srgb, var(--accent) 75%, var(--ink)); }
-.stat { overflow: hidden; }
-.bar-part.blue { background: linear-gradient(180deg, color-mix(in srgb, var(--blue) 65%, #fff), var(--blue)); }
-.bar-part.pink { background: linear-gradient(180deg, color-mix(in srgb, var(--pink) 65%, #fff), var(--pink)); }
-.bar-part.mint { background: linear-gradient(180deg, color-mix(in srgb, var(--mint) 65%, #fff), var(--mint)); }
-.bar-part.tangerine { background: linear-gradient(180deg, color-mix(in srgb, var(--tangerine) 65%, #fff), var(--tangerine)); }
-.bar-part.grape { background: linear-gradient(180deg, color-mix(in srgb, var(--grape) 65%, #fff), var(--grape)); }
-.crew .orb { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.4), inset 0 -6px 12px rgb(0 0 0 / 0.2), 0 10px 26px -8px color-mix(in srgb, var(--crew) 85%, transparent); }
-.hero .crew.big .ring { inset: -8px; border-color: color-mix(in srgb, var(--crew) 40%, transparent); }
-.hero .crew.big::before { content: ""; position: absolute; inset: -22px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--crew) 28%, transparent), transparent); z-index: -1; }
-.login-card { padding-top: 42px; }
-.login-card h1 { font-size: 40px; font-style: italic; }
-.login-card .brand-mark { width: 62px; height: 62px; margin: 0 auto 4px; }
-
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes aurora { to { transform: rotate(360deg); } }
-  @keyframes foil { 0% { background-position: 0% 0; } 100% { background-position: -220% 0; } }
-  @keyframes glint { 0%, 78%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); } 88% { opacity: 1; transform: scale(1) rotate(45deg); } }
-  @keyframes edge-orbit { to { --spin: 360deg; } }
-  @keyframes pane-in { from { opacity: 0; transform: translateY(10px) scale(0.975); } to { opacity: 1; transform: none; } }
-  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-  body::after { animation: aurora 180s linear infinite; }
-  .hero-text h1 em, .brand-name, .login-card h1 { animation: foil 9s ease-in-out infinite alternate; }
-  .brand-mark::after { animation: glint 7s ease-in-out infinite; }
-  .login-card::before { background: conic-gradient(from var(--spin), var(--edge-b) 0deg, var(--accent) 40deg, var(--edge-a) 70deg, var(--edge-b) 130deg, var(--edge-b) 360deg); animation: edge-orbit 8s linear infinite; }
-  dialog[open] { animation: pane-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
-  dialog[open]::backdrop { animation: fade-in 0.3s ease-out; }
-  .home > * { animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-  .home > :nth-child(2) { animation-delay: 0.08s; }
-  .home > :nth-child(3) { animation-delay: 0.16s; }
-  .stats > .stat:nth-child(2), .projects > :nth-child(2) { animation-delay: 0.08s; }
-  .stats > .stat:nth-child(3), .projects > :nth-child(3) { animation-delay: 0.16s; }
-  .projects > :nth-child(4) { animation-delay: 0.24s; }
-}
-
+:root[data-theme="liquid"] .crew.mood-asleep .orb, :root[data-theme="paper"] .crew.mood-asleep .orb { filter: grayscale(0.85) brightness(1.15); opacity: 0.55; }
 /* ---------- small screens ---------- */
 
 @media (max-width: 980px) {
@@ -709,6 +817,7 @@ body::after {
   .react-btn { opacity: 1; }
 }
 @media (max-width: 420px) {
+  #look-name { display: none; }
   #logout { display: none; }
   .topbar #open-palette { padding: 3px 8px; }
 }

@@ -36,6 +36,7 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
 - The hub and the solo page listen on 127.0.0.1 only.
 - Approvals allow one exact command. Commands with * ( ) or line breaks cannot be approved.
 - Anything a person reads is plain English.
+- Design rounds are over once Brennan picks a look (Night, Gold, Liquid or Paper). Then delete the other looks and the "Look" button, and do not redesign again unless he asks. He refuses endless design rounds; never ask him to describe taste in design words, show him options instead.
 - Never add --bare or --dangerously-skip-permissions to the Claude flags.
 - Test with the stand-in Claude (test/fake-claude.js), never the real one, except in
   deliberate acceptance runs.

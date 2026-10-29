@@ -72,10 +72,30 @@ export const prefs = {
 export const ACCENTS = ['tangerine', 'blue', 'pink', 'mint', 'grape'];
 export const ACCENT_LABELS = { tangerine: 'Champagne', blue: 'Sapphire', pink: 'Rose', mint: 'Jade', grape: 'Amethyst' };
 
+// The looks on offer. Night and Gold come in dark and light; Liquid and Paper are light only.
+export const THEMES = ['night', 'gold', 'liquid', 'paper'];
+export const THEME_LABELS = { night: 'Night', gold: 'Gold', liquid: 'Liquid', paper: 'Paper' };
+const THEME_ACCENT = { night: 'tangerine', gold: 'tangerine', liquid: 'blue', paper: 'blue' };
+export const LIGHT_ONLY = new Set(['liquid', 'paper']);
+
+export const currentTheme = () => {
+  const theme = prefs.get('theme', 'night');
+  return THEMES.includes(theme) ? theme : 'night';
+};
+
 export function applyLook() {
   const root = document.documentElement;
+  const theme = currentTheme();
+  root.setAttribute('data-theme', theme);
   root.setAttribute('data-mode', prefs.get('mode', 'dark'));
-  root.setAttribute('data-accent', prefs.get('accent', 'tangerine'));
+  root.setAttribute('data-accent', prefs.get('accent', THEME_ACCENT[theme]));
+}
+
+// One press moves to the next look, so the choices are easy to compare.
+export function cycleTheme() {
+  prefs.set('theme', THEMES[(THEMES.indexOf(currentTheme()) + 1) % THEMES.length]);
+  applyLook();
+  return currentTheme();
 }
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -190,7 +210,8 @@ export function openSettings() {
     },
   });
   const mode = prefs.get('mode', 'dark');
-  const accent = prefs.get('accent', 'tangerine');
+  const theme = currentTheme();
+  const accent = prefs.get('accent', THEME_ACCENT[theme]);
   const toggle = (label, key, fallback) => {
     const box = el('input', { type: 'checkbox' });
     box.checked = prefs.get(key, fallback);
@@ -199,7 +220,8 @@ export function openSettings() {
   };
   dialog.append(el('div', { class: 'settings-box' },
     el('h2', { text: 'Look and feel' }),
-    el('div', { class: 'segmented', role: 'group', 'aria-label': 'Light or dark' },
+    el('div', { class: 'segmented', role: 'group', 'aria-label': 'Look' }, THEMES.map((name) => choice(THEME_LABELS[name], 'theme', name, theme))),
+    LIGHT_ONLY.has(theme) ? null : el('div', { class: 'segmented', role: 'group', 'aria-label': 'Light or dark' },
       choice('Match my computer', 'mode', 'auto', mode), choice('Light', 'mode', 'light', mode), choice('Dark', 'mode', 'dark', mode)),
     el('div', { class: 'swatches', role: 'group', 'aria-label': 'Accent colour' },
       ACCENTS.map((name) => el('button', {
@@ -214,7 +236,7 @@ export function openSettings() {
           openSettings();
         },
       }))),
-    toggle('Confetti when my Claude finishes something', 'confetti', true),
+    toggle('A sparkle when my Claude finishes something', 'confetti', true),
     toggle('Soft sounds for new messages and finished runs', 'sound', false),
     el('div', { class: 'row-actions' },
       el('button', { type: 'button', class: 'btn primary', text: 'Done', onclick: () => dialog.close() }),
