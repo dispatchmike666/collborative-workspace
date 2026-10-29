@@ -228,3 +228,18 @@ test('the project brief and decisions really reach Claude, and the small text fi
   await waitFor(() => hub.store.sources(project.id).paths().length > 0, { label: 'the readable files' });
   assert.equal(hub.store.sources(project.id).get('notes.txt').text, 'hi');
 });
+
+test('an expired Claude sign-in is explained in plain words, with what to do about it', async (t) => {
+  const hub = await startHub(t);
+  const max = await hub.login('Max');
+  const project = await hub.makeProject(max);
+  await startHelper(t, hub, 'Max');
+
+  await hub.as(max)(`/api/projects/${project.id}/send`, hub.json({ text: 'AUTHFAIL please', to: 'ai' }));
+  await waitFor(() => idleCount(hub, project.id) === 1, { label: 'the run to finish' });
+  const explanation = hub.store.events(project.id).find((e) => e.kind === 'error');
+  assert.match(explanation.text, /sign-in has expired/);
+  assert.match(explanation.text, /run: claude/);
+  assert.match(explanation.text, /\/login/);
+  assert.equal(explanation.owner, 'Max');
+});

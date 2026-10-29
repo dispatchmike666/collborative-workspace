@@ -58,6 +58,10 @@ const oneLine = (text, max) => {
   return clean.length > max ? `${clean.slice(0, max - 1)}…` : clean;
 };
 
+// Claude says this when the sign-in on this computer has run out. We explain it in plain words.
+const SIGN_IN_PROBLEM = /failed to authenticate|oauth session expired|not logged in|please run \/login/i;
+const SIGN_IN_HELP = 'Your Claude sign-in has expired on this computer. Open a terminal, run: claude   then type /login and sign in again. After that, send your request again.';
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // The program that runs on each person's own computer. It connects out to the hub, and when the
@@ -231,6 +235,10 @@ export class Helper {
     }
     if (event.kind === 'run-start') return;
     context.sender.add(event);
+    if (event.kind === 'run-done' && !event.ok && SIGN_IN_PROBLEM.test(event.text ?? '')) {
+      context.sender.add({ kind: 'error', text: SIGN_IN_HELP });
+      this.#log(SIGN_IN_HELP);
+    }
   }
 
   async #handleJob(rawJob) {

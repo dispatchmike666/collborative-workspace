@@ -1,6 +1,15 @@
 // Turns timeline events into things to show on screen. Plain functions with no page access,
 // so they can be tested. Returns null when an event should not appear as a row.
 
+import { COLUMN_LABELS } from './logic.js';
+
+const CARD_ACTIONS = {
+  added: () => 'added a card',
+  started: () => 'gave a card to their Claude',
+  removed: () => 'removed a card',
+  moved: (event) => `moved a card to ${COLUMN_LABELS[event.column] ?? event.column}`,
+};
+
 const sameName = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
 
 function describeRun(event) {
@@ -44,6 +53,12 @@ export function eventToView(event, { me } = {}) {
       return { cls: 'sync', label: '', text: event.text };
     case 'notes-saved':
       return { cls: 'sync', label: '', text: `${event.who} updated the shared notes.` };
+    case 'board-card':
+      return { cls: 'sync', label: '', text: `${event.who} ${(CARD_ACTIONS[event.action] ?? (() => 'changed a card'))(event)}: ${event.title}` };
+    case 'decision-added':
+      return { cls: 'sync', label: '', text: `${event.who} added a decision: ${event.text}` };
+    case 'brief-saved':
+      return { cls: 'sync', label: '', text: `${event.who} updated the project brief.` };
     case 'approval-needed':
       return approvalView(event, me);
     case 'status':

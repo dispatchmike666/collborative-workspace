@@ -1,0 +1,137 @@
+// Small pure helpers for the pages: nothing here touches the page, so all of it is tested.
+
+export const COLUMN_LABELS = { ideas: 'Ideas', todo: 'To do', doing: 'Doing', done: 'Done' };
+export const USER_COLORS = ['blue', 'pink', 'mint', 'tangerine', 'grape'];
+
+export function groupBoard(cards, columns = Object.keys(COLUMN_LABELS)) {
+  const grouped = Object.fromEntries(columns.map((column) => [column, []]));
+  for (const card of cards) grouped[card.column]?.push(card);
+  return grouped;
+}
+
+// Each person keeps their colour: the first person added is blue, the second pink, and so on.
+export function userColor(name, users) {
+  const index = users.findIndex((candidate) => candidate.toLowerCase() === String(name).toLowerCase());
+  if (index >= 0) return USER_COLORS[index % USER_COLORS.length];
+  let hash = 0;
+  for (const char of String(name)) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return USER_COLORS[hash % USER_COLORS.length];
+}
+
+export function initial(name) {
+  return String(name ?? '').trim().charAt(0).toUpperCase() || '?';
+}
+
+// ---- reactions ----
+// state: Map of message id -> Map of emoji -> Set of people who reacted
+
+export function applyReaction(state, { target, emoji, who, on }) {
+  if (!state.has(target)) state.set(target, new Map());
+  const byEmoji = state.get(target);
+  if (!byEmoji.has(emoji)) byEmoji.set(emoji, new Set());
+  const people = byEmoji.get(emoji);
+  if (on) people.add(who);
+  else people.delete(who);
+  if (!people.size) byEmoji.delete(emoji);
+  if (!byEmoji.size) state.delete(target);
+  return state;
+}
+
+export function reactionChips(state, target, me) {
+  const byEmoji = state.get(target);
+  if (!byEmoji) return [];
+  return [...byEmoji].map(([emoji, people]) => ({
+    emoji,
+    count: people.size,
+    mine: [...people].some((person) => person.toLowerCase() === String(me).toLowerCase()),
+    who: [...people],
+  }));
+}
+
+// ---- command palette ----
+
+function score(label, query) {
+  const text = label.toLowerCase();
+  if (text.startsWith(query)) return 100;
+  if (text.split(/\s+/).some((word) => word.startsWith(query))) return 80;
+  if (text.includes(query)) return 60;
+  let position = 0;
+  let gaps = 0;
+  for (const char of query) {
+    const found = text.indexOf(char, position);
+    if (found < 0) return 0;
+    gaps += found - position;
+    position = found + 1;
+  }
+  return Math.max(1, 30 - gaps);
+}
+
+export function filterCommands(commands, rawQuery) {
+  const query = String(rawQuery ?? '').trim().toLowerCase();
+  if (!query) return commands;
+  return commands
+    .map((command, order) => ({ command, order, value: score(command.label, query) }))
+    .filter((entry) => entry.value > 0)
+    .sort((a, b) => b.value - a.value || a.order - b.order)
+    .map((entry) => entry.command);
+}
+
+// ---- typing ----
+
+export function typingNames(typing, now, { me = '', windowMs = 4000 } = {}) {
+  return [...typing]
+    .filter(([name, at]) => name.toLowerCase() !== me.toLowerCase() && now - at <= windowMs)
+    .map(([name]) => name);
+}
+
+export function typingLabel(names) {
+  if (!names.length) return '';
+  if (names.length === 1) return `${names[0]} is typing…`;
+  return `${names.slice(0, -1).join(', ')} and ${names.at(-1)} are typing…`;
+}
+
+// ---- numbers ----
+
+export function formatPlan(costUsd) {
+  const value = typeof costUsd === 'number' ? costUsd : 0;
+  if (value > 0 && value < 0.01) return '<$0.01';
+  return `$${value.toFixed(2)}`;
+}
+
+export function weekBars(week, users) {
+  const bars = week.map((entry) => {
+    const parts = users.filter((user) => entry.runs[user]).map((user) => ({ user, value: entry.runs[user] }));
+    const label = new Date(`${entry.day}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+    return { day: entry.day, label, parts, total: parts.reduce((sum, part) => sum + part.value, 0) };
+  });
+  return { bars, max: Math.max(1, ...bars.map((bar) => bar.total)) };
+}
+
+export function greeting(date, name) {
+  const hour = date.getHours();
+  if (hour < 5) return `Up late, ${name}?`;
+  if (hour < 12) return `Good morning, ${name}`;
+  if (hour < 18) return `Good afternoon, ${name}`;
+  return `Good evening, ${name}`;
+}
+
+// ---- the crew ----
+
+export function crewMood({ online, working, happy }) {
+  if (!online) return 'asleep';
+  if (working) return 'working';
+  if (happy) return 'happy';
+  return 'awake';
+}
+
+export const MOOD_TEXT = { asleep: 'asleep', awake: 'ready', working: 'working…', happy: 'nice work!' };
+export const MOOD_BUBBLE = { asleep: 'Zzz… helper is off', awake: 'Ready when you are', working: 'On it…', happy: 'All done!' };
+
+// Each project gets a colour of its own, the same on every screen.
+export const PROJECT_COLORS = ['blue', 'pink', 'mint', 'tangerine', 'grape', 'sun'];
+
+export function projectColor(projectId) {
+  let hash = 0;
+  for (const char of String(projectId)) hash = (hash * 33 + char.charCodeAt(0)) >>> 0;
+  return PROJECT_COLORS[hash % PROJECT_COLORS.length];
+}

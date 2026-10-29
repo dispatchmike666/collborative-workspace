@@ -7,6 +7,7 @@
 //   PROMPTCHECK   replies with the whole message it received
 //   DENY          finishes with one blocked command listed
 //   SLEEP<ms>     waits that long before answering (for example SLEEP800)
+//   AUTHFAIL      finishes the way Claude does when its sign-in has expired
 //   CRASH         exits with an error
 //   HANG          never finishes
 import fs from 'node:fs';
@@ -53,6 +54,8 @@ async function run(prompt) {
   if (prompt.includes('ENVCHECK')) text = `key:${process.env.ANTHROPIC_API_KEY ?? 'absent'}`;
   if (prompt.includes('ARGSCHECK')) text = `args:${args.join('|')}`;
   if (prompt.includes('PROMPTCHECK')) text = `prompt:${prompt}`;
+  const authFail = prompt.includes('AUTHFAIL');
+  if (authFail) text = 'Failed to authenticate: OAuth session expired and could not be refreshed';
   out(assistant({ type: 'text', text }));
   const denials = prompt.includes('DENY')
     ? [{ tool_name: 'Bash', tool_use_id: 't9', tool_input: { command: 'curl -s https://example.com', description: 'Check the site' } }]
@@ -60,7 +63,7 @@ async function run(prompt) {
   out({
     type: 'result',
     subtype: 'success',
-    is_error: false,
+    is_error: authFail,
     result: text,
     session_id: sessionId,
     duration_ms: 5,

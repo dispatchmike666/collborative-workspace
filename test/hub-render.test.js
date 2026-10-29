@@ -72,3 +72,14 @@ test('times are shown the way people say them', () => {
   assert.equal(timeAgo('2026-10-23T11:59:00Z', now), '1 min ago');
   assert.equal(timeAgo(null, now), '');
 });
+
+test('board, decision and brief changes are small quiet rows', () => {
+  assert.equal(eventToView({ kind: 'board-card', who: 'Max', action: 'added', title: 'Footer', column: 'todo' }).text, 'Max added a card: Footer');
+  assert.equal(eventToView({ kind: 'board-card', who: 'Max', action: 'started', title: 'Footer', column: 'doing' }).text, 'Max gave a card to their Claude: Footer');
+  assert.equal(eventToView({ kind: 'board-card', who: 'Max', action: 'moved', title: 'Footer', column: 'done' }).text, 'Max moved a card to Done: Footer');
+  assert.equal(eventToView({ kind: 'board-card', who: 'Max', action: 'removed', title: 'Footer', column: 'todo' }).text, 'Max removed a card: Footer');
+  assert.equal(eventToView({ kind: 'decision-added', who: 'Brennan', text: 'Blue buttons' }).text, 'Brennan added a decision: Blue buttons');
+  assert.equal(eventToView({ kind: 'brief-saved', who: 'Brennan' }).text, 'Brennan updated the project brief.');
+  assert.equal(eventToView({ kind: 'reaction', target: 1, emoji: '🎉', who: 'Max', on: true }), null);
+  assert.equal(eventToView({ kind: 'typing', who: 'Max' }), null);
+});

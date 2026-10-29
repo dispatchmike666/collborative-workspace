@@ -3,11 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>Log in - Shared workspace</title>
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body class="login-page">
-  <main class="login-card">
+  <main class="login-card sticker">
+    <div id="crew" class="crew-row"></div>
     <h1>Shared workspace</h1>
     <p class="muted">Log in to work on projects together.</p>
     <form id="login-form">
@@ -18,7 +20,7 @@
         <input id="password" name="password" type="password" autocomplete="current-password" required>
       </label>
       <p id="error" class="error" role="alert" hidden></p>
-      <button type="submit" class="primary">Log in</button>
+      <button type="submit" class="btn primary">Log in</button>
     </form>
   </main>
   <script type="module" src="/assets/login.js"></script>

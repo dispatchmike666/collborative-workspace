@@ -1,3 +1,14 @@
+import { creature } from './crew.js';
+import { applyLook } from './ui.js';
+
+applyLook();
+
+// The crew waves hello. They stay asleep until you are in.
+document.getElementById('crew').append(
+  creature({ color: 'blue', mood: 'awake', size: 'big', label: 'A friendly helper' }),
+  creature({ color: 'pink', mood: 'asleep', size: 'big', label: 'A sleepy helper' }),
+);
+
 const form = document.getElementById('login-form');
 const errorEl = document.getElementById('error');
 
