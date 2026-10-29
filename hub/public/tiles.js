@@ -16,6 +16,7 @@ export function createTiles({ projectId, defs }) {
   let activeNarrow = 'chat';
   let disposed = false;
   let zoomed = null;
+  let activeId = 'chat';
 
   const stage = el('div', { class: 'stage' });
   const emptyNote = el('p', { class: 'stage-empty', text: 'Nothing is open. Use the dock below to bring a tile back.', hidden: true });
@@ -44,7 +45,17 @@ export function createTiles({ projectId, defs }) {
     tile.style.height = `${rect.h}px`;
   }
 
+  // The window you are working in. The others go quiet, like inactive windows on a Mac.
+  function paintActive() {
+    if (layout.tiles[activeId]?.mode === 'closed') {
+      activeId = TILE_IDS.find((id) => layout.tiles[id].mode !== 'closed') ?? null;
+    }
+    for (const [id, tile] of tileEls) tile.classList.toggle('active-window', id === activeId);
+  }
+
   function bringFront(id) {
+    activeId = id;
+    paintActive();
     layout.z += 1;
     layout.tiles[id].z = layout.z;
     tileEls.get(id).style.zIndex = String(10 + layout.z);
@@ -124,7 +135,15 @@ export function createTiles({ projectId, defs }) {
     });
     tile.addEventListener('pointerdown', () => {
       if (layout.tiles[def.id].mode === 'float') bringFront(def.id);
+      else {
+        activeId = def.id;
+        paintActive();
+      }
     }, true);
+    tile.addEventListener('focusin', () => {
+      activeId = def.id;
+      paintActive();
+    });
     stage.append(tile);
   }
   stage.append(emptyNote);
@@ -258,6 +277,7 @@ export function createTiles({ projectId, defs }) {
     emptyNote.hidden = TILE_IDS.some((id) => layout.tiles[id].mode !== 'closed');
     refreshChrome();
     applyZoom();
+    paintActive();
   }
 
   function refreshChrome() {
@@ -406,6 +426,8 @@ export function createTiles({ projectId, defs }) {
     setArrange,
     setCount,
     isNarrow: narrow,
+    hide: (id) => setMode(id, 'closed'),
+    reset: resetLayout,
     isOpen: (id) => layout.tiles[id].mode !== 'closed',
     destroy() {
       disposed = true;

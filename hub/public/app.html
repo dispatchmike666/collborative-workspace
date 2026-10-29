@@ -8,20 +8,19 @@
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-  <header class="topbar">
+  <header class="topbar menubar">
     <a class="brand" href="#/" aria-label="Home">
       <span class="brand-mark" id="brand-mark"></span>
-      <span class="brand-name">workspace</span>
     </a>
-    <div id="crew" class="crew-row" aria-label="The crew"></div>
+    <nav id="menus" class="menus" aria-label="Menus"></nav>
     <span class="spacer"></span>
-    <button id="open-palette" class="btn small" type="button" aria-keyshortcuts="Control+K">
-      <span class="label-long">Jump to…</span> <kbd>Ctrl K</kbd>
-    </button>
-    <button id="toggle-sound" class="btn small icon ghost" type="button" aria-pressed="false" aria-label="Sounds are off">♪</button>
-    <button id="open-settings" class="btn small icon ghost" type="button" aria-label="Look and feel" title="Look and feel">◐</button>
+    <div id="crew" class="crew-row" aria-label="The crew"></div>
+    <button id="open-palette" class="mb-btn" type="button" aria-keyshortcuts="Control+K" aria-label="Jump to…" title="Jump to… (Ctrl K)"></button>
+    <button id="toggle-sound" class="mb-btn" type="button" aria-pressed="false" aria-label="Sounds are off">♪</button>
+    <button id="open-settings" class="mb-btn" type="button" aria-label="Look and feel" title="Look and feel">◐</button>
     <span id="who" class="who"></span>
-    <button id="logout" class="btn small ghost" type="button">Log out</button>
+    <button id="logout" class="mb-btn" type="button" hidden>Log out</button>
+    <span id="clock" class="clock" aria-hidden="true"></span>
   </header>
   <main id="view"></main>
   <div id="toasts" class="toasts" aria-live="polite"></div>

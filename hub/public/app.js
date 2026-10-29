@@ -1,4 +1,5 @@
 import { brandMark, crewMember } from './crew.js';
+import { icon } from './icons.js';
 import { createPalette } from './palette.js';
 import { showHome } from './home.js';
 import { projectActions, showProject } from './project.js';
@@ -39,12 +40,112 @@ function buildTopbar() {
     paintSound();
   });
   document.getElementById('open-settings').addEventListener('click', openSettings);
-  document.getElementById('open-palette').addEventListener('click', () => palette.open());
-  document.getElementById('who').textContent = `Signed in as ${me}`;
+  const paletteButton = document.getElementById('open-palette');
+  paletteButton.replaceChildren(icon('search', 15, 2));
+  paletteButton.addEventListener('click', () => palette.open());
+  buildMenus();
+  const clock = document.getElementById('clock');
+  const tick = () => { clock.textContent = new Date().toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }); };
+  tick();
+  setInterval(tick, 20_000);
+  document.getElementById('who').textContent = me;
   document.getElementById('logout').addEventListener('click', async () => {
     await fetch('/api/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
     window.location.assign('/login');
   });
+}
+
+// ---------- the menu bar ----------
+
+const MODE_CHOICES = [['light', 'Light'], ['dark', 'Dark'], ['auto', 'Match system']];
+
+function menuDefinitions() {
+  const here = projectActions.current;
+  const mode = prefs.get('mode', 'light');
+  const accent = prefs.get('accent', 'blue');
+  const go = (hash) => () => { window.location.hash = hash; };
+  const setLook = (key, value) => () => { prefs.set(key, value); applyLook(); };
+  return [
+    {
+      label: 'Workspace',
+      bold: true,
+      items: [
+        { label: 'All projects', run: go('#/') },
+        ...projects.map((project) => ({ label: project.name, run: go(`#/p/${project.id}`), checked: here?.projectId === project.id })),
+        '-',
+        { label: 'Look and feel…', run: openSettings },
+        '-',
+        { label: 'Log out', run: () => document.getElementById('logout').click() },
+      ],
+    },
+    {
+      label: 'Window',
+      items: [
+        { label: 'Tidy into a wall', run: () => here.arrange('tiles'), disabled: !here },
+        { label: 'Float everything', run: () => here.arrange('windows'), disabled: !here },
+        { label: 'Reset layout', run: () => here.reset(), disabled: !here },
+        '-',
+        ...(here ? here.windows() : [['chat', 'Chat'], ['board', 'Board'], ['brief', 'Brief'], ['files', 'Files'], ['notes', 'Notes'], ['preview', 'Preview']].map(([key, label]) => ({ key, label, open: false, off: true })))
+          .map((win) => ({ label: win.label, checked: win.open, disabled: !here, run: () => here.toggleWindow(win.key) })),
+      ],
+    },
+    {
+      label: 'View',
+      items: [
+        ...MODE_CHOICES.map(([value, label]) => ({ label, checked: mode === value, run: setLook('mode', value) })),
+        '-',
+        ...ACCENTS.map((name) => ({ label: ACCENT_LABELS[name], checked: accent === name, run: setLook('accent', name) })),
+        '-',
+        { label: 'Sounds', checked: prefs.get('sound', false), run: () => document.getElementById('toggle-sound').click() },
+        { label: 'Celebrate finished runs', checked: prefs.get('confetti', false), run: () => prefs.set('confetti', !prefs.get('confetti', false)) },
+      ],
+    },
+  ];
+}
+
+function buildMenus() {
+  const nav = document.getElementById('menus');
+  let openButton = null;
+  let popup = null;
+
+  const close = () => {
+    popup?.remove();
+    popup = null;
+    openButton?.setAttribute('aria-expanded', 'false');
+    openButton = null;
+  };
+  const open = (button, index) => {
+    close();
+    const definition = menuDefinitions()[index];
+    popup = el('div', { class: 'menu-pop', role: 'menu' }, definition.items.map((item) => {
+      if (item === '-') return el('div', { class: 'menu-sep', role: 'separator' });
+      return el('button', {
+        type: 'button', class: 'menu-row', role: 'menuitem', disabled: item.disabled || undefined,
+        onclick: () => { close(); item.run(); },
+      }, el('span', { class: 'menu-check', 'aria-hidden': 'true', text: item.checked ? '✓' : '' }), el('span', { text: item.label }));
+    }));
+    const box = button.getBoundingClientRect();
+    popup.style.left = `${box.left}px`;
+    popup.style.top = `${box.bottom + 1}px`;
+    document.body.append(popup);
+    openButton = button;
+    button.setAttribute('aria-expanded', 'true');
+  };
+
+  menuDefinitions().forEach((definition, index) => {
+    const button = el('button', { type: 'button', class: `menu-title${definition.bold ? ' bold' : ''}`, 'aria-haspopup': 'menu', 'aria-expanded': 'false', text: definition.label });
+    button.addEventListener('click', () => (openButton === button ? close() : open(button, index)));
+    // Once one menu is open, sliding across the bar opens its neighbours, like on a Mac.
+    button.addEventListener('mouseenter', () => { if (openButton && openButton !== button) open(button, index); });
+    nav.append(button);
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (popup && !event.target.closest('.menu-pop, .menu-title')) close();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') close();
+  });
+  window.addEventListener('hashchange', close);
 }
 
 // ---------- the command palette ----------

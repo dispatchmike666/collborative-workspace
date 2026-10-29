@@ -15,6 +15,7 @@ const SHAPES = {
   close: [['path', { d: 'M18 6 6 18M6 6l12 12' }]],
   home: [['path', { d: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z' }]],
   chevron: [['path', { d: 'm6 9 6 6 6-6' }]],
+  search: [['circle', { cx: 11, cy: 11, r: 7 }], ['path', { d: 'm20 20-3.5-3.5' }]],
   plus: [['path', { d: 'M12 5v14M5 12h14' }]],
   expand: [['path', { d: 'M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7' }]],
   shrink: [['path', { d: 'M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7' }]],

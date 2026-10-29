@@ -51,10 +51,12 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **The windows.** A project is one calm screen of free windows: Chat in the middle as the main thing,
   Board on its left and Preview on its right. Files, Brief and Notes wait in the dock at the bottom and
   open as extra windows. Drag a title bar to move a window anywhere (even partly off the edge), drag any
-  edge or corner to resize it. Red dot hides a window, yellow snaps it into a tidy wall (and back), green
-  fills the whole stage (Escape goes back). The dock's last three buttons tidy everything into a wall,
-  float everything, or reset. Your arrangement is remembered per project. On a phone the dock becomes a
+  edge or corner to resize it. The window you are in is in full colour; the others go grey and quiet, as
+  on a Mac. Red dot hides a window, yellow snaps it into a tidy wall (and back), green fills the whole
+  stage (Escape goes back). Your arrangement is remembered per project. On a phone the dock becomes a
   tab bar and shows one window at a time.
+- **The menu bar.** Workspace (projects, look and feel, log out), Window (tidy, float, reset, and a tick
+  list of which windows are open) and View (light, dark, system, accent colour, sounds), plus a clock.
 - **Board.** Four lanes: Ideas, To do, Doing, Done. Drag cards between lanes. "Give to my
   Claude" turns a card into a request, and the card moves to Done by itself when the run ends well.
 - **Quick prompts.** A shelf above the message box with one-click requests ("Find bugs", "Make
@@ -62,10 +64,10 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **Reactions and typing.** Hover a message to react with an emoji. You see when the other
   person is typing.
 - **Files.** The Files tab lists the project's files and shows any text file when you click it.
-- **Look and feel.** Frosted glass on a clean neutral backdrop, with a glow that lights up the edges of
-  windows and cards as your mouse gets near. Light by default, a graphite dark mode, or match your
-  computer. Five accent colours (Azure, Rose, Teal, Amber, Violet) and soft sounds in the settings
-  (the half-moon icon). An optional celebration when a run finishes is off by default.
+- **Look and feel.** In the manner of macOS: a quiet backdrop, a menu bar, windows with the three dots, solid
+  system-style buttons and fields, a plain dock, and a faint light along window edges as your mouse gets
+  near. Light by default, a graphite dark mode, or match your computer. Five accent colours (Azure, Rose,
+  Teal, Amber, Violet) and soft sounds in View. An optional celebration when a run finishes is off by default.
 - **Jump menu.** Press Ctrl+K anywhere to jump to a project, a tab, the settings or a new project.
   Press `/` to jump to the message box.
 - **Chat.** Under the timeline, "My Claude" sends your message to your own Claude. "Just Max"
