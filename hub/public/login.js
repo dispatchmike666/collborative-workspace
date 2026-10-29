@@ -1,8 +1,7 @@
 import { brandMark } from './crew.js';
-import { applyLook, enableSpotlight } from './ui.js';
+import { applyLook } from './ui.js';
 
 applyLook();
-enableSpotlight();
 
 document.getElementById('crew').append(brandMark());
 

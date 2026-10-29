@@ -12,8 +12,8 @@ instructions that Claude reads on every request.
 
 | Area | What it does |
 |---|---|
-| New look | "Night glass": frosted panels over a dark midnight backdrop with slow drifting light, serif headings, champagne accent. Gold-foil headings with an italic name in the greeting, fine film grain, a slow turning aurora, glass edges that light up under the mouse pointer, a sweep of light on the main buttons, a glint on the gem, ornamental rules under section titles, and staggered entrances. Pale "pearl" light mode, or match the computer. Five accents. Motion switches itself off if the computer asks for less. (The first version was cartoonish, with sticker cards and little creatures; Brennan asked for glass and fancy, so it was redone the same day.) |
-| Presence | A glass orb with each person's initial. Dimmed when offline, green dot when online, turning ring while their Claude works, soft glow when a run ends well |
+| New look | "Slate glass": dark graphite and blue frosted panes, one accent, sharp and plain (a light mode too). Redone three times after feedback: cartoonish, then gold and ornate, then four looks that only changed colour. Final structure and look were picked by Brennan from pictures |
+| Presence | A glass orb with each person's initial. Dimmed when offline, green dot when online, turning ring while their Claude works |
 | Pulse (home) | Greeting, who is online, 7-day numbers (requests, rough plan use, files saved), a feed of what just happened, project cards |
 | Project brief | Standing instructions (up to 4,000 characters, versioned so two saves at once are caught) plus a list of settled decisions. Sent to Claude at the start of every request, for both people |
 | Shared notes to Claude | A switch sends the notes page to Claude too (first 3,000 characters) |
@@ -22,7 +22,7 @@ instructions that Claude reads on every request.
 | Reactions and typing | Emoji reactions on messages and a "someone is typing" line |
 | File viewer | Click a file to read it (text files only, up to 200 KB each) |
 | Jump menu | Ctrl+K from anywhere; `/` jumps to the message box |
-| Finishing touches | A small gold-dust sparkle when a run ends well, and soft sounds (both optional, in settings) |
+| Tile wall, windows and dock | The project screen is a wall of tiles (chat, board, preview, files, brief, notes). Tiles drag out into resizable windows, the dock opens and hides them, and the layout is remembered per project. On phones the dock is a tab bar |
 | Phone layout | One narrow top bar, a project strip, and a Chat / "Board, files and more" switch |
 | Sign-in help | If Claude's sign-in has expired, the helper says so in plain words and how to fix it |
 

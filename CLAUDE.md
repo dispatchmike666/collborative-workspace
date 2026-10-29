@@ -11,10 +11,11 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
 - `hub/` is the website (login, projects, live streams, queue and turn-taking, approvals,
   notes, preview, board, project brief and decisions, quick prompts, home numbers). No AI runs
   there. `hub/public/` is the page code: no inline scripts or styles (strict content policy),
-  plain modules, one stylesheet. The design is "night glass" (Brennan asked for glass and fancy,
-  not cartoonish): frosted panels over a dark midnight backdrop, one champagne accent, serif
-  headings, glass-orb presence markers (`crew.js`), a pale "pearl" light mode. No emoji in the
-  interface chrome; use plain symbols. Dark is the default look.
+  plain modules, one stylesheet. The design is "slate glass": dark graphite and deep blue panes of frosted glass, one blue accent,
+  sharp corners, thin lines, tight type, sans-serif only, a light mode as well. The project screen is a
+  tile wall (`tiles.js`): chat, board, preview, files, brief and notes are tiles that sit in a grid, can
+  pop out into draggable windows, and are brought back from a dock at the bottom. On phones the dock
+  becomes a tab bar. No emoji in the interface chrome; use plain symbols (`icons.js`).
 - `helper/` runs on each person's own computer and runs that person's own Claude. It puts the
   project's brief, last decisions and (if shared) notes at the top of every request to Claude.
 - `server/` is the Stage 1 single-person page. Its parser, runner and settings are reused by
@@ -36,7 +37,7 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
 - The hub and the solo page listen on 127.0.0.1 only.
 - Approvals allow one exact command. Commands with * ( ) or line breaks cannot be approved.
 - Anything a person reads is plain English.
-- Design rounds are over once Brennan picks a look (Night, Gold, Liquid or Paper). Then delete the other looks and the "Look" button, and do not redesign again unless he asks. He refuses endless design rounds; never ask him to describe taste in design words, show him options instead.
+- The look is settled (slate glass, tile wall with windows and a dock). Do not redesign it again unless Brennan asks. He refuses endless design rounds; never ask him to describe taste in design words, show him pictures or finished options instead.
 - Never add --bare or --dangerously-skip-permissions to the Claude flags.
 - Test with the stand-in Claude (test/fake-claude.js), never the real one, except in
   deliberate acceptance runs.

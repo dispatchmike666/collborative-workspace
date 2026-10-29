@@ -48,6 +48,12 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **Project brief and decisions.** The Brief tab holds standing instructions ("always use plain
   words", "never touch the login page") and a list of settled decisions. Claude is given both at
   the start of every request, for both people. Notes can be shared with Claude too, by a switch.
+- **The tile wall.** A project is one screen of tiles: Chat on the left, then Board, Preview, Files and
+  Brief. Drag a tile by its title bar to pull it out into a floating window, or press the pop-out
+  button. Drag the bottom-right corner to resize. Double-click a title bar to dock it back. The dock at
+  the bottom opens and hides tiles (Notes starts hidden), and "Tiles" or "Windows" turns the whole
+  screen into the wall or into floating windows. Your arrangement is remembered per project. On a
+  phone the dock becomes a tab bar and shows one tile at a time.
 - **Board.** Four lanes: Ideas, To do, Doing, Done. Drag cards between lanes. "Give to my
   Claude" turns a card into a request, and the card moves to Done by itself when the run ends well.
 - **Quick prompts.** A shelf above the message box with one-click requests ("Find bugs", "Make
@@ -55,12 +61,11 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **Reactions and typing.** Hover a message to react with an emoji. You see when the other
   person is typing.
 - **Files.** The Files tab lists the project's files and shows any text file when you click it.
+- **Look and feel.** Dark frosted glass with a blue accent by default, or a light mode, or match your
+  computer. Five accent colours (Azure, Rose, Teal, Amber, Violet) and soft sounds in the settings
+  (the half-moon icon). An optional celebration when a run finishes is off by default.
 - **Jump menu.** Press Ctrl+K anywhere to jump to a project, a tab, the settings or a new project.
   Press `/` to jump to the message box.
-- **Look and feel.** Frosted glass over a midnight backdrop (dark is the default), or a pale
-  "pearl" light mode, or match your computer. Five accents (Champagne, Sapphire, Rose, Jade,
-  Amethyst), a small gold-dust sparkle when a job finishes, and soft sounds if you want them (the
-  half-moon icon in the top bar). Phones are supported.
 - **Chat.** Under the timeline, "My Claude" sends your message to your own Claude. "Just Max"
   sends a normal message to the other person that no AI ever sees.
 - **Taking turns.** One Claude works on a project at a time. A second request waits in line

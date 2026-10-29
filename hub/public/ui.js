@@ -69,33 +69,13 @@ export const prefs = {
   },
 };
 
-export const ACCENTS = ['tangerine', 'blue', 'pink', 'mint', 'grape'];
-export const ACCENT_LABELS = { tangerine: 'Champagne', blue: 'Sapphire', pink: 'Rose', mint: 'Jade', grape: 'Amethyst' };
-
-// The looks on offer. Night and Gold come in dark and light; Liquid and Paper are light only.
-export const THEMES = ['night', 'gold', 'liquid', 'paper'];
-export const THEME_LABELS = { night: 'Night', gold: 'Gold', liquid: 'Liquid', paper: 'Paper' };
-const THEME_ACCENT = { night: 'tangerine', gold: 'tangerine', liquid: 'blue', paper: 'blue' };
-export const LIGHT_ONLY = new Set(['liquid', 'paper']);
-
-export const currentTheme = () => {
-  const theme = prefs.get('theme', 'night');
-  return THEMES.includes(theme) ? theme : 'night';
-};
+export const ACCENTS = ['blue', 'pink', 'mint', 'tangerine', 'grape'];
+export const ACCENT_LABELS = { blue: 'Azure', pink: 'Rose', mint: 'Teal', tangerine: 'Amber', grape: 'Violet' };
 
 export function applyLook() {
   const root = document.documentElement;
-  const theme = currentTheme();
-  root.setAttribute('data-theme', theme);
   root.setAttribute('data-mode', prefs.get('mode', 'dark'));
-  root.setAttribute('data-accent', prefs.get('accent', THEME_ACCENT[theme]));
-}
-
-// One press moves to the next look, so the choices are easy to compare.
-export function cycleTheme() {
-  prefs.set('theme', THEMES[(THEMES.indexOf(currentTheme()) + 1) % THEMES.length]);
-  applyLook();
-  return currentTheme();
+  root.setAttribute('data-accent', prefs.get('accent', 'blue'));
 }
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -143,11 +123,11 @@ export function playSound(name) {
 
 // ---------- confetti ----------
 
-// A small burst of gold dust: tiny cut diamonds in champagne, pearl and a little jewel colour.
-const CONFETTI = ['#e8cf9f', '#f6ecd2', '#c9a96a', '#ffffff', '#9fd8cf', '#c4b0ff'];
+// A short burst of small cut diamonds. Off unless switched on in settings.
+const CONFETTI = ['#5b9dff', '#9d82ff', '#38d0b0', '#f0a53c', '#f0709f', '#ffffff'];
 
 export function confetti() {
-  if (!prefs.get('confetti', true) || reducedMotion()) return;
+  if (!prefs.get('confetti', false) || reducedMotion()) return;
   const canvas = el('canvas', { class: 'confetti', 'aria-hidden': 'true' });
   document.body.append(canvas);
   const ratio = window.devicePixelRatio || 1;
@@ -210,8 +190,7 @@ export function openSettings() {
     },
   });
   const mode = prefs.get('mode', 'dark');
-  const theme = currentTheme();
-  const accent = prefs.get('accent', THEME_ACCENT[theme]);
+  const accent = prefs.get('accent', 'blue');
   const toggle = (label, key, fallback) => {
     const box = el('input', { type: 'checkbox' });
     box.checked = prefs.get(key, fallback);
@@ -220,8 +199,7 @@ export function openSettings() {
   };
   dialog.append(el('div', { class: 'settings-box' },
     el('h2', { text: 'Look and feel' }),
-    el('div', { class: 'segmented', role: 'group', 'aria-label': 'Look' }, THEMES.map((name) => choice(THEME_LABELS[name], 'theme', name, theme))),
-    LIGHT_ONLY.has(theme) ? null : el('div', { class: 'segmented', role: 'group', 'aria-label': 'Light or dark' },
+    el('div', { class: 'segmented', role: 'group', 'aria-label': 'Light or dark' },
       choice('Match my computer', 'mode', 'auto', mode), choice('Light', 'mode', 'light', mode), choice('Dark', 'mode', 'dark', mode)),
     el('div', { class: 'swatches', role: 'group', 'aria-label': 'Accent colour' },
       ACCENTS.map((name) => el('button', {
@@ -236,7 +214,7 @@ export function openSettings() {
           openSettings();
         },
       }))),
-    toggle('A sparkle when my Claude finishes something', 'confetti', true),
+    toggle('A celebration when my Claude finishes something', 'confetti', false),
     toggle('Soft sounds for new messages and finished runs', 'sound', false),
     el('div', { class: 'row-actions' },
       el('button', { type: 'button', class: 'btn primary', text: 'Done', onclick: () => dialog.close() }),
@@ -244,27 +222,4 @@ export function openSettings() {
   dialog.addEventListener('close', () => dialog.remove());
   document.body.append(dialog);
   dialog.showModal();
-}
-
-// ---------- glass that catches the light ----------
-
-// The pointer lights the cut edge of whatever pane it is over. Mouse only, and only where hovering exists.
-export function enableSpotlight() {
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  const SURFACES = '.sticker, .ticket, .topbar, .sidebar, .chat, .tools';
-  let pending = null;
-  let frame = 0;
-  document.addEventListener('pointermove', (event) => {
-    if (event.pointerType !== 'mouse' || !(event.target instanceof Element)) return;
-    pending = event;
-    if (frame) return;
-    frame = requestAnimationFrame(() => {
-      frame = 0;
-      for (let node = pending.target.closest(SURFACES); node; node = node.parentElement?.closest(SURFACES)) {
-        const box = node.getBoundingClientRect();
-        node.style.setProperty('--mx', `${pending.clientX - box.left}px`);
-        node.style.setProperty('--my', `${pending.clientY - box.top}px`);
-      }
-    });
-  }, { passive: true });
 }

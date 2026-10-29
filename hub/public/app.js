@@ -3,10 +3,9 @@ import { createPalette } from './palette.js';
 import { showHome } from './home.js';
 import { projectActions, showProject } from './project.js';
 import { memberState, onCrewChange, setPresence, setUsers } from './state.js';
-import { ACCENTS, ACCENT_LABELS, THEMES, THEME_LABELS, api, applyLook, currentTheme, cycleTheme, el, enableSpotlight, openSettings, prefs, toast } from './ui.js';
+import { ACCENTS, ACCENT_LABELS, api, applyLook, el, openSettings, prefs, toast } from './ui.js';
 
 applyLook();
-enableSpotlight();
 
 const viewEl = document.getElementById('view');
 let me = null;
@@ -38,9 +37,6 @@ function buildTopbar() {
     prefs.set('sound', !prefs.get('sound', false));
     paintSound();
   });
-  const lookName = document.getElementById('look-name');
-  lookName.textContent = THEME_LABELS[currentTheme()];
-  document.getElementById('cycle-look').addEventListener('click', () => { lookName.textContent = THEME_LABELS[cycleTheme()]; });
   document.getElementById('open-settings').addEventListener('click', openSettings);
   document.getElementById('open-palette').addEventListener('click', () => palette.open());
   document.getElementById('who').textContent = `Signed in as ${me}`;
@@ -62,10 +58,13 @@ const palette = createPalette(() => {
     const here = projectActions.current;
     commands.push({ icon: '✎', label: 'Write a message', hint: '/', run: here.focusComposer });
     for (const [key, label] of here.tabs) commands.push({ icon: '▤', label: `Show ${label}`, hint: 'this project', run: () => here.openTab(key) });
+    commands.push(
+      { icon: '▦', label: 'Tidy everything into the wall', hint: 'this project', run: () => here.arrange('tiles') },
+      { icon: '▭', label: 'Turn everything into floating windows', hint: 'this project', run: () => here.arrange('windows') },
+    );
   }
   commands.push(
     { icon: '◐', label: 'Look and feel', hint: 'colours, dark mode', run: openSettings },
-    ...THEMES.map((name) => ({ icon: '◈', label: `Look: ${THEME_LABELS[name]}`, run: () => { prefs.set('theme', name); applyLook(); document.getElementById('look-name').textContent = THEME_LABELS[name]; } })),
     { icon: '☾', label: 'Switch to dark mode', run: () => { prefs.set('mode', 'dark'); applyLook(); } },
     { icon: '☼', label: 'Switch to light mode', run: () => { prefs.set('mode', 'light'); applyLook(); } },
     { icon: '▭', label: 'Match my computer (light or dark)', run: () => { prefs.set('mode', 'auto'); applyLook(); } },

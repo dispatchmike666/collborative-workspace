@@ -2,12 +2,14 @@ import { createBoard } from './board.js';
 import { createBrief } from './brief.js';
 import { creature } from './crew.js';
 import { createFiles, createNotes, createPreview } from './files.js';
+import { icon } from './icons.js';
 import {
   applyReaction, initial, projectColor, reactionChips, typingLabel, typingNames, userColor,
 } from './logic.js';
 import { approvalUsedText, eventToView, statusText } from './render.js';
 import { cheer, crewState, setPresence, setWorking } from './state.js';
-import { api, confetti, el, playSound, prefs, toast } from './ui.js';
+import { createTiles } from './tiles.js';
+import { api, confetti, el, playSound, toast } from './ui.js';
 
 const REACTIONS = ['👍', '🎉', '😂', '🔥', '👀', '❤️'];
 const TABS = [['board', 'Board'], ['brief', 'Brief'], ['files', 'Files'], ['notes', 'Notes'], ['preview', 'Preview']];
@@ -20,7 +22,7 @@ export const projectActions = { current: null };
 const clock = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '');
 const sameName = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
 
-// The project screen: projects on the left, chat in the middle, the tool tabs on the right.
+// The project screen: a wall of tiles (chat, board, preview, files, brief, notes) that can pop out into windows, with a dock below.
 export async function showProject(viewEl, { me, users, projectId }) {
   viewEl.replaceChildren(el('p', { class: 'muted home', text: 'Loading…' }));
   let details;
@@ -290,66 +292,46 @@ export async function showProject(viewEl, { me, users, projectId }) {
   // ---------- layout ----------
 
   const note = details.project.repoUrl ? `Files are shared through ${details.project.repoUrl}` : 'No GitHub address, so the files stay on whichever computer does the work.';
-  const paneSwitch = el('div', { class: 'segmented pane-switch', role: 'group', 'aria-label': 'Show' },
-    el('button', { type: 'button', class: 'chip active', 'data-pane': 'chat', text: 'Chat' }),
-    el('button', { type: 'button', class: 'chip', 'data-pane': 'tools', text: 'Board, files and more' }));
 
-  const chat = el('section', { class: 'chat', 'aria-label': 'Chat' },
-    el('div', { class: 'chat-head' }, el('div', {}, el('p', { class: 'eyebrow', text: 'Project' }), el('h2', { text: details.project.name })), statusEl),
-    el('p', { class: 'head-note muted small', text: note }),
-    paneSwitch,
+  const chatContent = el('div', { class: 'chat' },
     timelineEl,
     typingEl,
     bannerEl,
     el('div', { class: 'composer' }, shelfEl, addBox,
       el('div', { class: 'segmented', role: 'group', 'aria-label': 'Send to' }, segments),
-      el('div', { class: 'composer-line' }, input, el('button', { type: 'button', class: 'btn primary', text: 'Send', onclick: send })),
-      el('p', { class: 'hint muted small' }, el('kbd', { text: 'Enter' }), ' sends  ·  ', el('kbd', { text: 'Shift' }), '+', el('kbd', { text: 'Enter' }), ' adds a line  ·  ', el('kbd', { text: '/' }), ' jumps here from anywhere')));
+      el('div', { class: 'composer-line' }, input, el('button', { type: 'button', class: 'btn primary', text: 'Send', onclick: send }))));
 
-  const sidebar = el('nav', { class: 'sidebar', 'aria-label': 'Projects' },
-    el('a', { class: 'side-link', href: '#/', text: '← Home' }),
-    projects.map((project) => el('a', { class: `side-link${project.id === projectId ? ' current' : ''}`, href: `#/p/${project.id}`, 'aria-current': project.id === projectId ? 'page' : null },
-      el('span', { class: `swatch c-${projectColor(project.id)}` }), el('span', { text: project.name }))));
-
-  const toolBody = el('div', { class: 'tool-body', role: 'tabpanel' });
-  const tabButtons = new Map();
-  const tools = el('aside', { class: 'tools', 'aria-label': 'Project tools' },
-    el('div', { class: 'tabs', role: 'tablist' }, TABS.map(([key, label]) => {
-      const count = el('span', { class: 'count' });
-      const button = el('button', { type: 'button', class: 'tab', role: 'tab', id: `tab-${key}`, onclick: () => openTab(key) }, el('span', { text: label }), count);
-      tabButtons.set(key, { button, count });
-      return button;
-    })),
-    toolBody);
-
+  const tiles = createTiles({
+    projectId,
+    defs: [
+      { id: 'chat', title: 'Chat', icon: 'chat', element: chatContent },
+      ...TABS.map(([key, label]) => ({ id: key, title: label, icon: key, element: panels[key].element })),
+    ],
+  });
   function refreshCounts() {
-    for (const [key, { count }] of tabButtons) {
-      const value = panels[key].count();
-      count.textContent = value ? String(value) : '';
-    }
-  }
-  function openTab(key) {
-    prefs.set('tab', key);
-    for (const [name, { button }] of tabButtons) button.setAttribute('aria-selected', String(name === key));
-    toolBody.setAttribute('aria-labelledby', `tab-${key}`);
-    toolBody.replaceChildren(panels[key].element);
-    root.dataset.pane = 'tools';
-    syncPaneSwitch();
+    for (const [key] of TABS) tiles.setCount(key, panels[key].count());
   }
 
-  const root = el('div', { class: 'project', 'data-pane': 'chat' }, sidebar, chat, tools);
-  function syncPaneSwitch() {
-    for (const button of paneSwitch.querySelectorAll('button')) button.classList.toggle('active', button.dataset.pane === root.dataset.pane);
-  }
-  for (const button of paneSwitch.querySelectorAll('button')) {
-    button.addEventListener('click', () => { root.dataset.pane = button.dataset.pane; syncPaneSwitch(); });
-  }
+  // The project switcher: a small menu in the bar above the tiles.
+  const menu = el('div', { class: 'menu', role: 'menu', hidden: true },
+    projects.map((project) => el('a', { class: `menu-item${project.id === projectId ? ' current' : ''}`, role: 'menuitem', href: `#/p/${project.id}` },
+      el('span', { class: `swatch c-${projectColor(project.id)}` }), el('span', { text: project.name }))),
+    el('a', { class: 'menu-item', role: 'menuitem', href: '#/' }, icon('home', 15), el('span', { text: 'All projects' })));
+  const switchButton = el('button', {
+    type: 'button', class: 'project-switch', 'aria-haspopup': 'menu', 'aria-expanded': 'false',
+    onclick: () => { menu.hidden = !menu.hidden; switchButton.setAttribute('aria-expanded', String(!menu.hidden)); },
+  }, el('span', { class: 'project-name', text: details.project.name }), icon('chevron', 16));
+  const closeSwitcher = () => { menu.hidden = true; switchButton.setAttribute('aria-expanded', 'false'); };
+  const projectBar = el('div', { class: 'project-bar' },
+    el('a', { class: 'crumb', href: '#/', 'aria-label': 'All projects', title: 'All projects' }, icon('home', 16)),
+    el('span', { class: 'crumb-sep', 'aria-hidden': 'true', text: '/' }),
+    el('div', { class: 'switch-wrap' }, switchButton, menu),
+    el('span', { class: 'project-note', text: note, title: note }),
+    el('span', { class: 'spacer' }),
+    statusEl);
 
+  const root = el('div', { class: 'project' }, projectBar, tiles.stage, el('div', { class: 'dock-space' }), tiles.dock);
   viewEl.replaceChildren(root);
-  const first = prefs.get('tab', 'board');
-  openTab(TABS.some(([key]) => key === first) ? first : 'board');
-  root.dataset.pane = 'chat';
-  syncPaneSwitch();
   renderStatus();
   updateBanner();
   refreshCounts();
@@ -408,24 +390,29 @@ export async function showProject(viewEl, { me, users, projectId }) {
 
   const onKey = (event) => {
     const typingInField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+    if (event.key === 'Escape') closeSwitcher();
     if (event.key === '/' && !typingInField && !event.ctrlKey && !event.metaKey) {
       event.preventDefault();
-      root.dataset.pane = 'chat';
-      syncPaneSwitch();
-      input.focus();
+      focusComposer();
     }
   };
   document.addEventListener('keydown', onKey);
 
+  function focusComposer() {
+    tiles.focus('chat');
+    input.focus();
+  }
   projectActions.current = {
     projectId,
-    openTab,
-    focusComposer: () => { root.dataset.pane = 'chat'; syncPaneSwitch(); input.focus(); },
+    openTab: (key) => tiles.focus(key),
+    focusComposer,
+    arrange: (mode) => tiles.setArrange(mode),
     tabs: TABS,
   };
 
   // Close click-away reaction menus.
   const closeMenus = (event) => {
+    if (!event.target.closest?.('.switch-wrap')) closeSwitcher();
     if (event.target.closest?.('.react-btn, .react-menu')) return;
     for (const menu of timelineEl.querySelectorAll('.react-menu')) menu.hidden = true;
     for (const button of timelineEl.querySelectorAll('.react-btn')) button.setAttribute('aria-expanded', 'false');
@@ -434,6 +421,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
 
   return () => {
     stream.close();
+    tiles.destroy();
     clearInterval(typingTimer);
     document.removeEventListener('keydown', onKey);
     document.removeEventListener('click', closeMenus);
