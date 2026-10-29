@@ -124,8 +124,8 @@ export function crewMood({ online, working, happy }) {
   return 'awake';
 }
 
-export const MOOD_TEXT = { asleep: 'asleep', awake: 'ready', working: 'working…', happy: 'nice work!' };
-export const MOOD_BUBBLE = { asleep: 'Zzz… helper is off', awake: 'Ready when you are', working: 'On it…', happy: 'All done!' };
+export const MOOD_TEXT = { asleep: 'offline', awake: 'ready', working: 'working', happy: 'just finished' };
+export const MOOD_BUBBLE = { asleep: 'Helper is off', awake: 'Ready when you are', working: 'Working on it', happy: 'Finished' };
 
 // Each project gets a colour of its own, the same on every screen.
 export const PROJECT_COLORS = ['blue', 'pink', 'mint', 'tangerine', 'grape', 'sun'];

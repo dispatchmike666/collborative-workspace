@@ -34,7 +34,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
     ]);
   } catch (error) {
     viewEl.replaceChildren(el('div', { class: 'home' },
-      el('div', { class: 'empty sticker' }, el('div', { class: 'emoji', text: '🧭' }),
+      el('div', { class: 'empty sticker' }, el('div', { class: 'emoji', text: '◇' }),
         el('strong', { text: error.status === 404 ? "That project isn't here" : "Couldn't open the project" }),
         el('p', { class: 'muted', text: error.status === 404 ? 'It may have been renamed, or the link is wrong.' : error.message }),
         el('a', { class: 'btn', href: '#/', text: 'Back to the home page' }))));
@@ -96,7 +96,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
   function avatar(event) {
     if (event.kind === 'claude-text') {
       const owner = event.owner ?? me;
-      return creature({ color: userColor(owner, users), size: 'mini', mood: 'awake', label: `${owner}'s Claude` });
+      return creature({ color: userColor(owner, users), size: 'mini', mood: 'awake', label: `${owner}'s Claude`, letter: '✦' });
     }
     const name = event.who ?? me;
     return el('span', { class: `avatar ${userColor(name, users)}`, 'aria-hidden': 'true', text: initial(name) });
@@ -178,7 +178,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
   function updateBanner() {
     const mine = Boolean(crewState.presence[me]);
     bannerEl.hidden = mine;
-    bannerEl.textContent = mine ? '' : "Your helper isn't running on your computer, so your Claude is asleep. Anything you send to your Claude will wait until the helper starts.";
+    bannerEl.textContent = mine ? '' : "Your helper isn't running on your computer, so your Claude is offline. Anything you send to your Claude will wait until the helper starts.";
   }
 
   // ---------- composer ----------
@@ -246,7 +246,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
   }
   function renderShelf() {
     shelfEl.replaceChildren(
-      el('button', { type: 'button', class: 'chip', text: '✨ Surprise me', onclick: () => shelf.length && insert(shelf[Math.floor(Math.random() * shelf.length)].text) }),
+      el('button', { type: 'button', class: 'chip', text: '✦ Surprise me', onclick: () => shelf.length && insert(shelf[Math.floor(Math.random() * shelf.length)].text) }),
       ...shelf.map((prompt) => el('span', { class: 'chip-group' },
         el('button', { type: 'button', class: 'chip', title: prompt.text, onclick: () => insert(prompt.text) },
           el('span', { text: prompt.emoji }), el('span', { text: prompt.title })),
@@ -267,7 +267,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
   }
   const promptTitle = el('input', { type: 'text', maxlength: '40', placeholder: 'Name, like "Add dark mode"', 'aria-label': 'Prompt name' });
   const promptText = el('textarea', { rows: '2', maxlength: '1000', placeholder: 'What to ask your Claude', 'aria-label': 'Prompt text' });
-  const promptEmoji = el('input', { type: 'text', maxlength: '4', placeholder: '💬', 'aria-label': 'Emoji', value: '💬' });
+  const promptEmoji = el('input', { type: 'text', maxlength: '4', placeholder: '✦', 'aria-label': 'Symbol', value: '✦' });
   addBox.append(
     el('div', { class: 'composer-line' }, promptEmoji, promptTitle),
     promptText,

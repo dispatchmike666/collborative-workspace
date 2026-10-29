@@ -31,7 +31,7 @@ test('anyone can add a prompt to the shelf', (t) => {
   assert.equal(added.title, 'Dark mode');
   assert.equal(added.by, 'Max');
   assert.ok(new Prompts(file).list().some((p) => p.id === added.id));
-  assert.equal(prompts.add({ title: 'No emoji', text: 'Hello', by: 'Max' }).emoji, '💬');
+  assert.equal(prompts.add({ title: 'No emoji', text: 'Hello', by: 'Max' }).emoji, '✦');
 });
 
 test('bad prompts are refused with plain messages', (t) => {

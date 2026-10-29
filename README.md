@@ -39,8 +39,9 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 
 - **Home (Pulse).** The first page shows who is online, how much your team's Claudes did this
   week (requests, rough plan use, files saved), a feed of what just happened, and your projects.
-- **The crew.** Each person has a little creature in the top bar. It sleeps when their helper
-  is off, wakes when it is on, works while their Claude is running, and hops when a job ends well.
+- **Presence.** Each person has a glass orb with their initial in the top bar. It is dimmed when
+  their helper is off, has a green dot when they are online, a turning ring while their Claude is
+  working, and a soft glow when a job ends well.
 - **Projects.** Create one with a name and, if the project's files should be shared, its GitHub
   address (`https://github.com/owner/repo`). Everyone who works on it needs access to that
   repository.
@@ -56,8 +57,10 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **Files.** The Files tab lists the project's files and shows any text file when you click it.
 - **Jump menu.** Press Ctrl+K anywhere to jump to a project, a tab, the settings or a new project.
   Press `/` to jump to the message box.
-- **Look and feel.** Light, dark or match your computer; five accent colours; confetti and soft
-  sounds if you want them (settings, the palette icon in the top bar). Phones are supported.
+- **Look and feel.** Frosted glass over a midnight backdrop (dark is the default), or a pale
+  "pearl" light mode, or match your computer. Five accents (Champagne, Sapphire, Rose, Jade,
+  Amethyst), a small gold-dust sparkle when a job finishes, and soft sounds if you want them (the
+  half-moon icon in the top bar). Phones are supported.
 - **Chat.** Under the timeline, "My Claude" sends your message to your own Claude. "Just Max"
   sends a normal message to the other person that no AI ever sees.
 - **Taking turns.** One Claude works on a project at a time. A second request waits in line

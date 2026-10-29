@@ -1,9 +1,9 @@
-import { creature, crewMember } from './crew.js';
+import { brandMark, crewMember } from './crew.js';
 import { createPalette } from './palette.js';
 import { showHome } from './home.js';
 import { projectActions, showProject } from './project.js';
 import { memberState, onCrewChange, setPresence, setUsers } from './state.js';
-import { ACCENTS, api, applyLook, el, openSettings, prefs, toast } from './ui.js';
+import { ACCENTS, ACCENT_LABELS, api, applyLook, el, openSettings, prefs, toast } from './ui.js';
 
 applyLook();
 
@@ -16,7 +16,7 @@ let cleanup = null;
 // ---------- the top bar ----------
 
 function buildTopbar() {
-  document.getElementById('brand-mark').replaceWith(el('span', { class: 'brand-mark', id: 'brand-mark' }, creature({ color: 'blue', mood: 'awake', size: 'mini', label: '' })));
+  document.getElementById('brand-mark').replaceWith(brandMark());
   const crew = document.getElementById('crew');
   const members = users.map((name) => crewMember({ name, users }));
   crew.replaceChildren(...members.map((member) => member.element));
@@ -27,7 +27,7 @@ function buildTopbar() {
   const sound = document.getElementById('toggle-sound');
   const paintSound = () => {
     const on = prefs.get('sound', false);
-    sound.textContent = on ? '🔊' : '🔇';
+    sound.textContent = '♪';
     sound.setAttribute('aria-pressed', String(on));
     sound.setAttribute('aria-label', on ? 'Sounds are on' : 'Sounds are off');
     sound.title = sound.getAttribute('aria-label');
@@ -50,23 +50,23 @@ function buildTopbar() {
 
 const palette = createPalette(() => {
   const commands = [
-    { icon: '🏠', label: 'Go to the home page', hint: 'Pulse', run: () => { window.location.hash = '#/'; } },
-    ...projects.map((project) => ({ icon: '📁', label: `Open ${project.name}`, hint: 'project', run: () => { window.location.hash = `#/p/${project.id}`; } })),
+    { icon: '⌂', label: 'Go to the home page', hint: 'Pulse', run: () => { window.location.hash = '#/'; } },
+    ...projects.map((project) => ({ icon: '◇', label: `Open ${project.name}`, hint: 'project', run: () => { window.location.hash = `#/p/${project.id}`; } })),
     { icon: '＋', label: 'Start a new project', run: () => { window.location.hash = '#/'; setTimeout(() => document.querySelector('.new-project-card input')?.focus(), 250); } },
   ];
   if (projectActions.current) {
     const here = projectActions.current;
-    commands.push({ icon: '💬', label: 'Write a message', hint: '/', run: here.focusComposer });
-    for (const [key, label] of here.tabs) commands.push({ icon: '🗂️', label: `Show ${label}`, hint: 'this project', run: () => here.openTab(key) });
+    commands.push({ icon: '✎', label: 'Write a message', hint: '/', run: here.focusComposer });
+    for (const [key, label] of here.tabs) commands.push({ icon: '▤', label: `Show ${label}`, hint: 'this project', run: () => here.openTab(key) });
   }
   commands.push(
-    { icon: '🎨', label: 'Look and feel', hint: 'colours, dark mode', run: openSettings },
-    { icon: '🌙', label: 'Switch to dark mode', run: () => { prefs.set('mode', 'dark'); applyLook(); } },
-    { icon: '☀️', label: 'Switch to light mode', run: () => { prefs.set('mode', 'light'); applyLook(); } },
-    { icon: '🖥️', label: 'Match my computer (light or dark)', run: () => { prefs.set('mode', 'auto'); applyLook(); } },
-    ...ACCENTS.map((name) => ({ icon: '●', label: `Colour: ${name}`, run: () => { prefs.set('accent', name); applyLook(); } })),
-    { icon: '🔊', label: prefs.get('sound', false) ? 'Turn sounds off' : 'Turn sounds on', run: () => document.getElementById('toggle-sound').click() },
-    { icon: '🚪', label: 'Log out', run: () => document.getElementById('logout').click() },
+    { icon: '◐', label: 'Look and feel', hint: 'colours, dark mode', run: openSettings },
+    { icon: '☾', label: 'Switch to dark mode', run: () => { prefs.set('mode', 'dark'); applyLook(); } },
+    { icon: '☼', label: 'Switch to light mode', run: () => { prefs.set('mode', 'light'); applyLook(); } },
+    { icon: '▭', label: 'Match my computer (light or dark)', run: () => { prefs.set('mode', 'auto'); applyLook(); } },
+    ...ACCENTS.map((name) => ({ icon: '●', label: `Accent: ${ACCENT_LABELS[name]}`, run: () => { prefs.set('accent', name); applyLook(); } })),
+    { icon: '♪', label: prefs.get('sound', false) ? 'Turn sounds off' : 'Turn sounds on', run: () => document.getElementById('toggle-sound').click() },
+    { icon: '⎋', label: 'Log out', run: () => document.getElementById('logout').click() },
   );
   return commands;
 });

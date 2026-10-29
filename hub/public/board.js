@@ -76,8 +76,8 @@ export function createBoard(ctx) {
         },
       }));
     }
-    if (index > 0) actions.append(el('button', { type: 'button', class: 'btn small icon', 'aria-label': `Move to ${COLUMN_LABELS[COLUMNS[index - 1]]}`, text: '◀', onclick: () => move(COLUMNS[index - 1]) }));
-    if (index < COLUMNS.length - 1) actions.append(el('button', { type: 'button', class: 'btn small icon', 'aria-label': `Move to ${COLUMN_LABELS[COLUMNS[index + 1]]}`, text: '▶', onclick: () => move(COLUMNS[index + 1]) }));
+    if (index > 0) actions.append(el('button', { type: 'button', class: 'btn small icon', 'aria-label': `Move to ${COLUMN_LABELS[COLUMNS[index - 1]]}`, text: '‹', onclick: () => move(COLUMNS[index - 1]) }));
+    if (index < COLUMNS.length - 1) actions.append(el('button', { type: 'button', class: 'btn small icon', 'aria-label': `Move to ${COLUMN_LABELS[COLUMNS[index + 1]]}`, text: '›', onclick: () => move(COLUMNS[index + 1]) }));
     actions.append(
       el('button', { type: 'button', class: 'btn small ghost', text: 'Edit', onclick: () => edit(node, card) }),
       el('button', { type: 'button', class: 'btn small ghost danger', 'aria-label': `Delete ${card.title}`, text: 'Delete', onclick: () => call(`/cards/${card.id}`, { method: 'DELETE' }) }),

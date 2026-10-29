@@ -69,14 +69,13 @@ export const prefs = {
   },
 };
 
-export const ACCENTS = ['blue', 'pink', 'mint', 'tangerine', 'grape'];
+export const ACCENTS = ['tangerine', 'blue', 'pink', 'mint', 'grape'];
+export const ACCENT_LABELS = { tangerine: 'Champagne', blue: 'Sapphire', pink: 'Rose', mint: 'Jade', grape: 'Amethyst' };
 
 export function applyLook() {
   const root = document.documentElement;
-  const mode = prefs.get('mode', 'auto');
-  if (mode === 'auto') root.removeAttribute('data-mode');
-  else root.setAttribute('data-mode', mode);
-  root.setAttribute('data-accent', prefs.get('accent', 'blue'));
+  root.setAttribute('data-mode', prefs.get('mode', 'dark'));
+  root.setAttribute('data-accent', prefs.get('accent', 'tangerine'));
 }
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -124,7 +123,8 @@ export function playSound(name) {
 
 // ---------- confetti ----------
 
-const CONFETTI = ['#3b5bff', '#ff4f8b', '#ffc93c', '#2fd1a0', '#ff7a2f', '#8b5cf6'];
+// A small burst of gold dust: tiny cut diamonds in champagne, pearl and a little jewel colour.
+const CONFETTI = ['#e8cf9f', '#f6ecd2', '#c9a96a', '#ffffff', '#9fd8cf', '#c4b0ff'];
 
 export function confetti() {
   if (!prefs.get('confetti', true) || reducedMotion()) return;
@@ -135,12 +135,12 @@ export function confetti() {
   canvas.height = window.innerHeight * ratio;
   const context = canvas.getContext('2d');
   context.scale(ratio, ratio);
-  const pieces = Array.from({ length: 90 }, () => ({
+  const pieces = Array.from({ length: 80 }, () => ({
     x: window.innerWidth * (0.3 + Math.random() * 0.4),
     y: window.innerHeight * 0.75,
-    vx: (Math.random() - 0.5) * 11,
-    vy: -(8 + Math.random() * 10),
-    size: 6 + Math.random() * 7,
+    vx: (Math.random() - 0.5) * 9,
+    vy: -(7 + Math.random() * 9),
+    size: 4 + Math.random() * 5,
     turn: Math.random() * Math.PI,
     spin: (Math.random() - 0.5) * 0.4,
     color: CONFETTI[Math.floor(Math.random() * CONFETTI.length)],
@@ -159,7 +159,13 @@ export function confetti() {
       context.translate(piece.x, piece.y);
       context.rotate(piece.turn);
       context.fillStyle = piece.color;
-      context.fillRect(-piece.size / 2, -piece.size / 4, piece.size, piece.size / 2);
+      context.beginPath();
+      context.moveTo(0, -piece.size);
+      context.lineTo(piece.size * 0.6, 0);
+      context.lineTo(0, piece.size);
+      context.lineTo(-piece.size * 0.6, 0);
+      context.closePath();
+      context.fill();
       context.restore();
     }
     if (age < 1700) requestAnimationFrame(frame);
@@ -183,8 +189,8 @@ export function openSettings() {
       openSettings();
     },
   });
-  const mode = prefs.get('mode', 'auto');
-  const accent = prefs.get('accent', 'blue');
+  const mode = prefs.get('mode', 'dark');
+  const accent = prefs.get('accent', 'tangerine');
   const toggle = (label, key, fallback) => {
     const box = el('input', { type: 'checkbox' });
     box.checked = prefs.get(key, fallback);
@@ -199,7 +205,7 @@ export function openSettings() {
       ACCENTS.map((name) => el('button', {
         type: 'button',
         class: `swatch-btn ${name}`,
-        'aria-label': name,
+        'aria-label': ACCENT_LABELS[name],
         'aria-pressed': String(accent === name),
         onclick: () => {
           prefs.set('accent', name);

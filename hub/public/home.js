@@ -16,10 +16,10 @@ export async function showHome(viewEl, { me, users }) {
   const subtitle = el('p');
   function renderCrew() {
     for (const member of members) member.update(memberState(member.element.dataset.user));
-    const asleep = users.filter((name) => !crewState.presence[name]);
-    if (!asleep.length) subtitle.textContent = 'Everyone\'s here and every Claude is awake.';
-    else if (asleep.length === users.length) subtitle.textContent = 'All the helpers are off, so the whole crew is asleep. Start a helper to wake yours.';
-    else subtitle.textContent = `${asleep.join(' and ')}'s Claude is asleep, because their helper isn't running.`;
+    const offline = users.filter((name) => !crewState.presence[name]);
+    if (!offline.length) subtitle.textContent = 'Everyone is here and every Claude is ready.';
+    else if (offline.length === users.length) subtitle.textContent = 'All the helpers are off. Start your helper to bring your Claude online.';
+    else subtitle.textContent = `${offline.join(' and ')}'s Claude is offline, because their helper isn't running.`;
   }
   renderCrew();
   const stopListening = onCrewChange(renderCrew);
@@ -56,7 +56,7 @@ export async function showHome(viewEl, { me, users }) {
         el('div', { class: 'feed-text' },
           el('div', {}, el('strong', { text: item.who }), ` ${item.text}`),
           el('a', { class: 'where', href: `#/p/${item.projectId}`, text: `${item.projectName}  ·  ${timeAgo(item.at)}` }))))))
-      : el('div', { class: 'empty sticker' }, el('div', { class: 'emoji', text: '🌱' }), el('strong', { text: 'Quiet so far' }),
+      : el('div', { class: 'empty sticker' }, el('div', { class: 'emoji', text: '◇' }), el('strong', { text: 'Quiet so far' }),
         el('p', { class: 'muted small', text: 'Messages, finished runs and saved files show up here.' })));
 
   // ---- projects ----

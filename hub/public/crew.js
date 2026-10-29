@@ -1,4 +1,4 @@
-import { MOOD_BUBBLE, MOOD_TEXT, crewMood, userColor } from './logic.js';
+import { MOOD_BUBBLE, MOOD_TEXT, crewMood, initial, userColor } from './logic.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -9,54 +9,34 @@ function svg(tag, attrs = {}, ...children) {
   return node;
 }
 
-// One mood = one set of eyes and a mouth. CSS shows the set that matches the creature's mood class.
-function face() {
-  const eyesAwake = svg('g', { class: 'only-awake eye-white-group' },
-    svg('circle', { class: 'eye-white', cx: 24, cy: 32, r: 6 }), svg('circle', { class: 'eye-white', cx: 40, cy: 32, r: 6 }),
-    svg('circle', { class: 'pupil', cx: 25, cy: 33, r: 2.6 }), svg('circle', { class: 'pupil', cx: 41, cy: 33, r: 2.6 }));
-  const eyesWorking = svg('g', { class: 'only-working' },
-    svg('circle', { class: 'eye-white', cx: 24, cy: 32, r: 6 }), svg('circle', { class: 'eye-white', cx: 40, cy: 32, r: 6 }),
-    svg('circle', { class: 'pupil', cx: 25, cy: 35, r: 2.8 }), svg('circle', { class: 'pupil', cx: 41, cy: 35, r: 2.8 }));
-  const eyesAsleep = svg('g', { class: 'only-asleep' },
-    svg('path', { class: 'line', d: 'M18 33 q6 5 12 0' }), svg('path', { class: 'line', d: 'M34 33 q6 5 12 0' }));
-  const eyesHappy = svg('g', { class: 'only-happy' },
-    svg('path', { class: 'line', d: 'M18 34 q6 -8 12 0' }), svg('path', { class: 'line', d: 'M34 34 q6 -8 12 0' }));
-  const mouths = [
-    svg('path', { class: 'line only-awake', d: 'M28 42 q4 4 8 0' }),
-    svg('path', { class: 'line only-working', d: 'M29 43 h6' }),
-    svg('ellipse', { class: 'mouth-fill only-asleep', cx: 32, cy: 43, rx: 2.2, ry: 1.6 }),
-    svg('path', { class: 'mouth-fill only-happy', d: 'M26 41 q6 10 12 0 z' }),
-  ];
-  return [eyesAwake, eyesWorking, eyesAsleep, eyesHappy, ...mouths];
+// The mark in the top bar and on the login card: a cut gem.
+export function brandMark() {
+  const wrapper = document.createElement('span');
+  wrapper.className = 'brand-mark';
+  wrapper.id = 'brand-mark';
+  wrapper.append(svg('svg', { viewBox: '0 0 32 32', 'aria-hidden': 'true' },
+    svg('path', { class: 'gem-a', d: 'M16 3 L28 12 L21 12 Z' }),
+    svg('path', { class: 'gem-b', d: 'M16 3 L4 12 L11 12 Z' }),
+    svg('path', { class: 'gem-c', d: 'M16 3 L21 12 L11 12 Z' }),
+    svg('path', { class: 'gem-d', d: 'M4 12 L11 12 L16 29 Z' }),
+    svg('path', { class: 'gem-e', d: 'M28 12 L21 12 L16 29 Z' }),
+    svg('path', { class: 'gem-f', d: 'M11 12 L21 12 L16 29 Z' })));
+  return wrapper;
 }
 
-// A little helper creature in a person's colour. Moods: asleep, awake, working, happy.
-export function creature({ color = 'blue', mood = 'awake', size = '', label = '' } = {}) {
+// A person's presence: a glass orb in their colour with their initial.
+// Moods: asleep (offline), awake (ready), working, happy (just finished).
+export function creature({ color = 'blue', mood = 'awake', size = '', label = '', letter = '' } = {}) {
   const wrapper = document.createElement('span');
   wrapper.className = `crew crew-${color} mood-${mood}${size ? ` ${size}` : ''}`;
   wrapper.setAttribute('role', 'img');
   wrapper.setAttribute('aria-label', label);
-
-  const text = (cls, x, y, value) => {
-    const node = svg('text', { class: cls, x, y });
-    node.textContent = value;
-    return node;
-  };
-  const sparkle = (d) => svg('path', { class: 'spark', d });
-  const body = svg('g', { class: 'body-group' },
-    svg('path', { class: 'line', d: 'M32 13 V7' }),
-    svg('circle', { class: 'antenna-ball', cx: 32, cy: 5, r: 3.4 }),
-    svg('ellipse', { class: 'feet', cx: 22, cy: 55, rx: 6, ry: 3.2 }),
-    svg('ellipse', { class: 'feet', cx: 42, cy: 55, rx: 6, ry: 3.2 }),
-    svg('path', { class: 'body', d: 'M10 36 C10 21 20 12 32 12 C44 12 54 21 54 36 V44 C54 50 50 54 44 54 H20 C14 54 10 50 10 44 Z' }),
-    svg('circle', { class: 'blush', cx: 17, cy: 41, r: 3.2 }),
-    svg('circle', { class: 'blush', cx: 47, cy: 41, r: 3.2 }),
-    ...face(),
-    text('z one', 48, 14, 'z'),
-    text('z two', 54, 8, 'Z'),
-    sparkle('M54 14 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z'),
-    sparkle('M8 18 l1.5 3.5 3.5 1.5 -3.5 1.5 -1.5 3.5 -1.5 -3.5 -3.5 -1.5 3.5 -1.5z'));
-  wrapper.append(svg('svg', { viewBox: '0 0 64 64', 'aria-hidden': 'true' }, body));
+  const ring = document.createElement('span');
+  ring.className = 'ring';
+  const orb = document.createElement('span');
+  orb.className = 'orb';
+  orb.textContent = letter;
+  wrapper.append(ring, orb);
   return wrapper;
 }
 
@@ -65,10 +45,10 @@ export function setMood(node, mood) {
   node.classList.add(`mood-${mood}`);
 }
 
-// A creature with a name and a status line. Update it with member.update({ online, working, happy }).
+// An orb with a name and a status line. Update it with member.update({ online, working, happy }).
 export function crewMember({ name, users, size = '' }) {
   const color = userColor(name, users);
-  const pet = creature({ color, size, mood: 'asleep' });
+  const pet = creature({ color, size, mood: 'asleep', letter: initial(name) });
   const nameEl = document.createElement('span');
   nameEl.className = 'crew-name';
   nameEl.textContent = name;
@@ -81,7 +61,7 @@ export function crewMember({ name, users, size = '' }) {
   const root = document.createElement('div');
   root.className = 'crew-member';
   root.dataset.user = name;
-  root.append(...(size === 'big' ? [bubble] : []), pet, nameEl, status);
+  root.append(pet, nameEl, status, ...(size === 'big' ? [bubble] : []));
 
   function update(state) {
     const mood = crewMood(state);

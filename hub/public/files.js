@@ -44,7 +44,7 @@ export function createFiles(ctx) {
           class: `file${changed.includes(path) ? ' changed' : ''}`,
           onclick: () => (readable.has(path) ? open(path) : toast("That file is too big, or not text, so it can't be shown here.", 'bad')),
         }, el('span', { class: 'dot' }), el('span', { text: path }), readable.has(path) ? el('span', { class: 'view', text: 'read' }) : null))))
-        : el('div', { class: 'empty' }, el('div', { class: 'emoji', text: '📂' }), el('strong', { text: 'No files yet' }), el('p', { class: 'muted small', text: 'Ask your Claude to make something and its files show up here.' })),
+        : el('div', { class: 'empty' }, el('div', { class: 'emoji', text: '▤' }), el('strong', { text: 'No files yet' }), el('p', { class: 'muted small', text: 'Ask your Claude to make something and its files show up here.' })),
     );
   }
 
@@ -142,7 +142,7 @@ export function createPreview(ctx) {
   let version = ctx.details.previewVersion;
   const frame = el('iframe', { class: 'preview-frame', title: 'Preview of the project', sandbox: 'allow-scripts', referrerpolicy: 'no-referrer', hidden: true });
   const empty = el('div', { class: 'empty' },
-    el('div', { class: 'emoji', text: '🖼️' }),
+    el('div', { class: 'emoji', text: '▣' }),
     el('strong', { text: 'Nothing to preview yet' }),
     el('p', { class: 'muted small', text: 'When the project has an index.html in its top folder, the page shows up here.' }));
   const link = el('a', { class: 'btn small', target: '_blank', rel: 'noopener', text: 'Open in a new tab', hidden: true });
