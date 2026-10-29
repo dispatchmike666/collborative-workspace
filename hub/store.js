@@ -1,7 +1,13 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { computeActivity } from './activity.js';
+import { Board } from './board.js';
 import { readJson, writeJsonAtomic } from './fs-util.js';
+import { Knowledge } from './knowledge.js';
+import { isSafeRelativePath } from './paths.js';
+import { Prompts } from './prompts.js';
+import { Sources } from './sources.js';
 
 const MAX_TEXT = 8000;
 const MAX_NOTES_CHARS = 100_000;
@@ -12,7 +18,6 @@ const MAX_PREVIEW_TOTAL_BYTES = 5 * 1024 * 1024;
 const MAX_EVENTS_IN_MEMORY = 5000;
 
 const REPO_URL = /^https:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/;
-const PREVIEW_PATH = /^[A-Za-z0-9._/-]+$/;
 
 const CONTENT_TYPES = {
   html: 'text/html; charset=utf-8',
@@ -78,6 +83,8 @@ export class Store {
   #timelines = new Map();
   #previews = new Map();
   #listeners = new Map();
+  #parts = new Map();
+  #prompts = null;
 
   constructor(dir, { now = () => new Date() } = {}) {
     this.#dir = dir;
@@ -135,6 +142,39 @@ export class Store {
       b.lastActivityAt.localeCompare(a.lastActivityAt) || Number(b.hasEvents) - Number(a.hasEvents) || b.index - a.index
     ));
     return entries.map(({ hasEvents, index, ...rest }) => rest);
+  }
+
+  // ---- the extra workspaces (board, brief, readable files, quick prompts, home numbers) ----
+
+  #part(projectId, name, build) {
+    this.#require(projectId);
+    const key = `${projectId}/${name}`;
+    if (!this.#parts.has(key)) this.#parts.set(key, build(path.join(this.#projectDir(projectId), `${name}.json`)));
+    return this.#parts.get(key);
+  }
+
+  board(projectId) {
+    return this.#part(projectId, 'board', (file) => new Board(file, { now: this.#now }));
+  }
+
+  knowledge(projectId) {
+    return this.#part(projectId, 'knowledge', (file) => new Knowledge(file, { now: this.#now }));
+  }
+
+  sources(projectId) {
+    return this.#part(projectId, 'sources', (file) => new Sources(file));
+  }
+
+  // The shelf of quick prompts is shared by every project.
+  prompts() {
+    this.#prompts ??= new Prompts(path.join(this.#dir, 'prompts.json'));
+    return this.#prompts;
+  }
+
+  // The week's numbers and the "what's been happening" feed across every project.
+  activity({ now = this.#now().getTime() } = {}) {
+    const projects = this.listProjects();
+    return computeActivity({ projects, eventsFor: (id) => this.#timeline(id).events, now });
   }
 
   // ---- timeline ----
@@ -267,10 +307,7 @@ export class Store {
     let total = 0;
     const checked = files.map((file) => {
       const filePath = String(file?.path ?? '');
-      const segments = filePath.split('/');
-      if (!PREVIEW_PATH.test(filePath) || filePath.startsWith('/') || segments.some((part) => !part || part.startsWith('.'))) {
-        throw new Error(`Bad preview path: ${filePath}`);
-      }
+      if (!isSafeRelativePath(filePath)) throw new Error(`Bad preview path: ${filePath}`);
       const body = Buffer.from(String(file.data ?? ''), 'base64');
       if (body.length > MAX_PREVIEW_FILE_BYTES) throw new Error(`Preview file too large: ${filePath}`);
       total += body.length;

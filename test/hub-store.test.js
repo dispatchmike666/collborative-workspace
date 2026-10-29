@@ -172,3 +172,44 @@ test('a preview upload with bad paths or too much data is refused', (t) => {
   const many = Array.from({ length: 201 }, (_, i) => ({ path: `f${i}.txt`, data: b64('x') }));
   assert.throws(() => store.setPreview(id, many), /too many/i);
 });
+
+test('each project gets its own board, brief and readable files, and they persist', (t) => {
+  const dir = tempDir(t);
+  const store = new Store(dir);
+  const one = store.createProject({ name: 'One', createdBy: 'Max' });
+  const two = store.createProject({ name: 'Two', createdBy: 'Max' });
+
+  store.board(one.id).add({ title: 'Card for one', by: 'Max' });
+  store.knowledge(one.id).addDecision({ text: 'Blue buttons', by: 'Max' });
+  store.sources(one.id).set([{ path: 'a.txt', text: 'hello' }]);
+
+  assert.equal(store.board(two.id).list().length, 0);
+  assert.equal(store.knowledge(two.id).get().decisions.length, 0);
+  assert.deepEqual(store.sources(two.id).paths(), []);
+  assert.equal(store.board(one.id), store.board(one.id), 'the same board object is reused');
+
+  const reopened = new Store(dir);
+  assert.equal(reopened.board(one.id).list()[0].title, 'Card for one');
+  assert.equal(reopened.knowledge(one.id).get().decisions[0].text, 'Blue buttons');
+  assert.equal(reopened.sources(one.id).get('a.txt').text, 'hello');
+  assert.throws(() => store.board('nope'), /No such project/);
+  assert.throws(() => store.knowledge('nope'), /No such project/);
+  assert.throws(() => store.sources('nope'), /No such project/);
+});
+
+test('the quick prompts shelf is shared by every project', (t) => {
+  const dir = tempDir(t);
+  const store = new Store(dir);
+  const added = store.prompts().add({ title: 'Hello', text: 'Say hello', by: 'Max' });
+  assert.ok(new Store(dir).prompts().list().some((p) => p.id === added.id));
+});
+
+test('the home page numbers come from every project', (t) => {
+  const store = new Store(tempDir(t), { now: () => new Date('2026-10-29T10:00:00Z') });
+  const project = store.createProject({ name: 'P', createdBy: 'Max' });
+  store.addEvent(project.id, { kind: 'run-done', owner: 'Max', ok: true, costUsd: 0.1 });
+  const { totals, feed, week } = store.activity({ now: Date.parse('2026-10-29T12:00:00Z') });
+  assert.deepEqual(totals.runs, { Max: 1 });
+  assert.equal(feed[0].projectName, 'P');
+  assert.equal(week.length, 7);
+});
