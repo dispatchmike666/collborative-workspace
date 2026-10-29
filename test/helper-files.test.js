@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
-import { buildPreviewBundle, listProjectFiles } from '../helper/files.js';
+import { buildPreviewBundle, buildSourceBundle, listProjectFiles } from '../helper/files.js';
 import { tempDir } from './helpers.js';
 
 function write(dir, relative, content = 'x') {
@@ -68,4 +68,30 @@ test('a preview stops growing at the overall limit', (t) => {
   assert.ok(total <= 5 * 1024 * 1024);
   assert.equal(bundle.truncated, true);
   assert.ok(bundle.files.some((f) => f.path === 'index.html'), 'the main page always makes it in');
+});
+
+test('readable files are the small text files of the project, without hidden or binary ones', (t) => {
+  const dir = tempDir(t);
+  write(dir, 'index.html', '<h1>Hi</h1>');
+  write(dir, 'src/app.js', 'console.log(1)');
+  write(dir, 'README.md', '# Title');
+  write(dir, 'data.bin', 'abc\u0000def');
+  write(dir, 'photo.png', 'not really a picture');
+  write(dir, 'tool.exe', 'binary');
+  write(dir, '.env', 'SECRET=1');
+  write(dir, 'node_modules/x/index.js', 'x');
+  write(dir, 'big.js', 'x'.repeat(200 * 1024 + 1));
+  const files = buildSourceBundle(dir);
+  assert.deepEqual(files.map((f) => f.path), ['README.md', 'index.html', 'src/app.js']);
+  assert.equal(files.find((f) => f.path === 'src/app.js').text, 'console.log(1)');
+});
+
+test('readable files stop at the overall limits', (t) => {
+  const dir = tempDir(t);
+  for (let i = 0; i < 120; i += 1) write(dir, `f${String(i).padStart(3, '0')}.txt`, 'x');
+  assert.equal(buildSourceBundle(dir).length, 100);
+  const heavy = tempDir(t);
+  for (let i = 0; i < 9; i += 1) write(heavy, `h${i}.txt`, 'x'.repeat(190 * 1024));
+  const total = buildSourceBundle(heavy).reduce((sum, f) => sum + Buffer.byteLength(f.text), 0);
+  assert.ok(total <= 1.5 * 1024 * 1024);
 });

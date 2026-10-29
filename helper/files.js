@@ -5,6 +5,10 @@ const MAX_DEPTH = 6;
 const MAX_PREVIEW_FILES = 200;
 const MAX_PREVIEW_FILE_BYTES = 1024 * 1024;
 const MAX_PREVIEW_TOTAL_BYTES = 5 * 1024 * 1024;
+const SOURCE_EXTENSIONS = new Set(['js', 'mjs', 'cjs', 'ts', 'tsx', 'jsx', 'json', 'md', 'txt', 'html', 'htm', 'css', 'scss', 'py', 'rb', 'go', 'rs', 'java', 'c', 'h', 'cpp', 'cs', 'sh', 'ps1', 'cmd', 'bat', 'yml', 'yaml', 'toml', 'ini', 'sql', 'svg', 'xml', 'csv', 'vue', 'php']);
+const MAX_SOURCE_FILES = 100;
+const MAX_SOURCE_FILE_BYTES = 200 * 1024;
+const MAX_SOURCE_TOTAL_BYTES = 1.5 * 1024 * 1024;
 const PREVIEW_EXTENSIONS = new Set(['html', 'htm', 'css', 'js', 'mjs', 'json', 'txt', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'woff2']);
 
 // Every file worth showing, as paths like "src/app.js". Hidden files, .git and node_modules are skipped.
@@ -52,4 +56,24 @@ export function buildPreviewBundle(dir) {
   }
   files.sort((a, b) => a.path.localeCompare(b.path));
   return { files, truncated };
+}
+
+// The small text files of a project, so they can be read in the page. Hidden files, installed
+// packages, binary files and anything big are left out.
+export function buildSourceBundle(dir) {
+  const files = [];
+  let total = 0;
+  for (const relative of walk(dir).sort()) {
+    if (files.length >= MAX_SOURCE_FILES) break;
+    const extension = relative.includes('.') ? relative.split('.').pop().toLowerCase() : '';
+    if (!SOURCE_EXTENSIONS.has(extension)) continue;
+    const full = path.join(dir, relative);
+    const size = fs.statSync(full).size;
+    if (size > MAX_SOURCE_FILE_BYTES || total + size > MAX_SOURCE_TOTAL_BYTES) continue;
+    const text = fs.readFileSync(full, 'utf8');
+    if (text.includes('\u0000')) continue;
+    total += size;
+    files.push({ path: relative, text });
+  }
+  return files;
 }

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { GitSync } from '../helper/git-sync.js';
-import { Helper, validateJob } from '../helper/helper.js';
+import { Helper, composePrompt, validateJob } from '../helper/helper.js';
 import { FAKE_CLAUDE, tempDir, waitFor } from './helpers.js';
 import { startHub } from './hub-fixture.js';
 
@@ -174,4 +174,57 @@ test('a stop that arrives before Claude has started still prevents the run', asy
   await waitFor(() => hub.store.events(project.id).some((e) => e.kind === 'error' && /took too long/.test(e.text)), { label: 'the hub timeout' });
   await waitFor(() => helper.activeJobs === 0, { label: 'the helper to finish with the job' });
   assert.equal(fs.existsSync(path.join(workspaceRoot, project.id, 'started.txt')), false, 'Claude must not run after a stop');
+});
+
+test('what Claude is told starts with the project instructions, decisions and shared notes, then the recap and the request', () => {
+  const prompt = composePrompt({
+    context: { brief: 'Plain English.', decisions: ['Blue buttons', 'No new packages'], notes: 'Footer next' },
+    recap: 'Max asked: hello',
+    who: 'Brennan',
+    text: 'what changed?',
+  });
+  assert.equal(prompt, [
+    'Project instructions (always follow these):\nPlain English.',
+    'Decisions the team has settled (keep to these):\n- Blue buttons\n- No new packages',
+    'Shared project notes (for reference):\nFooter next',
+    'This is a shared project. Since you last worked on it, your teammates did the following (you did not do these things):\nMax asked: hello',
+    "Brennan's request:\nwhat changed?",
+  ].join('\n\n'));
+});
+
+test('with nothing to add, Claude is told only the request', () => {
+  assert.equal(composePrompt({ context: { brief: '', decisions: [], notes: '' }, recap: '', who: 'Max', text: 'hi' }), 'hi');
+  assert.equal(composePrompt({ recap: '', who: 'Max', text: 'hi' }), 'hi');
+});
+
+test('a job with an unreasonable project context is refused', () => {
+  const good = { jobId: 'j1', projectId: 'map-1a2b3c', repoUrl: null, who: 'Max', kind: 'message', text: 'hi', recap: '', allowedTools: [] };
+  assert.doesNotThrow(() => validateJob({ ...good, context: { brief: 'ok', decisions: ['a'], notes: '' } }));
+  assert.doesNotThrow(() => validateJob(good));
+  for (const context of [
+    'text', { brief: 5, decisions: [], notes: '' }, { brief: 'x'.repeat(5001), decisions: [], notes: '' },
+    { brief: '', decisions: 'no', notes: '' }, { brief: '', decisions: [5], notes: '' },
+    { brief: '', decisions: Array(31).fill('a'), notes: '' }, { brief: '', decisions: [], notes: 'n'.repeat(4001) },
+  ]) {
+    assert.throws(() => validateJob({ ...good, context }), /refused/, JSON.stringify(context).slice(0, 60));
+  }
+});
+
+test('the project brief and decisions really reach Claude, and the small text files can be read afterwards', async (t) => {
+  const hub = await startHub(t);
+  const max = await hub.login('Max');
+  const project = await hub.makeProject(max);
+  await startHelper(t, hub, 'Max');
+  hub.store.knowledge(project.id).saveBrief({ text: 'Be kind and plain.', baseVersion: 0, user: 'Max' });
+  hub.store.knowledge(project.id).addDecision({ text: 'Blue buttons', by: 'Max' });
+
+  await hub.as(max)(`/api/projects/${project.id}/send`, hub.json({ text: 'PROMPTCHECK WRITE:notes.txt', to: 'ai' }));
+  await waitFor(() => idleCount(hub, project.id) === 1, { label: 'the run to finish' });
+  const reply = hub.store.events(project.id).find((e) => e.kind === 'claude-text').text;
+  assert.match(reply, /^prompt:Project instructions \(always follow these\):\nBe kind and plain\./);
+  assert.match(reply, /Decisions the team has settled \(keep to these\):\n- Blue buttons/);
+  assert.match(reply, /Max's request:\nPROMPTCHECK WRITE:notes\.txt/);
+
+  await waitFor(() => hub.store.sources(project.id).paths().length > 0, { label: 'the readable files' });
+  assert.equal(hub.store.sources(project.id).get('notes.txt').text, 'hi');
 });

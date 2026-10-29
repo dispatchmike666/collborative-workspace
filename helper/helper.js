@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { ClaudeRunner } from '../server/claude-runner.js';
-import { buildPreviewBundle, listProjectFiles } from './files.js';
+import { buildPreviewBundle, buildSourceBundle, listProjectFiles } from './files.js';
 import { GitSync } from './git-sync.js';
 import { connectSse } from './sse-client.js';
 
@@ -8,6 +8,15 @@ const PROJECT_ID = /^[a-z0-9-]{1,80}$/;
 const REPO_URL = /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 // An approval may only allow one exact Bash or PowerShell command: no wildcards, no extra rules.
 const ALLOWED_RULE = /^(Bash|PowerShell)\([^*()\r\n\u0000]{1,500}\)$/;
+
+function checkContext(context) {
+  if (context === undefined) return true;
+  if (!context || typeof context !== 'object') return false;
+  const { brief, decisions, notes } = context;
+  if (typeof brief !== 'string' || brief.length > 5000) return false;
+  if (typeof notes !== 'string' || notes.length > 4000) return false;
+  return Array.isArray(decisions) && decisions.length <= 30 && decisions.every((d) => typeof d === 'string' && d.length <= 400);
+}
 
 // Checks a job from the hub before anything runs, so a bad job can never touch other folders,
 // fetch from other addresses, or widen what Claude is allowed to do.
@@ -23,19 +32,25 @@ export function validateJob(job) {
   if (!Array.isArray(job.allowedTools) || !job.allowedTools.every((rule) => typeof rule === 'string' && ALLOWED_RULE.test(rule))) {
     refuse('the allowed commands are not valid');
   }
+  if (!checkContext(job.context)) refuse('the project context is not valid');
   return job;
 }
 
-// What Claude is actually told: a short recap of what teammates did, then the request.
-export function composePrompt({ recap, who, text }) {
-  if (!recap) return text;
-  return [
-    'This is a shared project. Since you last worked on it, your teammates did the following (you did not do these things):',
-    recap,
-    '',
-    `${who}'s request:`,
-    text,
-  ].join('\n');
+// What Claude is actually told: the project's standing instructions and settled decisions, the shared
+// notes if they are shared, a short recap of what teammates did, and then the request itself.
+export function composePrompt({ context, recap, who, text }) {
+  const sections = [];
+  if (context?.brief) sections.push(`Project instructions (always follow these):\n${context.brief}`);
+  if (context?.decisions?.length) {
+    const lines = context.decisions.map((decision) => `- ${decision}`).join('\n');
+    sections.push(`Decisions the team has settled (keep to these):\n${lines}`);
+  }
+  if (context?.notes) sections.push(`Shared project notes (for reference):\n${context.notes}`);
+  if (recap) {
+    sections.push(`This is a shared project. Since you last worked on it, your teammates did the following (you did not do these things):\n${recap}`);
+  }
+  if (!sections.length) return text;
+  return [...sections, `${who}'s request:\n${text}`].join('\n\n');
 }
 
 const oneLine = (text, max) => {
@@ -292,6 +307,8 @@ export class Helper {
       .catch((error) => this.#log(`Could not send the file list: ${error.message}`));
 
     if (count || !this.#previewSent.has(job.projectId)) {
+      await this.#post('/helper/sources', { projectId: job.projectId, files: buildSourceBundle(projectDir) })
+        .catch((error) => this.#log(`Could not send the readable files: ${error.message}`));
       const bundle = buildPreviewBundle(projectDir);
       if (bundle) {
         try {
