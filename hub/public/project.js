@@ -415,6 +415,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
     focusComposer,
     arrange: (mode) => tiles.setArrange(mode),
     reset: () => tiles.reset(),
+    snapAll: (layoutId) => tiles.arrangeAll(layoutId),
     windows: () => [['chat', 'Chat'], ...TABS].map(([key, label]) => ({ key, label, open: tiles.isOpen(key) })),
     toggleWindow: (key) => (tiles.isOpen(key) ? tiles.hide(key) : tiles.focus(key)),
     tabs: TABS,

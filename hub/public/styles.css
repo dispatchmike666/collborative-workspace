@@ -231,28 +231,36 @@ kbd { font: 600 11px var(--font-mono); padding: 1px 5px; border: 0.5px solid var
   .sticker, .topbar, .tile, .dock, .toast, .menu, .menu-pop, dialog, .react-menu { background: var(--glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
-/* --near is 0 far from the pointer and 1 right on it. The script sets it, and where the pointer is. */
+/* --near is 0 far from the pointer and 1 right on it. The script sets it, and where the pointer is.
+   The light only gathers on the part of the edge closest to the pointer, never as a whole outline. */
+.tile, .sticker { --r: var(--radius); }
+.dock { --r: 20px; }
 .tile, .sticker, .dock { --near: 0; --mx: 50%; --my: 50%; }
 .tile::before, .sticker::before, .dock::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
+  inset: -9px;
+  padding: 9px;
+  border-radius: calc(var(--r) + 9px);
   pointer-events: none;
-  opacity: calc(var(--near) * 0.75);
+  opacity: calc(var(--near) * 0.9);
   will-change: opacity;
-  box-shadow: 0 0 0 1px var(--glow), 0 0 14px 0 var(--glow);
+  background: radial-gradient(150px circle at calc(var(--mx) + 9px) calc(var(--my) + 9px), var(--glow), transparent 72%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  filter: blur(7px);
 }
 .tile::after, .sticker::after, .dock::after {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: inherit;
+  border-radius: var(--r);
   padding: 1px;
   pointer-events: none;
-  opacity: calc(var(--near) * 0.9);
+  opacity: calc(var(--near) * 0.95);
   will-change: opacity;
-  background: radial-gradient(110px circle at var(--mx) var(--my), color-mix(in srgb, var(--accent) 70%, #fff), transparent 70%);
+  background: radial-gradient(120px circle at var(--mx) var(--my), color-mix(in srgb, var(--accent) 65%, #fff), transparent 70%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
@@ -707,3 +715,69 @@ canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-
 /* cinematic headings */
 .hero-text h1, .login-card h1 { background: linear-gradient(180deg, var(--ink), color-mix(in srgb, var(--ink) 55%, transparent)); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
 .hero-text h1 em { -webkit-text-fill-color: var(--accent-ink); color: var(--accent-ink); }
+
+/* ---------- backgrounds you can pick in the View menu (dark mode) ---------- */
+
+:root[data-bg="spotlight"] body::before {
+  background: radial-gradient(ellipse 62% 56% at 50% -6%, color-mix(in srgb, var(--accent) 62%, transparent), transparent 72%), radial-gradient(ellipse 90% 40% at 50% 112%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 70%);
+  -webkit-mask: none; mask: none; filter: none; opacity: 0.85;
+}
+:root[data-bg="spotlight"] body::after { display: none; }
+
+:root[data-bg="grid"] body::before {
+  background-image: linear-gradient(rgb(255 255 255 / 0.10) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.10) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask: radial-gradient(ellipse 80% 72% at 50% 38%, #000 18%, transparent 82%); mask: radial-gradient(ellipse 80% 72% at 50% 38%, #000 18%, transparent 82%);
+  filter: none; opacity: 1;
+}
+:root[data-bg="grid"] body::after {
+  background: radial-gradient(ellipse 54% 42% at 50% 0%, color-mix(in srgb, var(--accent) 48%, transparent), transparent 72%);
+  -webkit-mask: none; mask: none; filter: none; opacity: 0.8;
+}
+
+:root[data-bg="ripples"] body::before {
+  background: repeating-radial-gradient(circle at 88% 112%, transparent 0 52px, color-mix(in srgb, var(--accent) 50%, transparent) 52px 53px);
+  -webkit-mask: radial-gradient(circle at 88% 112%, #000 8%, transparent 78%); mask: radial-gradient(circle at 88% 112%, #000 8%, transparent 78%);
+  filter: none; opacity: 0.7;
+}
+:root[data-bg="ripples"] body::after {
+  background: radial-gradient(circle at 88% 112%, color-mix(in srgb, var(--accent) 52%, transparent), transparent 56%);
+  -webkit-mask: none; mask: none; filter: blur(24px); opacity: 0.7;
+}
+
+:root[data-bg="dots"] body::before {
+  background-image: radial-gradient(rgb(255 255 255 / 0.34) 1px, transparent 1.7px);
+  background-size: 22px 22px;
+  -webkit-mask: radial-gradient(ellipse 80% 72% at 50% 40%, #000 14%, transparent 82%); mask: radial-gradient(ellipse 80% 72% at 50% 40%, #000 14%, transparent 82%);
+  filter: none; opacity: 1;
+}
+:root[data-bg="dots"] body::after {
+  background: radial-gradient(ellipse 60% 50% at 14% 0%, color-mix(in srgb, var(--accent) 50%, transparent), transparent 70%);
+  -webkit-mask: none; mask: none; filter: none; opacity: 0.8;
+}
+
+:root[data-bg="aurora"] body::before {
+  background: conic-gradient(from 205deg at 66% 26%, transparent 0deg, color-mix(in srgb, var(--accent) 72%, transparent) 38deg, color-mix(in srgb, #ff9a3c 55%, transparent) 88deg, transparent 138deg, color-mix(in srgb, #4c9bff 46%, transparent) 220deg, transparent 285deg);
+  -webkit-mask: radial-gradient(ellipse 78% 68% at 56% 34%, #000 14%, transparent 84%); mask: radial-gradient(ellipse 78% 68% at 56% 34%, #000 14%, transparent 84%);
+  filter: blur(60px) saturate(1.35); opacity: 0.9;
+}
+:root[data-bg="aurora"] body::after { display: none; }
+
+:root[data-bg="plain"] body::before, :root[data-bg="plain"] body::after { display: none; }
+
+/* light mode keeps a plain, quiet backdrop whatever is chosen */
+:root[data-mode="light"] body::before, :root[data-mode="light"] body::after { display: none; }
+@media (prefers-color-scheme: light) { :root[data-mode="auto"] body::before, :root[data-mode="auto"] body::after { display: none; } }
+
+/* ---------- snap layouts ---------- */
+
+.snap-pop { position: fixed; z-index: 200001; padding: 10px 12px 12px; border: 0.5px solid var(--edge); border-radius: 12px; background: var(--glass-solid); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); box-shadow: 0 0 0 0.5px var(--ring), 0 24px 60px -12px var(--shade); animation: fade-in 0.1s ease-out; }
+.snap-title { margin: 0 0 8px; font: 600 11px var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.snap-grid { display: grid; grid-template-columns: repeat(4, 72px); gap: 10px; }
+.snap-layout { position: relative; width: 72px; height: 48px; border-radius: 5px; background: var(--glass-2); box-shadow: 0 0 0 0.5px var(--line-strong); }
+.snap-zone { position: absolute; margin: 0; padding: 0; border: 0; border-radius: 3px; background: var(--glass-3); box-shadow: inset 0 0 0 0.5px var(--line-strong); cursor: default; transition: background-color 0.08s ease; }
+.snap-zone:hover, .snap-zone:focus-visible { background: var(--accent); box-shadow: 0 0 10px -1px var(--glow); }
+.snap-assist { display: grid; gap: 8px; min-width: 190px; }
+.snap-assist-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.menu-heading { padding: 6px 12px 2px 22px; font: 600 10.5px var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+@media (max-width: 760px) { .snap-pop { display: none; } }

@@ -227,3 +227,43 @@ test('windows start side by side with the chat in the middle', async () => {
   const notes = startRect('notes', bounds, 1);
   assert.ok(notes.x > files.x && notes.y > files.y, 'extra windows are staggered');
 });
+
+test('every snap layout covers the stage exactly, with no spaces overlapping', async () => {
+  const { SNAP_LAYOUTS } = await import('../hub/public/logic.js');
+  assert.equal(new Set(SNAP_LAYOUTS.map((layout) => layout.id)).size, SNAP_LAYOUTS.length, 'ids are unique');
+  assert.ok(SNAP_LAYOUTS.length >= 6, 'plenty to choose from');
+  for (const layout of SNAP_LAYOUTS) {
+    let area = 0;
+    for (const [left, top, width, height] of layout.zones) {
+      assert.ok(left >= 0 && top >= 0 && left + width <= 1.0000001 && top + height <= 1.0000001, `${layout.id} stays inside`);
+      area += width * height;
+    }
+    assert.ok(Math.abs(area - 1) < 1e-9, `${layout.id} fills the whole stage`);
+    for (let a = 0; a < layout.zones.length; a += 1) {
+      for (let b = a + 1; b < layout.zones.length; b += 1) {
+        const [ax, ay, aw, ah] = layout.zones[a];
+        const [bx, by, bw, bh] = layout.zones[b];
+        const apart = ax + aw <= bx + 1e-9 || bx + bw <= ax + 1e-9 || ay + ah <= by + 1e-9 || by + bh <= ay + 1e-9;
+        assert.ok(apart, `${layout.id} spaces ${a} and ${b} do not overlap`);
+      }
+    }
+  }
+});
+
+test('a snap space turns into pixels with a small gap between neighbours', async () => {
+  const { zoneRect, SNAP_LAYOUTS } = await import('../hub/public/logic.js');
+  const halves = SNAP_LAYOUTS.find((layout) => layout.id === 'halves');
+  assert.deepEqual(zoneRect(halves.zones[0], { w: 1000, h: 600 }), { x: 0, y: 0, w: 496, h: 600 });
+  assert.deepEqual(zoneRect(halves.zones[1], { w: 1000, h: 600 }), { x: 504, y: 0, w: 496, h: 600 });
+});
+
+test('when everything is arranged, the chat takes the biggest space and the rest follow in order', async () => {
+  const { arrangeAssign, SNAP_LAYOUTS } = await import('../hub/public/logic.js');
+  const center = SNAP_LAYOUTS.find((layout) => layout.id === 'center');
+  const placed = arrangeAssign(['preview', 'chat', 'board'], center);
+  assert.deepEqual(placed.chat, [0.26, 0, 0.48, 1]);
+  assert.deepEqual(placed.board, [0, 0, 0.26, 1]);
+  assert.deepEqual(placed.preview, [0.74, 0, 0.26, 1]);
+  const halves = SNAP_LAYOUTS.find((layout) => layout.id === 'halves');
+  assert.deepEqual(Object.keys(arrangeAssign(['chat', 'board', 'preview', 'files'], halves)), ['chat', 'board'], 'extra windows are left alone');
+});

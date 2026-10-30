@@ -1,5 +1,5 @@
 import { icon } from './icons.js';
-import { cascadeRect, keepReachable, normalizeLayout, packSides, resizeRect, startRect, TILE_IDS, WALL_ORDER } from './logic.js';
+import { arrangeAssign, keepReachable, normalizeLayout, packSides, resizeRect, SNAP_LAYOUTS, startRect, TILE_IDS, WALL_ORDER, zoneRect } from './logic.js';
 import { el, prefs } from './ui.js';
 
 const NARROW = '(max-width: 760px)';
@@ -67,7 +67,16 @@ export function createTiles({ projectId, defs }) {
     const counter = el('span', { class: 'tile-count', hidden: true });
     const closeLight = el('button', { type: 'button', class: 'light red', 'aria-label': `Hide ${def.title}`, title: `Hide ${def.title}`, onclick: () => setMode(def.id, 'closed') }, icon('close', 8, 3));
     const popLight = el('button', { type: 'button', class: 'light yellow', onclick: () => togglePop(def.id) });
-    const zoomLight = el('button', { type: 'button', class: 'light green', onclick: () => toggleZoom(def.id) });
+    const zoomLight = el('button', { type: 'button', class: 'light green', onclick: () => { closeSnap(); toggleZoom(def.id); } });
+    // Rest on the green dot for a moment and the snap layouts appear, like on Windows.
+    zoomLight.addEventListener('mouseenter', () => {
+      clearTimeout(snapTimer);
+      snapTimer = setTimeout(() => showSnap(def.id, zoomLight), 320);
+    });
+    zoomLight.addEventListener('mouseleave', () => {
+      clearTimeout(snapTimer);
+      snapTimer = setTimeout(closeSnap, 380);
+    });
     const head = el('header', { class: 'tile-head', tabindex: '0', 'aria-label': `${def.title} bar. Arrow keys move a window, Shift and arrows resize it.` },
       el('div', { class: 'lights' }, closeLight, popLight, zoomLight),
       el('h3', { class: 'tile-title', text: def.title }),
@@ -368,6 +377,112 @@ export function createTiles({ projectId, defs }) {
     }
   }
 
+  // ---------- snap layouts: the flyout from the green dot ----------
+
+  let snapPop = null;
+  let snapTimer = 0;
+
+  function closeSnap() {
+    clearTimeout(snapTimer);
+    snapPop?.remove();
+    snapPop = null;
+  }
+
+  function placePop(pop, anchor) {
+    document.body.append(pop);
+    const box = anchor.getBoundingClientRect();
+    pop.style.left = `${Math.max(8, Math.min(box.left - 10, window.innerWidth - pop.offsetWidth - 8))}px`;
+    pop.style.top = `${box.bottom + 8}px`;
+  }
+
+  function snapTo(id, rect) {
+    const state = layout.tiles[id];
+    state.mode = 'float';
+    state.rect = keepReachable(rect, bounds());
+    state.auto = false;
+    if (zoomed === id) zoomed = null;
+    bringFront(id);
+    save();
+    apply();
+  }
+
+  function showSnap(id, anchor) {
+    if (narrow() || snapPop?.dataset.owner === id) return;
+    closeSnap();
+    const grid = el('div', { class: 'snap-grid' }, SNAP_LAYOUTS.map((definition) => el('div', { class: 'snap-layout', title: definition.label },
+      definition.zones.map((zone, index) => {
+        const [left, top, width, height] = zone;
+        const space = el('button', { type: 'button', class: 'snap-zone', 'aria-label': `${definition.label}, space ${index + 1}`, onclick: () => choose(id, definition, index, anchor) });
+        space.style.left = `calc(${left * 100}% + 1.5px)`;
+        space.style.top = `calc(${top * 100}% + 1.5px)`;
+        space.style.width = `calc(${width * 100}% - 3px)`;
+        space.style.height = `calc(${height * 100}% - 3px)`;
+        return space;
+      }))));
+    snapPop = el('div', { class: 'snap-pop', 'data-owner': id, role: 'dialog', 'aria-label': `Snap ${titleOf[id]} into a layout` },
+      el('p', { class: 'snap-title', text: `Snap ${titleOf[id]}` }), grid);
+    snapPop.addEventListener('mouseenter', () => clearTimeout(snapTimer));
+    snapPop.addEventListener('mouseleave', () => {
+      clearTimeout(snapTimer);
+      snapTimer = setTimeout(closeSnap, 380);
+    });
+    placePop(snapPop, anchor);
+  }
+
+  function choose(id, definition, index, anchor) {
+    snapTo(id, zoneRect(definition.zones[index], bounds()));
+    showAssist(definition, new Set([index]), new Set([id]), anchor);
+  }
+
+  // After one window is snapped, offer the other open windows for the spaces that are left.
+  function showAssist(definition, used, placed, anchor) {
+    closeSnap();
+    const next = definition.zones.findIndex((_, index) => !used.has(index));
+    const others = TILE_IDS.filter((other) => !placed.has(other) && layout.tiles[other].mode !== 'closed');
+    if (next < 0 || !others.length) return;
+    snapPop = el('div', { class: 'snap-pop snap-assist', role: 'dialog', 'aria-label': 'Fill the other spaces' },
+      el('p', { class: 'snap-title', text: 'Fill the other spaces' }),
+      el('div', { class: 'snap-assist-list' }, others.map((other) => el('button', {
+        type: 'button', class: 'chip', text: titleOf[other],
+        onclick: () => {
+          snapTo(other, zoneRect(definition.zones[next], bounds()));
+          used.add(next);
+          placed.add(other);
+          showAssist(definition, used, placed, anchor);
+        },
+      }))),
+      el('button', { type: 'button', class: 'btn small ghost', text: 'Done', onclick: closeSnap }));
+    placePop(snapPop, anchor);
+  }
+
+  // Put every open window into a layout at once.
+  function arrangeAll(layoutId) {
+    const definition = SNAP_LAYOUTS.find((candidate) => candidate.id === layoutId);
+    if (!definition || narrow()) return;
+    closeSnap();
+    const open = TILE_IDS.filter((id) => layout.tiles[id].mode !== 'closed');
+    const frame = bounds();
+    const spots = Object.fromEntries(open.map((id) => [id, measure(id)]));
+    const assignment = arrangeAssign(open, definition);
+    layout.arrange = 'windows';
+    zoomed = null;
+    for (const id of open) {
+      const state = layout.tiles[id];
+      if (assignment[id]) {
+        state.rect = keepReachable(zoneRect(assignment[id], frame), frame);
+        state.auto = false;
+      } else if (state.mode !== 'float') {
+        state.rect = keepReachable(spots[id], frame);
+        state.auto = false;
+      }
+      state.mode = 'float';
+      layout.z += 1;
+      state.z = layout.z;
+    }
+    save();
+    apply();
+  }
+
   function setArrange(mode) {
     if (narrow()) return;
     const open = TILE_IDS.filter((id) => layout.tiles[id].mode !== 'closed');
@@ -410,12 +525,19 @@ export function createTiles({ projectId, defs }) {
   observer.observe(stage);
   const onMedia = () => apply();
   const onKey = (event) => {
-    if (event.key === 'Escape' && zoomed) {
-      zoomed = null;
-      applyZoom();
+    if (event.key === 'Escape') {
+      closeSnap();
+      if (zoomed) {
+        zoomed = null;
+        applyZoom();
+      }
     }
   };
+  const onPointerDown = (event) => {
+    if (snapPop && !snapPop.contains(event.target) && !event.target.closest?.('.light.green')) closeSnap();
+  };
   document.addEventListener('keydown', onKey);
+  document.addEventListener('pointerdown', onPointerDown);
   narrowQuery.addEventListener('change', onMedia);
   apply();
 
@@ -427,6 +549,7 @@ export function createTiles({ projectId, defs }) {
     setCount,
     isNarrow: narrow,
     hide: (id) => setMode(id, 'closed'),
+    arrangeAll,
     reset: resetLayout,
     isOpen: (id) => layout.tiles[id].mode !== 'closed',
     destroy() {
@@ -434,6 +557,8 @@ export function createTiles({ projectId, defs }) {
       observer.disconnect();
       narrowQuery.removeEventListener('change', onMedia);
       document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointerDown);
+      closeSnap();
     },
   };
 }

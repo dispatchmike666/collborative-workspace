@@ -4,7 +4,8 @@ import { createPalette } from './palette.js';
 import { showHome } from './home.js';
 import { projectActions, showProject } from './project.js';
 import { memberState, onCrewChange, setPresence, setUsers } from './state.js';
-import { ACCENTS, ACCENT_LABELS, api, applyLook, el, enableProximityGlow, openSettings, prefs, toast } from './ui.js';
+import { SNAP_LAYOUTS } from './logic.js';
+import { ACCENTS, ACCENT_LABELS, BACKGROUNDS, api, applyLook, el, enableProximityGlow, openSettings, prefs, toast } from './ui.js';
 
 applyLook();
 enableProximityGlow();
@@ -63,6 +64,7 @@ function menuDefinitions() {
   const here = projectActions.current;
   const mode = prefs.get('mode', 'dark');
   const accent = prefs.get('accent', 'pink');
+  const background = prefs.get('bg', 'bands');
   const go = (hash) => () => { window.location.hash = hash; };
   const setLook = (key, value) => () => { prefs.set(key, value); applyLook(); };
   return [
@@ -85,6 +87,10 @@ function menuDefinitions() {
         { label: 'Float everything', run: () => here.arrange('windows'), disabled: !here },
         { label: 'Reset layout', run: () => here.reset(), disabled: !here },
         '-',
+        { heading: 'Arrange everything' },
+        ...SNAP_LAYOUTS.map((layout) => ({ label: layout.label, run: () => here.snapAll(layout.id), disabled: !here })),
+        '-',
+        { heading: 'Windows' },
         ...(here ? here.windows() : [['chat', 'Chat'], ['board', 'Board'], ['brief', 'Brief'], ['files', 'Files'], ['notes', 'Notes'], ['preview', 'Preview']].map(([key, label]) => ({ key, label, open: false, off: true })))
           .map((win) => ({ label: win.label, checked: win.open, disabled: !here, run: () => here.toggleWindow(win.key) })),
       ],
@@ -92,9 +98,14 @@ function menuDefinitions() {
     {
       label: 'View',
       items: [
+        { heading: 'Appearance' },
         ...MODE_CHOICES.map(([value, label]) => ({ label, checked: mode === value, run: setLook('mode', value) })),
         '-',
+        { heading: 'Accent colour' },
         ...ACCENTS.map((name) => ({ label: ACCENT_LABELS[name], checked: accent === name, run: setLook('accent', name) })),
+        '-',
+        { heading: 'Background' },
+        ...BACKGROUNDS.map(([key, label]) => ({ label, checked: background === key, run: setLook('bg', key) })),
         '-',
         { label: 'Sounds', checked: prefs.get('sound', false), run: () => document.getElementById('toggle-sound').click() },
         { label: 'Celebrate finished runs', checked: prefs.get('confetti', false), run: () => prefs.set('confetti', !prefs.get('confetti', false)) },
@@ -119,6 +130,7 @@ function buildMenus() {
     const definition = menuDefinitions()[index];
     popup = el('div', { class: 'menu-pop', role: 'menu' }, definition.items.map((item) => {
       if (item === '-') return el('div', { class: 'menu-sep', role: 'separator' });
+      if (item.heading) return el('div', { class: 'menu-heading', role: 'presentation', text: item.heading });
       return el('button', {
         type: 'button', class: 'menu-row', role: 'menuitem', disabled: item.disabled || undefined,
         onclick: () => { close(); item.run(); },

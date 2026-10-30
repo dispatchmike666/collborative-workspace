@@ -72,10 +72,14 @@ export const prefs = {
 export const ACCENTS = ['blue', 'pink', 'mint', 'tangerine', 'grape'];
 export const ACCENT_LABELS = { blue: 'Azure', pink: 'Coral', mint: 'Teal', tangerine: 'Amber', grape: 'Violet' };
 
+export const BACKGROUNDS = [['bands', 'Light bands'], ['spotlight', 'Spotlight'], ['grid', 'Grid'], ['ripples', 'Ripples'], ['dots', 'Dots'], ['aurora', 'Aurora'], ['plain', 'Plain black']];
+
 export function applyLook() {
   const root = document.documentElement;
   root.setAttribute('data-mode', prefs.get('mode', 'dark'));
   root.setAttribute('data-accent', prefs.get('accent', 'pink'));
+  const background = prefs.get('bg', 'bands');
+  root.setAttribute('data-bg', BACKGROUNDS.some(([key]) => key === background) ? background : 'bands');
 }
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -266,3 +266,38 @@ export function normalizeLayout(saved) {
   const top = Math.max(0, ...Object.values(tiles).map((tile) => tile.z));
   return { arrange: source.arrange === 'tiles' ? 'tiles' : 'windows', z: Math.max(top, Number.isFinite(source.z) ? source.z : 0), tiles };
 }
+
+// ---- snap layouts ----
+
+// Ready-made ways to divide the stage. Each space is [left, top, width, height] as fractions of the stage.
+export const SNAP_LAYOUTS = [
+  { id: 'center', label: 'Side, chat, side', zones: [[0, 0, 0.26, 1], [0.26, 0, 0.48, 1], [0.74, 0, 0.26, 1]] },
+  { id: 'halves', label: 'Two halves', zones: [[0, 0, 0.5, 1], [0.5, 0, 0.5, 1]] },
+  { id: 'focus', label: 'Main and side', zones: [[0, 0, 0.65, 1], [0.65, 0, 0.35, 1]] },
+  { id: 'thirds', label: 'Three columns', zones: [[0, 0, 1 / 3, 1], [1 / 3, 0, 1 / 3, 1], [2 / 3, 0, 1 / 3, 1]] },
+  { id: 'stack', label: 'Main and two', zones: [[0, 0, 0.6, 1], [0.6, 0, 0.4, 0.5], [0.6, 0.5, 0.4, 0.5]] },
+  { id: 'rail', label: 'Rail and two', zones: [[0, 0, 0.3, 1], [0.3, 0, 0.7, 0.5], [0.3, 0.5, 0.7, 0.5]] },
+  { id: 'rows', label: 'Top and bottom', zones: [[0, 0, 1, 0.5], [0, 0.5, 1, 0.5]] },
+  { id: 'corners', label: 'Four corners', zones: [[0, 0, 0.5, 0.5], [0.5, 0, 0.5, 0.5], [0, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]] },
+];
+
+// A space in pixels, with a small gap kept between neighbours.
+export function zoneRect(zone, bounds, gap = 8) {
+  const [left, top, width, height] = zone;
+  const x = Math.round(left * bounds.w + (left > 0.0001 ? gap / 2 : 0));
+  const y = Math.round(top * bounds.h + (top > 0.0001 ? gap / 2 : 0));
+  const right = Math.round((left + width) * bounds.w - (left + width < 0.9999 ? gap / 2 : 0));
+  const bottom = Math.round((top + height) * bounds.h - (top + height < 0.9999 ? gap / 2 : 0));
+  return { x, y, w: right - x, h: bottom - y };
+}
+
+// Which window goes in which space: the chat gets the biggest, then the others in their usual order.
+export function arrangeAssign(ids, layout) {
+  const spaces = layout.zones.map((zone, index) => ({ zone, index, area: zone[2] * zone[3] }))
+    .sort((a, b) => b.area - a.area || a.index - b.index);
+  const result = {};
+  TILE_IDS.filter((id) => ids.includes(id)).slice(0, spaces.length).forEach((id, position) => {
+    result[id] = spaces[position].zone;
+  });
+  return result;
+}
