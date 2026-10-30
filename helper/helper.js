@@ -194,7 +194,7 @@ export class Helper {
     let outcome = { ok: false, message: 'This computer is not set up to reach your chats.' };
     if (this.#liveChats && typeof chatId === 'string' && typeof text === 'string' && text.trim()) {
       try {
-        outcome = await this.#liveChats.send(chatId, text, who ?? 'Someone');
+        outcome = await this.#liveChats.send(chatId, text, who ?? 'Someone', requestId ? String(requestId) : undefined);
       } catch (error) {
         outcome = { ok: false, message: `Could not reach that chat (${error.message}).` };
       }
@@ -202,6 +202,8 @@ export class Helper {
     this.#log(outcome.ok ? 'Passed a message to one of your open chats.' : `Could not pass a message on: ${outcome.message}`);
     await this.#post('/helper/chat-result', { requestId: String(requestId ?? ''), ok: outcome.ok, message: outcome.message })
       .catch((error) => this.#log(`Could not report how the message went: ${error.message}`));
+    // Tell the hub right away, so the page can show the message as sent without waiting for the next look.
+    this.#publishChats();
   }
 
   #onMessage({ event, data }) {

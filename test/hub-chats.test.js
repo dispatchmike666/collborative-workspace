@@ -192,3 +192,80 @@ test('a helper without the chat watcher says so and never looks at anyone\'s cha
   await new Promise((resolve) => setTimeout(resolve, 150));
   assert.deepEqual(await (await hub.as(brennan)('/api/chats')).json(), { online: true, chats: [] });
 });
+
+test('how far a message has got is kept with the chat, cleaned up, and nothing else comes along', () => {
+  const chats = new LiveChats();
+  chats.set('Brennan', [
+    chat({ lastMessage: { id: 'req-1', state: 'picked_up', sentAt: 5, text: 'what you wrote', address: 'private' } }),
+    chat({ id: ID_B, lastMessage: { id: 'req-2', state: 'exploded', sentAt: 1 } }),
+    chat({ id: 'cccccccc-3333-4333-8333-cccccccccccc' }),
+  ]);
+  const [first, second, third] = chats.list('Brennan');
+  assert.deepEqual(first.lastMessage, { id: 'req-1', state: 'picked_up', sentAt: 5 });
+  assert.equal(second.lastMessage, null, 'an unknown state is dropped');
+  assert.equal(third.lastMessage, null);
+  assert.deepEqual(chats.list('Max'), [], "Max never sees how Brennan's messages are going");
+});
+
+// Asks until the page shows what is expected, or gives up.
+async function eventually(read, matches, label) {
+  for (let tries = 0; tries < 250; tries += 1) {
+    const value = await read();
+    if (matches(value)) return value;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error(`Timed out waiting for ${label}`);
+}
+
+test('the page sees a message go from sent to picked up, without ever receiving its words', async (t) => {
+  const hub = await startHub(t);
+  const brennan = await hub.login('Brennan');
+
+  const claudeDir = tempDir(t);
+  fs.mkdirSync(path.join(claudeDir, 'sessions'));
+  fs.mkdirSync(path.join(claudeDir, 'projects', 'map-site'), { recursive: true });
+  const history = path.join(claudeDir, 'projects', 'map-site', `${ID_A}.jsonl`);
+  fs.writeFileSync(history, `${JSON.stringify({ type: 'user', message: { role: 'user', content: 'earlier work' } })}\n`);
+  const address = process.platform === 'win32'
+    ? `\\\\.\\pipe\\ws-test-${crypto.randomBytes(6).toString('hex')}`
+    : path.join(tempDir(t), 'chat.sock');
+  const received = [];
+  const mailbox = net.createServer((socket) => {
+    let text = '';
+    socket.on('data', (piece) => { text += piece.toString('utf8'); });
+    socket.on('close', () => received.push(...text.split('\n').filter(Boolean).map((line) => JSON.parse(line))));
+    socket.on('error', () => {});
+  });
+  await new Promise((resolve) => mailbox.listen(address, resolve));
+  t.after(() => new Promise((resolve) => { mailbox.closeAllConnections?.(); mailbox.close(resolve); }));
+  fs.writeFileSync(path.join(claudeDir, 'sessions', '4242.json'), JSON.stringify({
+    pid: 4242, sessionId: ID_A, name: 'Map site', cwd: '/work/map-site', kind: 'interactive', entrypoint: 'cli', status: 'idle', messagingSocketPath: address,
+  }));
+
+  const helper = new Helper({
+    hubUrl: hub.base,
+    token: hub.creds.Brennan.helperToken,
+    workspaceRoot: tempDir(t),
+    claudeCommand: process.execPath,
+    claudeArgs: [],
+    liveChats: new ChatWatcher({ claudeDir, isAlive: (pid) => pid === 4242, isWindows: false }),
+    chatScanMs: 40,
+    sseOptions: { minDelayMs: 20, maxDelayMs: 50 },
+  });
+  helper.start();
+  t.after(() => helper.stop());
+
+  const listed = () => hub.as(brennan)('/api/chats').then((res) => res.json());
+  await eventually(listed, (now) => now.chats.length === 1, 'the chat to show up');
+  assert.equal((await listed()).chats[0].lastMessage, null, 'nothing was sent yet');
+
+  const result = await (await hub.as(brennan)('/api/chats/send', hub.json({ chatId: ID_A, text: 'add a login page' }))).json();
+  assert.equal(result.ok, true, result.message);
+  const sent = await eventually(listed, (now) => now.chats[0]?.lastMessage?.state === 'sent', 'the message to show as sent');
+  assert.equal(typeof sent.chats[0].lastMessage.id, 'string');
+
+  fs.appendFileSync(history, `${JSON.stringify({ type: 'queue-operation', operation: 'enqueue', content: 'Message from Brennan in the shared workspace:\n\nadd a login page' })}\n`);
+  const picked = await eventually(listed, (now) => now.chats[0]?.lastMessage?.state === 'picked_up', 'the message to show as picked up');
+  assert.equal(picked.chats[0].lastMessage.id, sent.chats[0].lastMessage.id);
+  assert.ok(!JSON.stringify(picked).includes('login page'), 'the words of the message never reach the hub or the page');
+});

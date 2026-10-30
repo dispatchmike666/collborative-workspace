@@ -4,10 +4,17 @@ const MAX_CHATS = 50;
 const ID = /^[0-9a-zA-Z-]{8,64}$/;
 const WHERE = new Set(['desktop', 'terminal', 'other']);
 const STATUS = new Set(['busy', 'idle', 'unknown']);
+const MESSAGE_STATE = new Set(['sent', 'picked_up', 'finished', 'waiting']);
 
 const key = (user) => String(user).toLowerCase();
 const text = (value, max) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 const stamp = (value) => (Number.isFinite(value) ? value : null);
+
+// How far the last message to a chat has got. Only the state, an id and a time: never the message itself.
+const progress = (message) => {
+  if (!message || typeof message !== 'object' || !MESSAGE_STATE.has(message.state)) return null;
+  return { id: text(message.id, 40), state: message.state, sentAt: stamp(message.sentAt) };
+};
 
 // What each person's helper says is open on their own computer right now. Each list is private to its
 // owner: nobody else's page ever shows it. It lives in memory only and is forgotten when the helper
@@ -35,6 +42,7 @@ export class LiveChats {
         status: STATUS.has(chat.status) ? chat.status : 'unknown',
         doing: chat.doing ? text(chat.doing, 160) : null,
         canMessage: chat.canMessage === true,
+        lastMessage: progress(chat.lastMessage),
         startedAt: stamp(chat.startedAt),
         updatedAt: stamp(chat.updatedAt),
       });

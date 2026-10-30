@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { approvalUsedText, eventToView, statusText, timeAgo } from '../hub/public/render.js';
+import { approvalUsedText, eventToView, messageProgress, progressState, statusText, timeAgo } from '../hub/public/render.js';
 
 test('messages, team chat and Claude\'s words say who is speaking', () => {
   assert.deepEqual(eventToView({ kind: 'user', who: 'Max', text: 'hi' }), { cls: 'user', label: 'Max', text: 'hi' });
@@ -82,4 +82,24 @@ test('board, decision and brief changes are small quiet rows', () => {
   assert.equal(eventToView({ kind: 'brief-saved', who: 'Brennan' }).text, 'Brennan updated the project brief.');
   assert.equal(eventToView({ kind: 'reaction', target: 1, emoji: '🎉', who: 'Max', on: true }), null);
   assert.equal(eventToView({ kind: 'typing', who: 'Max' }), null);
+});
+
+test('the steps under a chat show how far a message has got', () => {
+  assert.deepEqual(messageProgress('sent'), { line: '● Sent   ○ Chat picked it up   ○ Chat finished', note: null });
+  assert.equal(messageProgress('picked_up').line, '● Sent   ● Chat picked it up   ○ Chat finished');
+  assert.equal(messageProgress('finished').line, '● Sent   ● Chat picked it up   ● Chat finished');
+  const waiting = messageProgress('waiting');
+  assert.equal(waiting.line, messageProgress('sent').line);
+  assert.match(waiting.note, /approve it there/);
+  assert.equal(messageProgress('something else'), null);
+  assert.equal(messageProgress(null), null);
+});
+
+test('a message just sent from this page shows as sent until the helper reports the new one', () => {
+  const old = { id: 'old', state: 'finished' };
+  assert.equal(progressState(null, undefined), null, 'nothing sent, nothing to show');
+  assert.equal(progressState(old, undefined), 'finished', 'a message sent earlier still shows');
+  assert.equal(progressState(old, 'old'), 'sent', 'the helper has not reported the new message yet');
+  assert.equal(progressState(null, null), 'sent', 'the very first message');
+  assert.equal(progressState({ id: 'new', state: 'picked_up' }, 'old'), 'picked_up', 'the helper has caught up');
 });

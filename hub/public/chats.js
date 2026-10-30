@@ -1,4 +1,4 @@
-import { timeAgo } from './render.js';
+import { messageProgress, progressState, timeAgo } from './render.js';
 import { api, el } from './ui.js';
 
 const WHERE_LABEL = { desktop: 'Claude desktop app', terminal: 'Terminal', other: 'Claude' };
@@ -27,6 +27,18 @@ export function createChats() {
     const doing = el('div', { class: 'small' });
     const where = el('div', { class: 'where small muted' });
     const result = el('p', { class: 'small muted', role: 'status', hidden: true });
+    const progress = el('p', { class: 'small muted', role: 'status', hidden: true });
+    const waitNote = el('p', { class: 'small muted', hidden: true });
+    // Undefined until this page sends a message; then the id of the message the helper last reported, so the
+    // new one shows as "sent" until the helper reports it.
+    let sentAfter;
+    const showProgress = () => {
+      const view = messageProgress(progressState(chat.lastMessage, sentAfter));
+      progress.hidden = !view;
+      progress.textContent = view ? view.line : '';
+      waitNote.hidden = !view?.note;
+      waitNote.textContent = view?.note ?? '';
+    };
     const input = el('input', { type: 'text', maxlength: '8000', placeholder: 'Message for this chat…', 'aria-label': 'Message for this chat' });
     const send = el('button', { type: 'submit', class: 'btn small primary', text: 'Send' });
     const form = el('form', {
@@ -38,10 +50,17 @@ export function createChats() {
         send.disabled = true;
         result.hidden = false;
         result.textContent = 'Sending…';
+        const before = chat.lastMessage ? chat.lastMessage.id : null;
         try {
           const outcome = await api('/api/chats/send', { method: 'POST', body: { chatId: chat.id, text } });
-          result.textContent = outcome.message;
-          if (outcome.ok) input.value = '';
+          if (outcome.ok) {
+            input.value = '';
+            sentAfter = before;
+            result.hidden = true;
+            showProgress();
+          } else {
+            result.textContent = outcome.message;
+          }
         } catch (error) {
           result.textContent = error.message;
         } finally {
@@ -58,12 +77,14 @@ export function createChats() {
         if (!form.hidden) input.focus();
       },
     });
-    const li = el('li', {}, dot, el('div', { class: 'feed-text' }, el('div', {}, name, ' ', status), doing, where, toggle, form, result));
+    const li = el('li', {}, dot, el('div', { class: 'feed-text' }, el('div', {}, name, ' ', status), doing, where, toggle, form, result, progress, waitNote));
 
     return {
       li,
       update(next) {
         chat = next;
+        if (sentAfter !== undefined && next.lastMessage && next.lastMessage.id !== sentAfter) sentAfter = undefined;
+        showProgress();
         dot.className = `avatar ${next.status === 'busy' ? 'mint' : 'blue'}`;
         dot.textContent = next.status === 'busy' ? '●' : '○';
         name.textContent = next.name;
