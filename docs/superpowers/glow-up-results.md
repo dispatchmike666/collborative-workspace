@@ -22,7 +22,7 @@ instructions that Claude reads on every request.
 | Reactions and typing | Emoji reactions on messages and a "someone is typing" line |
 | File viewer | Click a file to read it (text files only, up to 200 KB each) |
 | Jump menu | Ctrl+K from anywhere; `/` jumps to the message box |
-| Free windows, snap layouts and dock | Windows start with chat in the middle, board left, preview right; Files, Brief and Notes open from the dock. Drag anywhere, resize from every edge. The green dot opens a Windows-style flyout of eight snap layouts, with a follow-up list to fill the other spaces; Window > Arrange everything lays out all open windows at once. Seven backgrounds to pick from in View. Layout is remembered per project; on phones the dock is a tab bar |
+| Free windows, snap layouts and dock | Windows start with chat in the middle, board left, preview right; Files, Brief and Notes open from the dock. Drag anywhere, resize from every edge. The green dot opens a Windows-style flyout of eight snap layouts, with a follow-up list to fill the other spaces; Window > Arrange everything lays out all open windows at once. Eight backgrounds to pick from in View (light bands, spotlight, silk, horizon, beams, cosmos, contours, plain black) plus your own picture. Layout is remembered per project; on phones the dock is a tab bar |
 | Phone layout | One narrow top bar, a project strip, and a Chat / "Board, files and more" switch |
 | Sign-in help | If Claude's sign-in has expired, the helper says so in plain words and how to fix it |
 

@@ -724,44 +724,144 @@ canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-
 }
 :root[data-bg="spotlight"] body::after { display: none; }
 
-:root[data-bg="grid"] body::before {
-  background-image: linear-gradient(rgb(255 255 255 / 0.10) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.10) 1px, transparent 1px);
-  background-size: 48px 48px;
-  -webkit-mask: radial-gradient(ellipse 80% 72% at 50% 38%, #000 18%, transparent 82%); mask: radial-gradient(ellipse 80% 72% at 50% 38%, #000 18%, transparent 82%);
-  filter: none; opacity: 1;
+/* Silk: soft flowing ribbons with a bright edge */
+:root[data-bg="silk"] body::before {
+  background: linear-gradient(105deg, color-mix(in srgb, var(--accent) 80%, #ff9a3c), var(--accent) 45%, color-mix(in srgb, var(--accent) 62%, #6a5cff));
+  -webkit-mask: url("/assets/bg-silk.svg") center / cover no-repeat; mask: url("/assets/bg-silk.svg") center / cover no-repeat;
+  filter: saturate(1.25); opacity: 0.85;
 }
-:root[data-bg="grid"] body::after {
-  background: radial-gradient(ellipse 54% 42% at 50% 0%, color-mix(in srgb, var(--accent) 48%, transparent), transparent 72%);
-  -webkit-mask: none; mask: none; filter: none; opacity: 0.8;
-}
-
-:root[data-bg="ripples"] body::before {
-  background: repeating-radial-gradient(circle at 88% 112%, transparent 0 52px, color-mix(in srgb, var(--accent) 50%, transparent) 52px 53px);
-  -webkit-mask: radial-gradient(circle at 88% 112%, #000 8%, transparent 78%); mask: radial-gradient(circle at 88% 112%, #000 8%, transparent 78%);
-  filter: none; opacity: 0.7;
-}
-:root[data-bg="ripples"] body::after {
-  background: radial-gradient(circle at 88% 112%, color-mix(in srgb, var(--accent) 52%, transparent), transparent 56%);
-  -webkit-mask: none; mask: none; filter: blur(24px); opacity: 0.7;
+:root[data-bg="silk"] body::after {
+  background: radial-gradient(ellipse 60% 44% at 28% 96%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%), radial-gradient(ellipse 50% 40% at 80% 6%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);
+  -webkit-mask: none; mask: none; filter: blur(34px); opacity: 0.9;
 }
 
-:root[data-bg="dots"] body::before {
-  background-image: radial-gradient(rgb(255 255 255 / 0.34) 1px, transparent 1.7px);
-  background-size: 22px 22px;
-  -webkit-mask: radial-gradient(ellipse 80% 72% at 50% 40%, #000 14%, transparent 82%); mask: radial-gradient(ellipse 80% 72% at 50% 40%, #000 14%, transparent 82%);
-  filter: none; opacity: 1;
+/* Horizon: the bright edge of a planet rising at the bottom, under a few stars */
+:root[data-bg="horizon"] body::before {
+  background:
+    radial-gradient(ellipse 125% 58% at 50% 127%, transparent 0, transparent 64%, color-mix(in srgb, var(--accent) 34%, transparent) 68.5%, #fff 70%, color-mix(in srgb, var(--accent) 85%, #fff) 70.7%, color-mix(in srgb, var(--accent) 55%, transparent) 73%, color-mix(in srgb, var(--accent) 20%, transparent) 82%, transparent 96%),
+    radial-gradient(ellipse 80% 30% at 50% 100%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 72%);
+  -webkit-mask: none; mask: none; filter: none; opacity: 1;
 }
-:root[data-bg="dots"] body::after {
-  background: radial-gradient(ellipse 60% 50% at 14% 0%, color-mix(in srgb, var(--accent) 50%, transparent), transparent 70%);
-  -webkit-mask: none; mask: none; filter: none; opacity: 0.8;
+:root[data-bg="horizon"] body::after {
+  background:
+    radial-gradient(2.7px 2.7px at 14% 18%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%), radial-gradient(1.9px 1.9px at 27% 34%, rgb(255 255 255 / 0.75) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 41% 12%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%), radial-gradient(1.9px 1.9px at 55% 28%, rgb(255 255 255 / 0.70) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 68% 16%, rgb(255 255 255 / 0.95) 0 38%, transparent 100%), radial-gradient(1.9px 1.9px at 79% 38%, rgb(255 255 255 / 0.65) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 90% 22%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%), radial-gradient(1.9px 1.9px at 8% 46%, rgb(255 255 255 / 0.65) 0 38%, transparent 100%),
+    radial-gradient(2.3px 2.3px at 35% 52%, rgb(255 255 255 / 0.70) 0 38%, transparent 100%), radial-gradient(1.9px 1.9px at 62% 48%, rgb(255 255 255 / 0.60) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 84% 54%, rgb(255 255 255 / 0.75) 0 38%, transparent 100%), radial-gradient(1.9px 1.9px at 50% 6%, rgb(255 255 255 / 0.85) 0 38%, transparent 100%);
+  -webkit-mask: none; mask: none; filter: none; opacity: 1;
 }
 
-:root[data-bg="aurora"] body::before {
-  background: conic-gradient(from 205deg at 66% 26%, transparent 0deg, color-mix(in srgb, var(--accent) 72%, transparent) 38deg, color-mix(in srgb, #ff9a3c 55%, transparent) 88deg, transparent 138deg, color-mix(in srgb, #4c9bff 46%, transparent) 220deg, transparent 285deg);
-  -webkit-mask: radial-gradient(ellipse 78% 68% at 56% 34%, #000 14%, transparent 84%); mask: radial-gradient(ellipse 78% 68% at 56% 34%, #000 14%, transparent 84%);
-  filter: blur(60px) saturate(1.35); opacity: 0.9;
+/* Beams: soft rays of light falling in from the top right */
+:root[data-bg="beams"] body::before {
+  background: conic-gradient(from 178deg at 90% -10%, transparent 0 1deg,
+    color-mix(in srgb, var(--accent) 70%, transparent) 1deg 2.4deg, transparent 2.4deg 5deg,
+    color-mix(in srgb, color-mix(in srgb, var(--accent) 60%, #ff9a3c) 80%, transparent) 5deg 9deg, transparent 9deg 11deg,
+    color-mix(in srgb, var(--accent) 60%, transparent) 11deg 11.8deg, transparent 11.8deg 16deg,
+    color-mix(in srgb, var(--accent) 80%, transparent) 16deg 21deg, transparent 21deg 24deg,
+    color-mix(in srgb, var(--accent) 50%, transparent) 24deg 25deg, transparent 25deg 31deg,
+    color-mix(in srgb, color-mix(in srgb, var(--accent) 60%, #ff9a3c) 70%, transparent) 31deg 39deg, transparent 39deg 44deg,
+    color-mix(in srgb, var(--accent) 40%, transparent) 44deg 46deg, transparent 46deg 360deg);
+  -webkit-mask: radial-gradient(circle at 90% -10%, #000 0, #000 20%, transparent 90%); mask: radial-gradient(circle at 90% -10%, #000 0, #000 20%, transparent 90%);
+  filter: blur(5px) saturate(1.3); opacity: 0.55;
 }
-:root[data-bg="aurora"] body::after { display: none; }
+:root[data-bg="beams"] body::after {
+  background: radial-gradient(circle at 90% -10%, color-mix(in srgb, var(--accent) 80%, #fff) 0, color-mix(in srgb, var(--accent) 55%, transparent) 14%, transparent 46%);
+  -webkit-mask: none; mask: none; filter: blur(12px); opacity: 0.8;
+}
+
+/* Cosmos: stars, with a faint nebula behind them */
+:root[data-bg="cosmos"] body::before {
+  background:
+    radial-gradient(2.7px 2.7px at 45.3% 55.9%, rgb(255 255 255 / 0.77) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 84.8% 19.6%, rgb(255 255 255 / 0.79) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 61.2% 19.2%, rgb(255 255 255 / 0.68) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 9.9% 80.3%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 59.4% 39.8%, rgb(255 255 255 / 0.89) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 61.3% 16.4%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 7.2% 4.5%, rgb(255 255 255 / 0.86) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 77.3% 33.0%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 51.9% 63.7%, rgb(255 255 255 / 0.50) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 9.3% 65.2%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 98.6% 83.3%, rgb(255 255 255 / 0.93) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 75.3% 51.3%, rgb(255 255 255 / 0.54) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 76.1% 40.2%, rgb(255 255 255 / 0.73) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 94.9% 84.0%, rgb(255 255 255 / 0.63) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 91.9% 6.1%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 39.9% 8.2%, rgb(255 255 255 / 0.91) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 67.1% 34.0%, rgb(255 255 255 / 0.70) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 95.5% 75.3%, rgb(255 255 255 / 0.58) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 70.3% 2.1%, rgb(255 255 255 / 0.98) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 18.4% 55.8%, rgb(255 255 255 / 0.81) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 97.6% 76.4%, rgb(255 255 255 / 0.89) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 12.4% 42.2%, rgb(255 255 255 / 0.50) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 85.7% 96.5%, rgb(255 255 255 / 0.68) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 87.7% 21.6%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 60.0% 57.5%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 21.9% 26.3%, rgb(255 255 255 / 0.70) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 30.0% 8.2%, rgb(255 255 255 / 0.63) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 63.4% 2.5%, rgb(255 255 255 / 0.72) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 45.4% 95.0%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 14.3% 38.8%, rgb(255 255 255 / 0.90) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 90.0% 81.1%, rgb(255 255 255 / 0.94) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 16.5% 62.6%, rgb(255 255 255 / 0.62) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 94.1% 87.5%, rgb(255 255 255 / 0.55) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 5.6% 11.7%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 24.4% 70.0%, rgb(255 255 255 / 0.75) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 89.7% 49.1%, rgb(255 255 255 / 0.61) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 71.6% 7.7%, rgb(255 255 255 / 0.79) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 65.0% 61.4%, rgb(255 255 255 / 0.67) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 90.9% 21.0%, rgb(255 255 255 / 0.54) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 41.3% 25.4%, rgb(255 255 255 / 0.61) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 37.1% 57.1%, rgb(255 255 255 / 0.56) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 14.6% 45.1%, rgb(255 255 255 / 0.89) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 68.7% 58.3%, rgb(255 255 255 / 0.85) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 91.5% 47.5%, rgb(255 255 255 / 0.92) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 95.4% 3.1%, rgb(255 255 255 / 0.87) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 7.6% 31.5%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 8.4% 54.5%, rgb(255 255 255 / 0.86) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 92.8% 73.2%, rgb(255 255 255 / 0.98) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 90.7% 35.5%, rgb(255 255 255 / 0.99) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 8.6% 85.0%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 57.1% 62.2%, rgb(255 255 255 / 0.73) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 2.2% 8.1%, rgb(255 255 255 / 0.88) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 98.3% 87.2%, rgb(255 255 255 / 0.95) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 92.6% 69.0%, rgb(255 255 255 / 0.76) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 83.2% 9.2%, rgb(255 255 255 / 0.52) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 59.9% 48.1%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 12.1% 77.4%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 26.1% 2.1%, rgb(255 255 255 / 0.59) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 61.0% 51.8%, rgb(255 255 255 / 0.90) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 44.3% 88.4%, rgb(255 255 255 / 0.74) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 25.6% 63.1%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 38.7% 58.1%, rgb(255 255 255 / 0.63) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 14.2% 35.4%, rgb(255 255 255 / 0.93) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 94.1% 28.1%, rgb(255 255 255 / 0.57) 0 38%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 47.2% 91.7%, rgb(255 255 255 / 0.73) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 52.0% 66.9%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 97.2% 45.3%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 28.3% 60.5%, rgb(255 255 255 / 1.00) 0 38%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 56.9% 31.3%, rgb(255 255 255 / 0.51) 0 38%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 14.3% 45.6%, rgb(255 255 255 / 0.96) 0 38%, transparent 100%);
+  background-repeat: no-repeat;
+  -webkit-mask: none; mask: none; filter: none; opacity: 1;
+}
+:root[data-bg="cosmos"] body::after {
+  background: radial-gradient(ellipse 46% 38% at 72% 28%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 72%), radial-gradient(ellipse 40% 34% at 22% 72%, color-mix(in srgb, #4c9bff 26%, transparent), transparent 72%), radial-gradient(ellipse 30% 24% at 60% 82%, color-mix(in srgb, #ff9a3c 16%, transparent), transparent 72%);
+  -webkit-mask: none; mask: none; filter: blur(36px); opacity: 0.9;
+}
+
+/* Contours: map lines over two quiet hills */
+:root[data-bg="contours"] body::before {
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 90%, #fff), var(--accent) 55%, color-mix(in srgb, var(--accent) 60%, #ff9a3c));
+  -webkit-mask: url("/assets/bg-contours.svg") center / cover no-repeat; mask: url("/assets/bg-contours.svg") center / cover no-repeat;
+  filter: none; opacity: 0.62;
+}
+:root[data-bg="contours"] body::after {
+  background: radial-gradient(ellipse 44% 40% at 74% 72%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 72%), radial-gradient(ellipse 30% 28% at 19% 20%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 72%);
+  -webkit-mask: none; mask: none; filter: blur(30px); opacity: 0.9;
+}
 
 :root[data-bg="plain"] body::before, :root[data-bg="plain"] body::after { display: none; }
 
@@ -786,3 +886,9 @@ canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-
 .tile[data-tile="chat"] { background: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0) 22%), rgb(9 9 13 / 0.92); }
 :root[data-mode="light"] .tile[data-tile="chat"] { background: rgb(251 251 253 / 0.95); }
 @media (prefers-color-scheme: light) { :root[data-mode="auto"] .tile[data-tile="chat"] { background: rgb(251 251 253 / 0.95); } }
+
+/* Your own picture, from the View menu. It shows in light and dark. */
+:root[data-bg="picture"] body::before { display: block !important; background: var(--wallpaper) center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; inset: 0; }
+:root[data-bg="picture"] body::after { display: block !important; background: linear-gradient(180deg, rgb(0 0 0 / 0.26), rgb(0 0 0 / 0.5)); -webkit-mask: none; mask: none; filter: none; opacity: 1; inset: 0; }
+:root[data-mode="light"][data-bg="picture"] body::after { background: rgb(255 255 255 / 0.1); }
+@media (prefers-color-scheme: light) { :root[data-mode="auto"][data-bg="picture"] body::after { background: rgb(255 255 255 / 0.1); } }

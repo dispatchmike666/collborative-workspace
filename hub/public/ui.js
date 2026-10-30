@@ -72,14 +72,21 @@ export const prefs = {
 export const ACCENTS = ['blue', 'pink', 'mint', 'tangerine', 'grape'];
 export const ACCENT_LABELS = { blue: 'Azure', pink: 'Coral', mint: 'Teal', tangerine: 'Amber', grape: 'Violet' };
 
-export const BACKGROUNDS = [['bands', 'Light bands'], ['spotlight', 'Spotlight'], ['grid', 'Grid'], ['ripples', 'Ripples'], ['dots', 'Dots'], ['aurora', 'Aurora'], ['plain', 'Plain black']];
+export const BACKGROUNDS = [['bands', 'Light bands'], ['spotlight', 'Spotlight'], ['silk', 'Silk'], ['horizon', 'Horizon'], ['beams', 'Beams'], ['cosmos', 'Cosmos'], ['contours', 'Contours'], ['plain', 'Plain black']];
 
 export function applyLook() {
   const root = document.documentElement;
   root.setAttribute('data-mode', prefs.get('mode', 'dark'));
   root.setAttribute('data-accent', prefs.get('accent', 'pink'));
-  const background = prefs.get('bg', 'bands');
-  root.setAttribute('data-bg', BACKGROUNDS.some(([key]) => key === background) ? background : 'bands');
+  let background = prefs.get('bg', 'bands');
+  const picture = prefs.get('wallpaper', null);
+  if (background === 'picture' && typeof picture === 'string') {
+    root.style.setProperty('--wallpaper', `url("${picture}")`);
+  } else {
+    root.style.removeProperty('--wallpaper');
+    if (background === 'picture' || !BACKGROUNDS.some(([key]) => key === background)) background = 'bands';
+  }
+  root.setAttribute('data-bg', background);
 }
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -264,4 +271,56 @@ export function enableProximityGlow() {
     pointer = null;
     schedule();
   });
+}
+
+// ---------- your own background picture ----------
+
+// Opens the file picker, shrinks the picture so it fits in the browser's small storage, and starts using it.
+export function chooseWallpaper() {
+  const input = el('input', { type: 'file', accept: 'image/*', hidden: true });
+  input.addEventListener('change', async () => {
+    const file = input.files?.[0];
+    input.remove();
+    if (!file) return;
+    try {
+      const bitmap = await createImageBitmap(file);
+      let width = Math.min(bitmap.width, 2200);
+      let quality = 0.86;
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = Math.max(1, Math.round((bitmap.height * width) / bitmap.width));
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const url = canvas.toDataURL('image/jpeg', quality);
+        if (url.length < 2_000_000) {
+          try {
+            window.localStorage.setItem('ws.wallpaper', JSON.stringify(url));
+            prefs.set('bg', 'picture');
+            applyLook();
+            toast('Your picture is now the background.', 'good');
+            return;
+          } catch {
+            // The browser said no. Try again smaller.
+          }
+        }
+        width = Math.round(width * 0.75);
+        quality = Math.max(0.5, quality - 0.08);
+      }
+      toast("That picture is too big to keep. Try a smaller one.", 'bad');
+    } catch {
+      toast("Couldn't read that picture. Try a JPG or PNG.", 'bad');
+    }
+  });
+  document.body.append(input);
+  input.click();
+}
+
+export function removeWallpaper() {
+  try {
+    window.localStorage.removeItem('ws.wallpaper');
+  } catch {
+    // Nothing to remove.
+  }
+  if (prefs.get('bg', 'bands') === 'picture') prefs.set('bg', 'bands');
+  applyLook();
 }

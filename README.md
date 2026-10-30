@@ -69,8 +69,9 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **Look and feel.** A near-black stage with a few sharp bands of light in the accent colour far behind glossy
   panes of glass (the look Brennan picked from Raycast and Apple's glass), a menu bar, windows with the
   three dots, solid controls, a plain dock, and a faint light along window edges near the mouse. Dark by
-  default, with a light mode or match-your-computer. Eight snap layouts are in the Window menu. Pick a background in View (light bands, spotlight, grid,
-  ripples, dots, aurora, plain black). Five accent colours (Coral, Azure, Teal, Amber,
+  default, with a light mode or match-your-computer. Eight snap layouts are in the Window menu. Pick a background in View (light bands, spotlight, silk,
+  horizon, beams, cosmos, contours, plain black), or choose your own picture (it is shrunk and kept in your
+  browser only). Five accent colours (Coral, Azure, Teal, Amber,
   Violet) and soft sounds in View. An optional celebration when a run finishes is off by default.
 - **Jump menu.** Press Ctrl+K anywhere to jump to a project, a tab, the settings or a new project.
   Press `/` to jump to the message box.
