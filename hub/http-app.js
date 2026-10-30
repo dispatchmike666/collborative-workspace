@@ -8,12 +8,16 @@ const COOKIE_NAME = 'ws_session';
 const MAX_HELPER_EVENTS = 200;
 
 // Page scripts, styles and pictures: plain file names only, taken from the pages folder.
-const ASSET = /^\/assets\/([a-z0-9][a-z0-9._-]*\.(js|css|svg))$/;
+const ASSET = /^\/assets\/([a-z0-9][a-z0-9._-]*\.(js|css|svg|jpg|png|webp))$/;
 const ASSET_TYPES = {
   js: 'text/javascript; charset=utf-8',
   css: 'text/css; charset=utf-8',
   svg: 'image/svg+xml',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
 };
+const PICTURE_EXTENSIONS = new Set(['svg', 'jpg', 'png', 'webp']);
 
 const PAGE_HEADERS = {
   'cache-control': 'no-store',
@@ -79,10 +83,10 @@ export function createHubApp({
     return project;
   }
 
-  function sendFile(res, file, type) {
+  function sendFile(res, file, type, extra = {}) {
     try {
       const body = fs.readFileSync(path.join(publicDir, file));
-      res.writeHead(200, { 'content-type': type, ...PAGE_HEADERS });
+      res.writeHead(200, { 'content-type': type, ...PAGE_HEADERS, ...extra });
       res.end(body);
     } catch {
       sendJson(res, 500, { error: 'A page file is missing.' });
@@ -91,7 +95,8 @@ export function createHubApp({
 
   function sendAsset(res, name, extension) {
     if (!fs.existsSync(path.join(publicDir, name))) return sendJson(res, 404, { error: 'Not found.' });
-    return sendFile(res, name, ASSET_TYPES[extension]);
+    // Pictures never change under the same name, so the browser may keep them for a while.
+    return sendFile(res, name, ASSET_TYPES[extension], PICTURE_EXTENSIONS.has(extension) ? { 'cache-control': 'public, max-age=3600' } : {});
   }
 
   function startStream(res) {

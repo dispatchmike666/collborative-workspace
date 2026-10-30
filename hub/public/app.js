@@ -5,7 +5,7 @@ import { showHome } from './home.js';
 import { projectActions, showProject } from './project.js';
 import { memberState, onCrewChange, setPresence, setUsers } from './state.js';
 import { SNAP_LAYOUTS } from './logic.js';
-import { ACCENTS, ACCENT_LABELS, BACKGROUNDS, api, applyLook, chooseWallpaper, el, enableProximityGlow, openSettings, prefs, removeWallpaper, toast } from './ui.js';
+import { ACCENTS, ACCENT_LABELS, BACKGROUND_GROUPS, api, applyLook, chooseWallpaper, el, enableProximityGlow, openSettings, prefs, removeWallpaper, toast } from './ui.js';
 
 applyLook();
 enableProximityGlow();
@@ -96,6 +96,15 @@ function menuDefinitions() {
       ],
     },
     {
+      label: 'Background',
+      items: [
+        ...BACKGROUND_GROUPS.flatMap((group) => [{ heading: group.label }, ...group.items.map(([key, label]) => ({ label, checked: background === key, run: setLook('bg', key) }))]),
+        { heading: 'Your own' },
+        ...(prefs.get('wallpaper', null) ? [{ label: 'Your picture', checked: background === 'picture', run: setLook('bg', 'picture') }, { label: 'Remove my picture', run: removeWallpaper }] : []),
+        { label: 'Choose a picture…', run: chooseWallpaper },
+      ],
+    },
+    {
       label: 'View',
       items: [
         { heading: 'Appearance' },
@@ -104,10 +113,6 @@ function menuDefinitions() {
         { heading: 'Accent colour' },
         ...ACCENTS.map((name) => ({ label: ACCENT_LABELS[name], checked: accent === name, run: setLook('accent', name) })),
         '-',
-        { heading: 'Background' },
-        ...BACKGROUNDS.map(([key, label]) => ({ label, checked: background === key, run: setLook('bg', key) })),
-        ...(prefs.get('wallpaper', null) ? [{ label: 'Your picture', checked: background === 'picture', run: setLook('bg', 'picture') }, { label: 'Remove my picture', run: removeWallpaper }] : []),
-        { label: 'Choose a picture…', run: chooseWallpaper },
         '-',
         { label: 'Sounds', checked: prefs.get('sound', false), run: () => document.getElementById('toggle-sound').click() },
         { label: 'Celebrate finished runs', checked: prefs.get('confetti', false), run: () => prefs.set('confetti', !prefs.get('confetti', false)) },

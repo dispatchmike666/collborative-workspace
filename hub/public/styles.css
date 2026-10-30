@@ -887,8 +887,34 @@ canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-
 :root[data-mode="light"] .tile[data-tile="chat"] { background: rgb(251 251 253 / 0.95); }
 @media (prefers-color-scheme: light) { :root[data-mode="auto"] .tile[data-tile="chat"] { background: rgb(251 251 253 / 0.95); } }
 
+/* Wallpapers: finished pictures that sit behind everything, in light and dark. */
+:root[data-bg="dusk"] body::before { display: block !important; inset: 0; background: url("/assets/bg-dusk.svg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="dusk"] body::after { display: block !important; inset: 0; background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.30)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="ribbon"] body::before { display: block !important; inset: 0; background: url("/assets/bg-ribbon.svg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="ribbon"] body::after { display: block !important; inset: 0; background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.30)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="curtains"] body::before { display: block !important; inset: 0; background: url("/assets/bg-curtains.svg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="curtains"] body::after { display: block !important; inset: 0; background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.30)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="valley"] body::before { display: block !important; inset: 0; background: url("/assets/bg-valley.svg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="valley"] body::after { display: block !important; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(0 0 0 / 0.18)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="nebula"] body::before { display: block !important; inset: 0; background: url("/assets/bg-nebula.jpg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="nebula"] body::after { display: block !important; inset: 0; background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.30)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="galaxy"] body::before { display: block !important; inset: 0; background: url("/assets/bg-galaxy.jpg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="galaxy"] body::after { display: block !important; inset: 0; background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.30)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="earth"] body::before { display: block !important; inset: 0; background: url("/assets/bg-earth.jpg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="earth"] body::after { display: block !important; inset: 0; background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.30)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="planet"] body::before { display: block !important; inset: 0; background: url("/assets/bg-planet.jpg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="planet"] body::after { display: block !important; inset: 0; background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.30)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="eclipse"] body::before { display: block !important; inset: 0; background: url("/assets/bg-eclipse.jpg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="eclipse"] body::after { display: block !important; inset: 0; background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.30)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="deepfield"] body::before { display: block !important; inset: 0; background: url("/assets/bg-deepfield.jpg") center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+:root[data-bg="deepfield"] body::after { display: block !important; inset: 0; background: radial-gradient(ellipse 120% 100% at 50% 40%, transparent 50%, rgb(0 0 0 / 0.30)); -webkit-mask: none; mask: none; filter: none; opacity: 1; }
+
 /* Your own picture, from the View menu. It shows in light and dark. */
 :root[data-bg="picture"] body::before { display: block !important; background: var(--wallpaper) center / cover no-repeat; -webkit-mask: none; mask: none; filter: none; opacity: 1; inset: 0; }
 :root[data-bg="picture"] body::after { display: block !important; background: linear-gradient(180deg, rgb(0 0 0 / 0.26), rgb(0 0 0 / 0.5)); -webkit-mask: none; mask: none; filter: none; opacity: 1; inset: 0; }
 :root[data-mode="light"][data-bg="picture"] body::after { background: rgb(255 255 255 / 0.1); }
 @media (prefers-color-scheme: light) { :root[data-mode="auto"][data-bg="picture"] body::after { background: rgb(255 255 255 / 0.1); } }
+.menu-pop { max-height: calc(100vh - 44px); overflow-y: auto; }
+/* The pale valley needs a little shade on top so light text stays readable in dark mode, and none in light mode. */
+:root[data-bg="valley"] body::after { background: linear-gradient(180deg, rgb(6 8 18 / 0.5), rgb(6 8 18 / 0.28) 55%, rgb(0 0 0 / 0.2)); }
+:root[data-mode="light"][data-bg="valley"] body::after { background: none; }

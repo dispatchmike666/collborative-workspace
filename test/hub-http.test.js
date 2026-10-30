@@ -15,6 +15,11 @@ test('the login page is public, the app needs a login, and only listed files are
   for (const asset of ['app.js', 'render.js', 'login.js', 'styles.css']) {
     assert.equal((await fetch(`${base}/assets/${asset}`)).status, 200, asset);
   }
+  const picture = await fetch(`${base}/assets/bg-nebula.jpg`);
+  assert.equal(picture.status, 200);
+  assert.equal(picture.headers.get('content-type'), 'image/jpeg');
+  assert.match(picture.headers.get('cache-control'), /max-age=\d+/, 'wallpapers may be kept by the browser');
+  assert.equal((await fetch(`${base}/assets/bg-nebula.gif`)).status, 404, 'only listed picture types are served');
   assert.equal((await fetch(`${base}/assets/users.json`)).status, 404);
   assert.equal((await fetch(`${base}/nope`)).status, 404);
 

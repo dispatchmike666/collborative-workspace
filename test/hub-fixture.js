@@ -20,6 +20,7 @@ export async function startHub(t, options = {}, dispatcherOptions = {}) {
     'render.js': '//render',
     'login.js': '//login',
     'styles.css': 'body{}',
+    'bg-nebula.jpg': 'not really a picture',
   };
   for (const [file, text] of Object.entries(pages)) fs.writeFileSync(path.join(publicDir, file), text);
 

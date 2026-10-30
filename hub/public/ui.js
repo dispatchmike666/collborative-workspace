@@ -72,20 +72,30 @@ export const prefs = {
 export const ACCENTS = ['blue', 'pink', 'mint', 'tangerine', 'grape'];
 export const ACCENT_LABELS = { blue: 'Azure', pink: 'Coral', mint: 'Teal', tangerine: 'Amber', grape: 'Violet' };
 
-export const BACKGROUNDS = [['bands', 'Light bands'], ['spotlight', 'Spotlight'], ['silk', 'Silk'], ['horizon', 'Horizon'], ['beams', 'Beams'], ['cosmos', 'Cosmos'], ['contours', 'Contours'], ['plain', 'Plain black']];
+export const BACKGROUND_GROUPS = [
+  { label: 'Lights', items: [['bands', 'Light bands'], ['spotlight', 'Spotlight'], ['silk', 'Silk'], ['horizon', 'Horizon'], ['beams', 'Beams'], ['cosmos', 'Cosmos'], ['contours', 'Contours'], ['plain', 'Plain black']] },
+  { label: 'Mac-style', items: [['dusk', 'Dusk ridges'], ['ribbon', 'Flowing ribbons'], ['curtains', 'Blue curtains'], ['valley', 'Morning valley']] },
+  { label: 'Space', items: [['nebula', 'Nebula'], ['galaxy', 'Spiral galaxy'], ['earth', 'Earth at sunrise'], ['planet', 'Ringed planet'], ['eclipse', 'Eclipse'], ['deepfield', 'Deep field']] },
+];
+export const BACKGROUNDS = BACKGROUND_GROUPS.flatMap((group) => group.items);
+
+// A wallpaper decides for itself whether the page should be light or dark, as on a Mac.
+const WALLPAPER_MODE = { dusk: 'dark', ribbon: 'dark', curtains: 'dark', valley: 'light', nebula: 'dark', galaxy: 'dark', earth: 'dark', planet: 'dark', eclipse: 'dark', deepfield: 'dark' };
 
 export function applyLook() {
   const root = document.documentElement;
-  root.setAttribute('data-mode', prefs.get('mode', 'dark'));
   root.setAttribute('data-accent', prefs.get('accent', 'pink'));
   let background = prefs.get('bg', 'bands');
   const picture = prefs.get('wallpaper', null);
+  let forced = WALLPAPER_MODE[background] ?? null;
   if (background === 'picture' && typeof picture === 'string') {
     root.style.setProperty('--wallpaper', `url("${picture}")`);
+    forced = prefs.get('wallpaper-mode', null);
   } else {
     root.style.removeProperty('--wallpaper');
     if (background === 'picture' || !BACKGROUNDS.some(([key]) => key === background)) background = 'bands';
   }
+  root.setAttribute('data-mode', forced ?? prefs.get('mode', 'dark'));
   root.setAttribute('data-bg', background);
 }
 
@@ -291,10 +301,19 @@ export function chooseWallpaper() {
         canvas.width = width;
         canvas.height = Math.max(1, Math.round((bitmap.height * width) / bitmap.width));
         canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const probe = document.createElement('canvas');
+        probe.width = 16;
+        probe.height = 9;
+        probe.getContext('2d').drawImage(bitmap, 0, 0, 16, 9);
+        const pixels = probe.getContext('2d').getImageData(0, 0, 16, 9).data;
+        let total = 0;
+        for (let i = 0; i < pixels.length; i += 4) total += 0.2126 * pixels[i] + 0.7152 * pixels[i + 1] + 0.0722 * pixels[i + 2];
+        const brightness = total / (16 * 9 * 255);
         const url = canvas.toDataURL('image/jpeg', quality);
         if (url.length < 2_000_000) {
           try {
             window.localStorage.setItem('ws.wallpaper', JSON.stringify(url));
+            prefs.set('wallpaper-mode', brightness > 0.56 ? 'light' : 'dark');
             prefs.set('bg', 'picture');
             applyLook();
             toast('Your picture is now the background.', 'good');

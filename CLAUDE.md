@@ -18,7 +18,9 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
   menus and a clock, windows with red / yellow / green dots that go quiet when not active, solid system-style
   controls at 13px, a plain still dock (no bounce, no magnifying), and a glow that only lights the part of a window's edge nearest the mouse, never a full outline
   (`enableProximityGlow` in `ui.js`). Snap layouts (`SNAP_LAYOUTS` in `logic.js`) open from each window's green dot and
-  from Window > Arrange everything. Backgrounds are chosen in View (`data-bg` on the page); silk and contours are shape files in `hub/public/bg-*.svg`
+  from Window > Arrange everything. Backgrounds are chosen in the Background menu (`data-bg` on the page); the Mac-style and space wallpapers are finished
+  pictures made by the scripts that produced `hub/public/bg-*.svg|jpg` (numpy and PIL, noise, glows, grain), and each decides light or dark
+  mode itself (`WALLPAPER_MODE` in `ui.js`); silk and contours are shape files in `hub/public/bg-*.svg`
   coloured by the accent, and a person's own picture is stored in their browser (`chooseWallpaper` in `ui.js`). Dark by default, light mode available, coral accent by
   default, sans-serif only. The project screen (`tiles.js`) opens as free windows: chat in the middle as the
   focus, board and preview beside it, others from the dock. Windows move anywhere and resize from every
