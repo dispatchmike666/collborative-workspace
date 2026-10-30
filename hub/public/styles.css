@@ -52,7 +52,7 @@
 
   --accent: var(--pink);
   --btn: color-mix(in srgb, var(--accent) var(--btn-mix), #000);
-  --glow: color-mix(in srgb, var(--accent) 45%, transparent);
+  --glow: color-mix(in srgb, var(--accent) 54%, transparent);
   --on-accent: #ffffff;
 
   --radius: 10px;
@@ -243,7 +243,7 @@ kbd { font: 600 11px var(--font-mono); padding: 1px 5px; border: 0.5px solid var
   padding: 9px;
   border-radius: calc(var(--r) + 9px);
   pointer-events: none;
-  opacity: calc(var(--near) * 0.9);
+  opacity: calc(var(--near) * 1);
   will-change: opacity;
   background: radial-gradient(150px circle at calc(var(--mx) + 9px) calc(var(--my) + 9px), var(--glow), transparent 72%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -258,9 +258,9 @@ kbd { font: 600 11px var(--font-mono); padding: 1px 5px; border: 0.5px solid var
   border-radius: var(--r);
   padding: 1px;
   pointer-events: none;
-  opacity: calc(var(--near) * 0.95);
+  opacity: calc(var(--near) * 1);
   will-change: opacity;
-  background: radial-gradient(120px circle at var(--mx) var(--my), color-mix(in srgb, var(--accent) 65%, #fff), transparent 70%);
+  background: radial-gradient(120px circle at var(--mx) var(--my), color-mix(in srgb, var(--accent) 72%, #fff), transparent 72%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
