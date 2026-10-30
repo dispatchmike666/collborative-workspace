@@ -57,6 +57,14 @@ export class Dispatcher {
     };
   }
 
+  // Hands a message to one person's helper. False when that helper is not connected.
+  sendToHelper(userName, message) {
+    const helper = this.#helpers.get(String(userName).toLowerCase());
+    if (!helper) return false;
+    helper.send(message);
+    return true;
+  }
+
   // ---- jobs ----
 
   // A person asks their Claude to do something. Returns the job.

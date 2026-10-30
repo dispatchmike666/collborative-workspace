@@ -79,12 +79,21 @@ export class Helper {
   #onFatal;
   #sseOptions;
   #runnerTimeoutMs;
+  #liveChats;
+  #chatScanMs;
+  #chatTimer = null;
+  #chatsSentAt = 0;
+  #chatsSentText = '';
+  #chatsPosting = false;
+  #connected = false;
   #connection = null;
   #runners = new Map();
   #contexts = new Map();
   #active = new Map();
   #previewSent = new Set();
 
+  // `liveChats` is a ChatWatcher (see live-chats.js). Leave it out and the helper does not look at
+  // your open Claude chats at all.
   constructor({
     hubUrl,
     token,
@@ -98,7 +107,11 @@ export class Helper {
     onFatal = () => {},
     sseOptions = {},
     runnerTimeoutMs,
+    liveChats = null,
+    chatScanMs = 5000,
   }) {
+    this.#liveChats = liveChats;
+    this.#chatScanMs = chatScanMs;
     this.#onFatal = onFatal;
     this.#hubUrl = hubUrl.replace(/\/+$/, '');
     this.#token = token;
@@ -123,19 +136,72 @@ export class Helper {
       headers: { authorization: `Bearer ${this.#token}` },
       fetchImpl: this.#fetch,
       onMessage: (message) => this.#onMessage(message),
-      onOpen: () => this.#log('Connected to the hub. Waiting for work.'),
-      onClose: (error) => this.#log(`Lost the connection to the hub (${error.message}). Trying again…`),
+      onOpen: () => {
+        this.#log('Connected to the hub. Waiting for work.');
+        this.#connected = true;
+        this.#chatsSentAt = 0;
+        this.#publishChats();
+      },
+      onClose: (error) => {
+        this.#connected = false;
+        this.#log(`Lost the connection to the hub (${error.message}). Trying again…`);
+      },
       onFatal: (message) => {
         this.#log(message);
         this.#onFatal(message);
       },
       ...this.#sseOptions,
     });
+    if (this.#liveChats) {
+      this.#chatTimer = setInterval(() => this.#publishChats(), this.#chatScanMs);
+      this.#chatTimer.unref?.();
+    }
   }
 
   stop() {
+    clearInterval(this.#chatTimer);
     this.#connection?.stop();
     for (const runner of this.#runners.values()) runner.cancel();
+  }
+
+  // Tells the hub which Claude chats are open on this computer, but only when something changed (or every
+  // half minute, as a sign of life). Only the person who owns this helper ever sees the list.
+  async #publishChats() {
+    if (!this.#liveChats || !this.#connected || this.#chatsPosting) return;
+    let chats;
+    try {
+      chats = this.#liveChats.snapshot();
+    } catch (error) {
+      this.#log(`Could not look at your open chats: ${error.message}`);
+      return;
+    }
+    const text = JSON.stringify(chats);
+    if (text === this.#chatsSentText && Date.now() - this.#chatsSentAt < 30_000) return;
+    this.#chatsPosting = true;
+    try {
+      await this.#post('/helper/chats', { chats });
+      this.#chatsSentText = text;
+      this.#chatsSentAt = Date.now();
+    } catch (error) {
+      this.#log(`Could not send your open chats: ${error.message}`);
+    } finally {
+      this.#chatsPosting = false;
+    }
+  }
+
+  // The hub asks this helper to drop a message into one of this person's own open chats.
+  async #handleChatMessage({ requestId, chatId, text, who }) {
+    let outcome = { ok: false, message: 'This computer is not set up to reach your chats.' };
+    if (this.#liveChats && typeof chatId === 'string' && typeof text === 'string' && text.trim()) {
+      try {
+        outcome = await this.#liveChats.send(chatId, text, who ?? 'Someone');
+      } catch (error) {
+        outcome = { ok: false, message: `Could not reach that chat (${error.message}).` };
+      }
+    }
+    this.#log(outcome.ok ? 'Passed a message to one of your open chats.' : `Could not pass a message on: ${outcome.message}`);
+    await this.#post('/helper/chat-result', { requestId: String(requestId ?? ''), ok: outcome.ok, message: outcome.message })
+      .catch((error) => this.#log(`Could not report how the message went: ${error.message}`));
   }
 
   #onMessage({ event, data }) {
@@ -147,6 +213,7 @@ export class Helper {
     }
     if (event === 'job') this.#handleJob(payload.job).catch((error) => this.#log(`Something went wrong: ${error.message}`));
     else if (event === 'cancel') this.#cancel(payload.jobId);
+    else if (event === 'chat-message') this.#handleChatMessage(payload).catch((error) => this.#log(`Something went wrong: ${error.message}`));
   }
 
   // The hub gave up on a run. Remember that, even if Claude has not started yet,
