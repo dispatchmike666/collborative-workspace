@@ -56,7 +56,14 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
 - Approvals allow one exact command. Commands with * ( ) or line breaks cannot be approved.
 - Anything a person reads is plain English.
 - The look is settled (stage glass: dark, bands of light behind glossy windows, menu bar, free windows, plain dock, chat in the middle). To change it, ask Brennan for a reference screenshot first; never guess from adjectives. Do not redesign it again unless Brennan asks. He refuses endless design rounds; never ask him to describe taste in design words, show him pictures or finished options instead.
-- Never add --bare or --dangerously-skip-permissions to the Claude flags.
+- Never add --bare or --dangerously-skip-permissions to the Claude flags. The runner refuses them, and refuses
+  any per-message flag except an approval of one exact command (`--allowedTools`).
+- Claude is started with `--setting-sources ""` (no settings files at all, not even the project's own). A shared
+  project's settings file can run commands before each message, change Claude's environment and widen what it may
+  do without asking, on the OTHER person's computer. Do not put `project` back. Verified with the real Claude:
+  `node test/acceptance/hostile-project.manual.mjs` (run it after a Claude update or any change to the flags).
+- Stop kills the whole family of programs Claude started (`server/kill-tree.js`), and a run that prints nothing
+  for 8 minutes with no command running is stopped. Details: docs/superpowers/helper-hardening-results.md.
 - Test with the stand-in Claude (test/fake-claude.js), never the real one, except in
   deliberate acceptance runs.
 

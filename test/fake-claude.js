@@ -9,7 +9,10 @@
 //   SLEEP<ms>     waits that long before answering (for example SLEEP800)
 //   AUTHFAIL      finishes the way Claude does when its sign-in has expired
 //   CRASH         exits with an error
-//   HANG          never finishes
+//   HANG          never finishes, and prints nothing
+//   HANGTOOL      starts a tool call and then never finishes (a long-running command)
+//   GRANDCHILD    starts a second program of its own (grandchild.pid holds its id) and then never finishes
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -21,7 +24,22 @@ const sessionId = resumeId ?? 'fake-session-1';
 const out = (obj) => process.stdout.write(`${JSON.stringify(obj)}\n`);
 const assistant = (block) => ({ type: 'assistant', message: { role: 'assistant', content: [block] }, session_id: sessionId });
 
+const init = () => ({ type: 'system', subtype: 'init', session_id: sessionId, model: 'fake', apiKeySource: process.env.FAKE_API_KEY_SOURCE ?? 'none' });
+
 async function run(prompt) {
+  if (prompt.includes('GRANDCHILD')) {
+    out(init());
+    const grandchild = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
+    fs.writeFileSync(path.join(process.cwd(), 'grandchild.pid'), String(grandchild.pid));
+    setInterval(() => {}, 1000);
+    return;
+  }
+  if (prompt.includes('HANGTOOL')) {
+    out(init());
+    out(assistant({ type: 'tool_use', id: 't7', name: 'Bash', input: { command: 'sleep 999' } }));
+    setInterval(() => {}, 1000);
+    return;
+  }
   if (prompt.includes('HANG')) {
     setInterval(() => {}, 1000);
     return;
@@ -35,7 +53,7 @@ async function run(prompt) {
   const sleep = prompt.match(/SLEEP(\d+)/);
   if (sleep) await new Promise((resolve) => setTimeout(resolve, Number(sleep[1])));
 
-  out({ type: 'system', subtype: 'init', session_id: sessionId, model: 'fake', apiKeySource: process.env.FAKE_API_KEY_SOURCE ?? 'none' });
+  out(init());
 
   // The last WRITE: wins, because a recap at the top of the message may mention an older one.
   const match = [...prompt.matchAll(/WRITE:(\S+)/g)].at(-1);

@@ -4,16 +4,22 @@ import path from 'node:path';
 // How we start Claude for each message. Every flag here is on purpose:
 //  -p + stream-json + --verbose   run once and print each step as it happens
 //  --permission-mode acceptEdits  Claude may create and edit files without asking
-//  --setting-sources project      ignore personal hooks and skills, so runs stay lean
+//  --setting-sources ""           read NO settings files at all, not even the project's own. A shared
+//                                 project can carry a settings file that runs commands before every
+//                                 message, changes Claude's environment (for example where it sends
+//                                 requests) and widens what it may do without asking. With no setting
+//                                 sources none of that runs. The project's CLAUDE.md instructions still
+//                                 load. Checked with the real Claude: test/acceptance/hostile-project.manual.mjs
 //  --disable-slash-commands       turn off skills
 //  --strict-mcp-config            ignore other connected tools
-// Never add --bare (it only works with an API key) or --dangerously-skip-permissions.
+// Never add --bare (it skips the Claude plan login and only works with an API key) or
+// --dangerously-skip-permissions.
 export const CLAUDE_ARGS = [
   '-p',
   '--output-format', 'stream-json',
   '--verbose',
   '--permission-mode', 'acceptEdits',
-  '--setting-sources', 'project',
+  '--setting-sources', '',
   '--disable-slash-commands',
   '--strict-mcp-config',
 ];
