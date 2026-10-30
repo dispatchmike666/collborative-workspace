@@ -63,6 +63,25 @@ test('resetting a password or token makes the old one stop working', (t) => {
   assert.throws(() => store.resetPassword('Nobody'), /No such user/);
 });
 
+test('a person can choose their own password: it replaces the old one and the helper token keeps working', (t) => {
+  const { store, file } = makeStore(t);
+  const first = store.addUser('Brennan');
+  store.setPassword('Brennan', 'a-chosen-password-1');
+  assert.equal(store.verifyPassword('Brennan', first.password), null, 'the old password stops working');
+  assert.deepEqual(store.verifyPassword('brennan', 'a-chosen-password-1'), { id: 'brennan', name: 'Brennan' });
+  assert.ok(store.verifyHelperToken(first.helperToken), 'the helper token is untouched');
+  assert.ok(!fs.readFileSync(file, 'utf8').includes('a-chosen-password-1'), 'only a scrambled copy is stored');
+});
+
+test('a chosen password must be long enough and belong to a real person, and a refusal changes nothing', (t) => {
+  const { store } = makeStore(t);
+  const first = store.addUser('Brennan');
+  assert.throws(() => store.setPassword('Brennan', 'short1!'), /at least 10/);
+  assert.throws(() => store.setPassword('Brennan', '          '.slice(0, 9)), /at least 10/);
+  assert.throws(() => store.setPassword('Brennan', undefined), /at least 10/);
+  assert.ok(store.verifyPassword('Brennan', first.password), 'the old password still works');
+  assert.throws(() => store.setPassword('Nobody', 'a-long-enough-one'), /No such user/);
+});
 test('a session cookie proves who you are until it expires or is tampered with', () => {
   let clock = 1_000_000;
   const sessions = createSessions('test-secret', { ttlMs: 1000, now: () => clock });

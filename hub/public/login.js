@@ -27,7 +27,7 @@ form.addEventListener('submit', async (event) => {
     const body = await res.json().catch(() => ({}));
     errorEl.textContent = body.error ?? 'Could not log in. Try again.';
   } catch {
-    errorEl.textContent = "Couldn't reach the workspace. Check your connection and try again.";
+    errorEl.textContent = "Couldn't reach Glasshouse. Check your connection and try again.";
   }
   errorEl.hidden = false;
 });

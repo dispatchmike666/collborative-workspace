@@ -31,51 +31,37 @@ so I could not test it. Everything else in this project has been tested.
 
 ## Step 2: choose a way for Max to reach it
 
-### Option A: a Cloudflare "quick tunnel" (no account needed, one download)
+### Option A: a Cloudflare "quick tunnel" (does NOT work for this app)
 
-A tunnel is a secure pipe from the internet to a program on your PC. This one gives you a
-temporary web address.
+Cloudflare's free quick tunnel is a one-download way to get a temporary web address, but their own
+documentation says quick tunnels do not support Server-Sent Events. That is the live connection the
+workspace page and every helper depend on, so the workspace would load and then not update. Do not use it.
 
-1. Download `cloudflared` from Cloudflare's website (it is a single small program) and put it
-   somewhere you can run it.
-2. With the hub running, open a second terminal and run:
+### Option B: Tailscale (a private network just for you and Max) - tested and working
+
+Tailscale puts your PC and Max's PC on a private network. The hub is then not on the public internet at
+all. It needs a free Tailscale account and an install on both computers, and gives your PC a steady name.
+Tested on 2026-10-30: the live connection works through it.
+
+1. Install Tailscale on your PC and sign in with a **personal** account (not a work email, which joins
+   your company's network instead). To give the PC a plain name, run `tailscale up --hostname=workspace`.
+2. The first time you publish, Tailscale sends you to a page called "Start using Serve". Tick
+   **HTTPS certificates** only. Leave **Funnel** unticked: it is ticked by default, and it opens the
+   workspace to the whole public internet. Turning on HTTPS publicly lists your PC's name, so keep it plain.
+3. With the hub running, run: `tailscale serve --bg 3000`. It shows an address like
+   `https://workspace.something.ts.net` and says "tailnet only".
+4. Tell the hub that name, then restart it:
 
    ```
-   cloudflared tunnel --url http://localhost:3000
-   ```
-
-3. It prints an address like `https://something-random.trycloudflare.com`. That is the address
-   Max will use.
-4. Stop the hub (Ctrl+C) and start it again, telling it its public name. In PowerShell:
-
-   ```
-   $env:HUB_PUBLIC_HOST = "something-random.trycloudflare.com"
+   $env:HUB_PUBLIC_HOST = "workspace.something.ts.net"
    npm run hub
    ```
 
-5. Send Max the address. Anyone with the address can see the login page, but only a person
-   with a password can get past it.
+5. Invite Max in Tailscale's admin page (Users, then Invite users), and add him as a collaborator on the
+   GitHub repository so he can download the code.
+6. Max installs Tailscale, accepts the invite, and uses that address.
 
-The catch: this address changes every time you restart the tunnel, so you repeat steps 2 to 5
-each time. If that gets annoying, use Option B.
-
-### Option B: Tailscale (a private network just for your devices)
-
-Tailscale puts your PC and Max's PC on a private network. The hub is then not on the public
-internet at all. It needs a free Tailscale account and an install on both computers, and
-gives each computer a steady name.
-
-1. Both of you install Tailscale and sign in to the same Tailscale network.
-2. On your PC, with the hub running, run: `tailscale serve --bg 3000`
-3. It shows an address like `https://your-pc.something.ts.net`. Tell the hub that name:
-
-   ```
-   $env:HUB_PUBLIC_HOST = "your-pc.something.ts.net"
-   npm run hub
-   ```
-
-4. Max uses that address.
-
+Your PC has to be on, with the hub and your helper running, whenever Max is using the workspace.
 ### Option C: a web host (later, if you want it always on)
 
 Any service that runs Node programs and puts HTTPS in front of them will work, so the hub is

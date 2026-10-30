@@ -68,7 +68,7 @@ export class GitSync {
 
   async #identityArgs(cwd, who) {
     const email = (await this.#git(['config', 'user.email'], { cwd, check: false })).stdout.trim();
-    return email ? [] : ['-c', `user.name=${who}'s Claude`, '-c', 'user.email=claude@shared-workspace.local'];
+    return email ? [] : ['-c', `user.name=${who}'s Claude`, '-c', 'user.email=claude@glasshouse.local'];
   }
 
   // Gets this computer's copy ready before Claude works: copy the project the first time,

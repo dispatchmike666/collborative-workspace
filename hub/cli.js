@@ -10,7 +10,8 @@ const [command, name] = process.argv.slice(2);
 const usage = `Manage who can log in.
 
   npm run hub:add-user -- <Name>       add a person (2 to 20 letters or numbers)
-  npm run hub:new-password -- <Name>   give someone a new password
+  npm run hub:new-password -- <Name>   give someone a new random password
+  npm run hub:set-password -- <Name>   choose someone's password yourself (at least 10 characters)
   npm run hub:new-token -- <Name>      give someone a new helper token
   npm run hub:list                     show who can log in`;
 
@@ -50,6 +51,12 @@ try {
     needName();
     const file = saveCredentials(name, { password: users.resetPassword(name) });
     console.log(`${name} has a new password. It is in this private file: ${file}`);
+  } else if (command === 'set-password') {
+    needName();
+    if (process.stdin.isTTY) console.log(`Type the new password for ${name} and press Enter (it will show on screen):`);
+    const typed = fs.readFileSync(0, 'utf8').split(/\r?\n/)[0];
+    users.setPassword(name, typed);
+    console.log(`${name}'s password is changed. Nothing was written to a file.`);
   } else if (command === 'new-token') {
     needName();
     const file = saveCredentials(name, { helperToken: users.newHelperToken(name) });

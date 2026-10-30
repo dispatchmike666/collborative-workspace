@@ -69,7 +69,7 @@ function menuDefinitions() {
   const setLook = (key, value) => () => { prefs.set(key, value); applyLook(); };
   return [
     {
-      label: 'Workspace',
+      label: 'Glasshouse',
       bold: true,
       items: [
         { label: 'All projects', run: go('#/') },

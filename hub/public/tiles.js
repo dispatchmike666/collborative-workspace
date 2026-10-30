@@ -189,7 +189,7 @@ export function createTiles({ projectId, defs }) {
 
   // ---------- the dock ----------
 
-  const dock = el('nav', { class: 'dock', 'aria-label': 'Workspace dock' });
+  const dock = el('nav', { class: 'dock', 'aria-label': 'Glasshouse dock' });
   for (const def of defs) {
     const badge = el('span', { class: 'dock-badge', hidden: true });
     const item = el('button', { type: 'button', class: 'dock-item', 'aria-label': def.title, 'data-label': def.title, 'data-tile': def.id, onclick: () => focus(def.id) },

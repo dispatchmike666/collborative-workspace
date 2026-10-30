@@ -166,7 +166,7 @@ test('sending to a chat finds it by id, uses its password on Windows, and says w
   assert.equal(result.ok, true);
   await waitFor(() => mailbox.received.length === 2, { label: 'the message' });
   assert.deepEqual(mailbox.received[0], { type: 'auth', token: 'win-token' });
-  assert.equal(mailbox.received[1].message.content, 'Message from Brennan in the shared workspace:\n\nadd a login page');
+  assert.equal(mailbox.received[1].message.content, 'Message from Brennan in Glasshouse:\n\nadd a login page');
 
   mailbox.received.length = 0;
   await new ChatWatcher({ claudeDir, isAlive: alive(101), isWindows: false }).send(ID_A, 'again', 'Max');
@@ -187,7 +187,7 @@ test('sending says what went wrong in plain words', async (t) => {
 
 // ---- following a message after it is sent ----
 
-const SAID = 'Message from Brennan in the shared workspace:\n\nadd a login page';
+const SAID = 'Message from Brennan in Glasshouse:\n\nadd a login page';
 const queued = (content = SAID) => `${JSON.stringify({ type: 'queue-operation', operation: 'enqueue', content })}\n`;
 const turnWith = (content = SAID) => `${JSON.stringify({ type: 'user', message: { role: 'user', content: `Another Claude session sent a message:\n${content}\n\nThis came from another Claude session.` } })}\n`;
 const reply = () => `${JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: 'On it.' }] } })}\n`;

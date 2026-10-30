@@ -6,6 +6,7 @@ import { readJson, writeJsonAtomic } from './fs-util.js';
 const NAME_SHAPE = /^[A-Za-z][A-Za-z0-9_-]{1,19}$/;
 // No look-alike characters (0/O, 1/l/I) so a password is easy to read off a screen.
 const PASSWORD_ALPHABET = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const MIN_PASSWORD_LENGTH = 10;
 
 function randomPassword(length = 16) {
   let out = '';
@@ -82,6 +83,16 @@ export class UserStore {
     user.passwordHash = hashPassword(password);
     this.#save(data);
     return password;
+  }
+
+  // Lets a person pick their own password instead of a random one. Only a scrambled copy is kept.
+  setPassword(name, password) {
+    const chosen = String(password ?? '');
+    const data = this.#load();
+    const user = this.#require(data, name);
+    if (chosen.length < MIN_PASSWORD_LENGTH) throw new Error(`Passwords must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+    user.passwordHash = hashPassword(chosen);
+    this.#save(data);
   }
 
   newHelperToken(name) {

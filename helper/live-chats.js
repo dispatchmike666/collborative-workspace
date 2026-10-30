@@ -356,7 +356,7 @@ export class ChatWatcher {
       return { ok: false, message: 'That chat does not take messages from other programs.' };
     }
     const token = this.#isWindows ? peerToken(path.join(this.#claudeDir, 'sessions'), entry.pid) : null;
-    const framed = `Message from ${who} in the shared workspace:\n\n${text}`;
+    const framed = `Message from ${who} in Glasshouse:\n\n${text}`;
     // Catch up on the chat's record first, so only lines written from here on can count as this message.
     // Start listening before sending: the chat can answer faster than we get back here.
     this.#tail.taskFor(chatId);

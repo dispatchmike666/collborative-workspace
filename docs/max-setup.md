@@ -1,7 +1,7 @@
 # Max: setting up your helper
 
 **What you are setting up.** The helper is a small program that runs on your own computer.
-When you ask your Claude to do something in the shared workspace, the website passes the
+When you ask your Claude to do something in Glasshouse, the website passes the
 request to your helper, and your helper runs your own Claude on your own computer. You and
 Brennan each have your own helper and your own Claude plan. Nobody uses anyone else's Claude.
 

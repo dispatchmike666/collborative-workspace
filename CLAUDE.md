@@ -1,4 +1,4 @@
-# Shared workspace
+# Glasshouse
 
 ## What this is
 

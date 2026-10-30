@@ -176,7 +176,7 @@ test('a helper lists the open chats on its computer, keeps the page up to date, 
   const result = await (await hub.as(brennan)('/api/chats/send', hub.json({ chatId: ID_A, text: 'add a login page' }))).json();
   assert.equal(result.ok, true, result.message);
   await waitFor(() => received.length === 1, { label: "the message in the chat's mailbox" });
-  assert.equal(received[0].message.content, 'Message from Brennan in the shared workspace:\n\nadd a login page');
+  assert.equal(received[0].message.content, 'Message from Brennan in Glasshouse:\n\nadd a login page');
 });
 
 test('a helper without the chat watcher says so and never looks at anyone\'s chats', async (t) => {
@@ -264,7 +264,7 @@ test('the page sees a message go from sent to picked up, without ever receiving 
   const sent = await eventually(listed, (now) => now.chats[0]?.lastMessage?.state === 'sent', 'the message to show as sent');
   assert.equal(typeof sent.chats[0].lastMessage.id, 'string');
 
-  fs.appendFileSync(history, `${JSON.stringify({ type: 'queue-operation', operation: 'enqueue', content: 'Message from Brennan in the shared workspace:\n\nadd a login page' })}\n`);
+  fs.appendFileSync(history, `${JSON.stringify({ type: 'queue-operation', operation: 'enqueue', content: 'Message from Brennan in Glasshouse:\n\nadd a login page' })}\n`);
   const picked = await eventually(listed, (now) => now.chats[0]?.lastMessage?.state === 'picked_up', 'the message to show as picked up');
   assert.equal(picked.chats[0].lastMessage.id, sent.chats[0].lastMessage.id);
   assert.ok(!JSON.stringify(picked).includes('login page'), 'the words of the message never reach the hub or the page');

@@ -26,7 +26,7 @@ const app = createApp({
 
 // 127.0.0.1 means "this computer only": nothing else on the network can reach it.
 http.createServer(app).listen(config.port, '127.0.0.1', () => {
-  console.log(`Shared workspace is running at http://localhost:${config.port}`);
+  console.log(`Glasshouse is running at http://localhost:${config.port}`);
   console.log(`Claude works in this folder: ${config.projectDir}`);
   console.log('Press Ctrl+C to stop.');
 });

@@ -10,7 +10,7 @@ import { closeServer, listen, readEvents, tempDir } from './helpers.js';
 // A running copy of the web server with a pretend runner that just records what it was sent.
 async function start(t) {
   const publicDir = tempDir(t);
-  fs.writeFileSync(path.join(publicDir, 'index.html'), '<title>Shared workspace</title>');
+  fs.writeFileSync(path.join(publicDir, 'index.html'), '<title>Glasshouse</title>');
   const timeline = new Timeline();
   const sent = [];
   const runner = { send: (text, who) => sent.push({ text, who }) };
@@ -30,7 +30,7 @@ test('serves the page', async (t) => {
   const res = await fetch(`${base}/`);
   assert.equal(res.status, 200);
   assert.match(res.headers.get('content-type'), /text\/html/);
-  assert.match(await res.text(), /Shared workspace/);
+  assert.match(await res.text(), /Glasshouse/);
 });
 
 test('unknown addresses are not found, and other files on the computer cannot be asked for', async (t) => {

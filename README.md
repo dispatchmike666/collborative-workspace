@@ -1,4 +1,4 @@
-# Shared workspace
+# Glasshouse
 
 A website where two people work on software projects together. Each person talks to their
 own Claude, runs on their own computer and their own Claude plan, and both watch every step
