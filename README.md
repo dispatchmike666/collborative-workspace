@@ -64,10 +64,11 @@ live. The two Claudes share project files through GitHub and take turns quietly.
 - **Reactions and typing.** Hover a message to react with an emoji. You see when the other
   person is typing.
 - **Files.** The Files tab lists the project's files and shows any text file when you click it.
-- **Look and feel.** In the manner of macOS: a quiet backdrop, a menu bar, windows with the three dots, solid
-  system-style buttons and fields, a plain dock, and a faint light along window edges as your mouse gets
-  near. Light by default, a graphite dark mode, or match your computer. Five accent colours (Azure, Rose,
-  Teal, Amber, Violet) and soft sounds in View. An optional celebration when a run finishes is off by default.
+- **Look and feel.** A near-black stage with a few sharp bands of light in the accent colour far behind glossy
+  panes of glass (the look Brennan picked from Raycast and Apple's glass), a menu bar, windows with the
+  three dots, solid controls, a plain dock, and a faint light along window edges near the mouse. Dark by
+  default, with a light mode or match-your-computer. Five accent colours (Coral, Azure, Teal, Amber,
+  Violet) and soft sounds in View. An optional celebration when a run finishes is off by default.
 - **Jump menu.** Press Ctrl+K anywhere to jump to a project, a tab, the settings or a new project.
   Press `/` to jump to the message box.
 - **Chat.** Under the timeline, "My Claude" sends your message to your own Claude. "Just Max"

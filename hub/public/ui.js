@@ -70,12 +70,12 @@ export const prefs = {
 };
 
 export const ACCENTS = ['blue', 'pink', 'mint', 'tangerine', 'grape'];
-export const ACCENT_LABELS = { blue: 'Azure', pink: 'Rose', mint: 'Teal', tangerine: 'Amber', grape: 'Violet' };
+export const ACCENT_LABELS = { blue: 'Azure', pink: 'Coral', mint: 'Teal', tangerine: 'Amber', grape: 'Violet' };
 
 export function applyLook() {
   const root = document.documentElement;
-  root.setAttribute('data-mode', prefs.get('mode', 'light'));
-  root.setAttribute('data-accent', prefs.get('accent', 'blue'));
+  root.setAttribute('data-mode', prefs.get('mode', 'dark'));
+  root.setAttribute('data-accent', prefs.get('accent', 'pink'));
 }
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -189,8 +189,8 @@ export function openSettings() {
       openSettings();
     },
   });
-  const mode = prefs.get('mode', 'light');
-  const accent = prefs.get('accent', 'blue');
+  const mode = prefs.get('mode', 'dark');
+  const accent = prefs.get('accent', 'pink');
   const toggle = (label, key, fallback) => {
     const box = el('input', { type: 'checkbox' });
     box.checked = prefs.get(key, fallback);

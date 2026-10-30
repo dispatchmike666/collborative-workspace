@@ -61,8 +61,8 @@ const MODE_CHOICES = [['light', 'Light'], ['dark', 'Dark'], ['auto', 'Match syst
 
 function menuDefinitions() {
   const here = projectActions.current;
-  const mode = prefs.get('mode', 'light');
-  const accent = prefs.get('accent', 'blue');
+  const mode = prefs.get('mode', 'dark');
+  const accent = prefs.get('accent', 'pink');
   const go = (hash) => () => { window.location.hash = hash; };
   const setLook = (key, value) => () => { prefs.set(key, value); applyLook(); };
   return [

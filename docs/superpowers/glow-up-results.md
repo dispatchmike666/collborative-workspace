@@ -12,7 +12,7 @@ instructions that Claude reads on every request.
 
 | Area | What it does |
 |---|---|
-| New look | In the manner of macOS: quiet neutral backdrop, a menu bar with working menus and a clock, windows with the three dots that go grey when inactive, solid system-style controls, a plain dock, and only a faint edge light near the mouse. Light by default, graphite dark mode too. Redone many times after feedback (cartoonish, gold, recolours, dark navy, coloured wallpaper, bouncy dock, strong glow); Brennan chose the structure from pictures |
+| New look | "Stage glass": near-black stage, a few sharp bands of light in the accent colour behind glossy glass windows, menu bar with working menus and a clock, windows with the three dots that go quiet when inactive, solid controls, a plain dock, a faint edge light near the mouse. Dark by default, light mode too. Settled only after many rounds: it clicked when Brennan picked Raycast and Apple's glass as reference pictures |
 | Presence | A glass orb with each person's initial. Dimmed when offline, green dot when online, turning ring while their Claude works |
 | Pulse (home) | Greeting, who is online, 7-day numbers (requests, rough plan use, files saved), a feed of what just happened, project cards |
 | Project brief | Standing instructions (up to 4,000 characters, versioned so two saves at once are caught) plus a list of settled decisions. Sent to Claude at the start of every request, for both people |

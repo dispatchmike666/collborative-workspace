@@ -11,15 +11,16 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
 - `hub/` is the website (login, projects, live streams, queue and turn-taking, approvals,
   notes, preview, board, project brief and decisions, quick prompts, home numbers). No AI runs
   there. `hub/public/` is the page code: no inline scripts or styles (strict content policy),
-  plain modules, one stylesheet. The design is "glass", in the manner of macOS: a quiet neutral backdrop (no coloured blobs, Brennan hated
-  them), a slim menu bar with real menus and a clock, windows with red / yellow / green dots that go grey
-  when not active, solid system-style buttons and fields at 13px, a plain still dock (no bounce, no
-  magnifying), and only a faint edge light that follows the mouse (`enableProximityGlow` in `ui.js`; he
-  found a strong glow too intense). Light by default, graphite dark mode available, system blue accent,
-  sans-serif only. The project screen (`tiles.js`) opens as free windows: chat in the middle as the focus,
-  board and preview beside it, others from the dock. Windows move anywhere and resize from every edge. On
-  phones the dock becomes a tab bar. Keep it calm and sharp. No emoji in the interface chrome; use plain
-  symbols (`icons.js`).
+  plain modules, one stylesheet. The design is "stage glass": a near-black stage, a few sharp diagonal bands of light in the accent colour far
+  behind (`body::before` in the stylesheet), and glossy glass windows in front. Brennan picked Raycast and
+  Apple's glass pages as the feel (dark, bold, glossy, light behind glass); a flat grey or pastel backdrop
+  shows nothing through the glass and he disliked it, as he did fuzzy coloured blobs. Slim menu bar with real
+  menus and a clock, windows with red / yellow / green dots that go quiet when not active, solid system-style
+  controls at 13px, a plain still dock (no bounce, no magnifying), and only a faint edge light that follows
+  the mouse (`enableProximityGlow` in `ui.js`). Dark by default, light mode available, coral accent by
+  default, sans-serif only. The project screen (`tiles.js`) opens as free windows: chat in the middle as the
+  focus, board and preview beside it, others from the dock. Windows move anywhere and resize from every
+  edge. On phones the dock becomes a tab bar. No emoji in the interface chrome; use plain symbols (`icons.js`).
 - `helper/` runs on each person's own computer and runs that person's own Claude. It puts the
   project's brief, last decisions and (if shared) notes at the top of every request to Claude.
 - `server/` is the Stage 1 single-person page. Its parser, runner and settings are reused by
@@ -41,7 +42,7 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
 - The hub and the solo page listen on 127.0.0.1 only.
 - Approvals allow one exact command. Commands with * ( ) or line breaks cannot be approved.
 - Anything a person reads is plain English.
-- The look is settled (macOS-style glass, menu bar, free windows, plain dock, chat in the middle). Do not redesign it again unless Brennan asks. He refuses endless design rounds; never ask him to describe taste in design words, show him pictures or finished options instead.
+- The look is settled (stage glass: dark, bands of light behind glossy windows, menu bar, free windows, plain dock, chat in the middle). To change it, ask Brennan for a reference screenshot first; never guess from adjectives. Do not redesign it again unless Brennan asks. He refuses endless design rounds; never ask him to describe taste in design words, show him pictures or finished options instead.
 - Never add --bare or --dangerously-skip-permissions to the Claude flags.
 - Test with the stand-in Claude (test/fake-claude.js), never the real one, except in
   deliberate acceptance runs.
