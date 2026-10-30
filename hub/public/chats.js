@@ -1,4 +1,4 @@
-import { messageProgress, progressState, timeAgo } from './render.js';
+import { messageProgress, placeInOrder, progressState, timeAgo } from './render.js';
 import { api, el } from './ui.js';
 
 const WHERE_LABEL = { desktop: 'Claude desktop app', terminal: 'Terminal', other: 'Claude' };
@@ -106,6 +106,7 @@ export function createChats() {
       row.li.remove();
       rows.delete(id);
     }
+    const ordered = [];
     for (const chat of chats) {
       let row = rows.get(chat.id);
       if (!row) {
@@ -113,7 +114,14 @@ export function createChats() {
         rows.set(chat.id, row);
       }
       row.update(chat);
-      list.append(row.li);
+      ordered.push(row.li);
+    }
+    // Rows are never pulled out and put back (that drops the cursor from a box being typed in). While you are
+    // typing in one, the order is left alone until you are done; new rows still appear at the end.
+    if (list.contains(document.activeElement)) {
+      for (const li of ordered) if (!li.parentNode) list.append(li);
+    } else {
+      placeInOrder(list, ordered);
     }
     panel.hidden = chats.length === 0;
     if (!online) note.textContent = 'Start your helper to see the Claude chats open on your computer.';

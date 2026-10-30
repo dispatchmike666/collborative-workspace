@@ -115,3 +115,13 @@ export function progressState(polled, sentAfter) {
   if (sentAfter !== undefined && (!polled || polled.id === sentAfter)) return 'sent';
   return polled?.state ?? null;
 }
+
+// Puts `nodes` in the given order under `parent`, moving only the ones that are out of place. Adding a node
+// that is already there pulls it out of the page and puts it back, and that drops the cursor from any box
+// inside it. The chat list refreshes every few seconds, so rows must stay put unless they really move.
+export function placeInOrder(parent, nodes) {
+  nodes.forEach((node, index) => {
+    const current = parent.children[index];
+    if (current !== node) parent.insertBefore(node, current ?? null);
+  });
+}

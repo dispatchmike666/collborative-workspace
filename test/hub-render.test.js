@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { approvalUsedText, eventToView, messageProgress, progressState, statusText, timeAgo } from '../hub/public/render.js';
+import { approvalUsedText, eventToView, messageProgress, placeInOrder, progressState, statusText, timeAgo } from '../hub/public/render.js';
 
 test('messages, team chat and Claude\'s words say who is speaking', () => {
   assert.deepEqual(eventToView({ kind: 'user', who: 'Max', text: 'hi' }), { cls: 'user', label: 'Max', text: 'hi' });
@@ -102,4 +102,44 @@ test('a message just sent from this page shows as sent until the helper reports 
   assert.equal(progressState(old, 'old'), 'sent', 'the helper has not reported the new message yet');
   assert.equal(progressState(null, null), 'sent', 'the very first message');
   assert.equal(progressState({ id: 'new', state: 'picked_up' }, 'old'), 'picked_up', 'the helper has caught up');
+});
+
+// A pretend page element that behaves like the real one: putting a child back "moves" it, which in a real page
+// pulls it out and reinserts it (and that is what drops the cursor from a box inside it).
+function pretendParent(names) {
+  const children = [...names];
+  const moved = [];
+  return {
+    children,
+    moved,
+    insertBefore(node, before) {
+      moved.push(node);
+      const from = children.indexOf(node);
+      if (from >= 0) children.splice(from, 1);
+      children.splice(before === null ? children.length : children.indexOf(before), 0, node);
+    },
+  };
+}
+
+test('rows that are already in the right order are not touched, so a box being typed in keeps its cursor', () => {
+  const parent = pretendParent(['a', 'b', 'c']);
+  placeInOrder(parent, ['a', 'b', 'c']);
+  assert.deepEqual(parent.moved, []);
+  assert.deepEqual(parent.children, ['a', 'b', 'c']);
+});
+
+test('a new row goes in its place without moving the others', () => {
+  const parent = pretendParent(['a', 'c']);
+  placeInOrder(parent, ['a', 'b', 'c']);
+  assert.deepEqual(parent.moved, ['b']);
+  assert.deepEqual(parent.children, ['a', 'b', 'c']);
+});
+
+test('rows that changed order are put back in order', () => {
+  const parent = pretendParent(['b', 'a', 'c']);
+  placeInOrder(parent, ['a', 'b', 'c']);
+  assert.deepEqual(parent.children, ['a', 'b', 'c']);
+  const empty = pretendParent([]);
+  placeInOrder(empty, ['x', 'y']);
+  assert.deepEqual(empty.children, ['x', 'y']);
 });

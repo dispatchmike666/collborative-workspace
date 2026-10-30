@@ -74,6 +74,11 @@ message a line belongs to. Progress is forgotten ten minutes after finishing, ha
 nobody picked up, and when the chat closes. Like the rest of this feature, it depends on Claude Code's own
 files, which are not a documented public feature and could change.
 
+Fixed the same day: the box for typing a message lost its cursor every few seconds, because the list put
+every row back on each 5-second refresh and that drops focus from a box inside it. Rows now stay put
+(`placeInOrder` in `hub/public/render.js`), and the order is left alone while you are typing in one. Found
+and checked in Brennan's real Chrome: typed across three refreshes and nothing was lost.
+
 Decided against: letting a person share a chat with their teammate (Brennan, 2026-10-30). Not built.
 
 ## A test helper change
