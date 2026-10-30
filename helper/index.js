@@ -2,6 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { CLAUDE_ARGS, resolveClaudeCommand } from '../server/config.js';
 import { Helper } from './helper.js';
+import { ChatWatcher } from './live-chats.js';
 
 const hubUrl = process.env.HUB_URL;
 const token = process.env.HELPER_TOKEN;
@@ -23,6 +24,8 @@ const helper = new Helper({
   workspaceRoot,
   claudeCommand: resolveClaudeCommand(),
   claudeArgs: CLAUDE_ARGS,
+  // Set SHOW_OPEN_CHATS=off to keep your open Claude chats out of the workspace page.
+  liveChats: process.env.SHOW_OPEN_CHATS === 'off' ? null : new ChatWatcher(),
   log: (message) => console.log(`[${stamp()}] ${message}`),
   onFatal: () => process.exit(1),
 });

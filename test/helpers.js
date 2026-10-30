@@ -6,10 +6,18 @@ import path from 'node:path';
 export const FAKE_CLAUDE = path.join(import.meta.dirname, 'fake-claude.js');
 
 // A fresh empty folder that is deleted when the test ends.
-// Windows won't delete a folder a program is still using, so we retry for a moment.
+// Windows won't delete a folder a program is still using, so we retry for a moment. If it still
+// cannot be deleted (a stopped program was slow to let go), the test has already passed or failed
+// on its own merits, so a leftover temp folder must not turn a pass into a failure.
 export function tempDir(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ws-test-'));
-  t.after(() => fs.rmSync(dir, { recursive: true, force: true, maxRetries: 50, retryDelay: 200 }));
+  t.after(() => {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true, maxRetries: 50, retryDelay: 200 });
+    } catch (error) {
+      if (!['EPERM', 'EBUSY', 'ENOTEMPTY'].includes(error.code)) throw error;
+    }
+  });
   return dir;
 }
 

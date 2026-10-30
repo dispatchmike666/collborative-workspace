@@ -1,3 +1,4 @@
+import { createChats } from './chats.js';
 import { crewMember } from './crew.js';
 import { formatPlan, greeting, initial, projectColor, userColor, weekBars } from './logic.js';
 import { timeAgo } from './render.js';
@@ -91,7 +92,8 @@ export async function showHome(viewEl, { me, users }) {
       el('div', { class: 'new-project-card sticker' }, el('h3', { text: 'Start something new' }),
         el('p', { class: 'muted small', text: 'Add a GitHub address if you both should share the files.' }), form)));
 
-  viewEl.replaceChildren(el('div', { class: 'home' }, hero, stats, el('div', { class: 'columns' }, feed, projectsSection)));
+  const chats = createChats();
+  viewEl.replaceChildren(el('div', { class: 'home' }, hero, stats, chats.element, el('div', { class: 'columns' }, feed, projectsSection)));
 
   const refresh = setInterval(async () => {
     try {
@@ -102,6 +104,7 @@ export async function showHome(viewEl, { me, users }) {
   }, 12_000);
   return () => {
     clearInterval(refresh);
+    chats.stop();
     stopListening();
   };
 }

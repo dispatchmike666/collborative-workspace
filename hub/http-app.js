@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseCookies } from './auth.js';
+import { LiveChats } from './chats.js';
 import { HttpError, MAX_HELPER_BODY_BYTES, checkMessageText, errorStatus, readJsonBody, sendJson } from './http-util.js';
 import { createWorkspaceRoutes } from './routes-workspace.js';
 
@@ -54,6 +55,7 @@ export function createHubApp({
   publicHosts = [],
   secureCookies = false,
   trustProxy = false,
+  chats = new LiveChats(),
 }) {
   const workspace = createWorkspaceRoutes({ store, dispatcher });
 
@@ -268,7 +270,39 @@ export function createHubApp({
     req.on('close', () => {
       clearInterval(ping);
       unregister();
+      // A quick reconnect has already registered again by now. Only forget the chats if nobody has.
+      if (!dispatcher.isOnline(user.name)) chats.clear(user.name);
     });
+  }
+
+  // ---- open Claude chats (private to each person) ----
+
+  async function handleHelperChats(req, res, user) {
+    const body = await readJsonBody(req);
+    try {
+      chats.set(user.name, body.chats);
+    } catch (error) {
+      throw new HttpError(400, error.message);
+    }
+    return sendJson(res, 200, { ok: true });
+  }
+
+  async function handleHelperChatResult(req, res, user) {
+    const body = await readJsonBody(req);
+    chats.result(user.name, String(body.requestId ?? ''), { ok: body.ok, message: body.message });
+    return sendJson(res, 200, { ok: true });
+  }
+
+  async function handleChatSend(req, res, user) {
+    const body = await readJsonBody(req);
+    const text = checkMessageText(body.text);
+    const outcome = await chats.send({
+      user: user.name,
+      chatId: String(body.chatId ?? ''),
+      text,
+      deliver: (message) => dispatcher.sendToHelper(user.name, { ...message, who: user.name }),
+    });
+    return sendJson(res, 200, outcome);
   }
 
   async function handleHelperEvents(req, res, user) {
@@ -357,6 +391,8 @@ export function createHubApp({
         if (method === 'POST' && pathname === '/helper/files') return await handleHelperFiles(req, res);
         if (method === 'POST' && pathname === '/helper/preview') return await handleHelperPreview(req, res);
         if (method === 'POST' && pathname === '/helper/sources') return await handleHelperSources(req, res);
+        if (method === 'POST' && pathname === '/helper/chats') return await handleHelperChats(req, res, user);
+        if (method === 'POST' && pathname === '/helper/chat-result') return await handleHelperChatResult(req, res, user);
         return sendJson(res, 404, { error: 'Not found.' });
       }
 
@@ -373,6 +409,10 @@ export function createHubApp({
         if (method === 'GET' && pathname === '/api/me') {
           return sendJson(res, 200, { name: user.name, users: users.listNames(), presence: dispatcher.presence() });
         }
+        if (method === 'GET' && pathname === '/api/chats') {
+          return sendJson(res, 200, { online: dispatcher.isOnline(user.name), chats: chats.list(user.name) });
+        }
+        if (method === 'POST' && pathname === '/api/chats/send') return await handleChatSend(req, res, user);
         if (pathname === '/api/projects') {
           if (method === 'GET') return sendJson(res, 200, store.listProjects());
           if (method === 'POST') return await handleCreateProject(req, res, user);
