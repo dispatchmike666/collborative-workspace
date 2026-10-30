@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
@@ -15,6 +16,11 @@ const FIRST_READ_BYTES = 2 * 1024 * 1024;
 const MAX_DOING_CHARS = 120;
 const MAX_NAME_CHARS = 120;
 const NOT_FOUND_RECHECK_MS = 30_000;
+// How long a sent message may go unnoticed before we say it is still waiting, how long we keep showing a
+// finished one, and when we stop following one the chat never picked up.
+const STALL_MS = 120_000;
+const KEEP_FINISHED_MS = 600_000;
+const GIVE_UP_MS = 1_800_000;
 const WHERE = { 'claude-desktop': 'desktop', cli: 'terminal' };
 
 export function defaultClaudeDir(env = process.env) {
@@ -110,6 +116,27 @@ function visit(node, found, depth = 0) {
   }
 }
 
+const textOf = (content) => {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content.map((block) => (typeof block?.text === 'string' ? block.text : '')).join('\n');
+};
+
+// Looks at one line of a chat's record for signs of a message we sent: the chat queued it, the chat took it
+// as one of its turns, and (only after that) the chat answered.
+function noticeMessage({ framed, progress }, entry) {
+  if (entry?.type === 'queue-operation') {
+    if (entry.operation === 'enqueue' && typeof entry.content === 'string' && entry.content.includes(framed)) progress.received = true;
+  } else if (entry?.type === 'user') {
+    if (textOf(entry.message?.content).includes(framed)) {
+      progress.received = true;
+      progress.delivered = true;
+    }
+  } else if (entry?.type === 'assistant' && progress.delivered) {
+    progress.replied = true;
+  }
+}
+
 // Reads a chat's own record of what happened (a file that only ever grows), and only what was added since
 // the last look, so checking every few seconds stays cheap even for very long chats.
 class TaskTail {
@@ -118,16 +145,28 @@ class TaskTail {
   #located = new Map();
   #missing = new Map();
   #state = new Map();
+  #watches = new Map();
 
   constructor(projectsDir, now) {
     this.#projectsDir = projectsDir;
     this.#now = now;
   }
 
+  // From the next look on, listen for one message to show up in this chat's record. `progress` is updated
+  // as it does. Only lines written after the last look can count.
+  watch(sessionId, framed, progress) {
+    this.#watches.set(sessionId, { framed, progress });
+  }
+
+  unwatch(sessionId) {
+    this.#watches.delete(sessionId);
+  }
+
   #locate(sessionId) {
     const known = this.#located.get(sessionId);
     if (known && fs.existsSync(known)) return known;
-    if (this.#now() - (this.#missing.get(sessionId) ?? -Infinity) < NOT_FOUND_RECHECK_MS) return null;
+    // A chat we are waiting to hear from is looked for every time, so a brand new record is not missed.
+    if (!this.#watches.has(sessionId) && this.#now() - (this.#missing.get(sessionId) ?? -Infinity) < NOT_FOUND_RECHECK_MS) return null;
     const file = `${sessionId}.jsonl`;
     let folders = [];
     try {
@@ -181,10 +220,13 @@ class TaskTail {
       from = firstBreak < 0 ? usable : firstBreak + 1;
     }
     const found = { task: state.task };
+    const watch = this.#watches.get(sessionId);
     for (const line of buffer.subarray(from, usable).toString('utf8').split('\n')) {
       if (!line.trim()) continue;
       try {
-        visit(JSON.parse(line), found);
+        const entry = JSON.parse(line);
+        visit(entry, found);
+        if (watch) noticeMessage(watch, entry);
       } catch {
         // A line that is not JSON says nothing about tasks.
       }
@@ -250,7 +292,9 @@ export class ChatWatcher {
   #claudeDir;
   #isAlive;
   #isWindows;
+  #now;
   #tail;
+  #sent = new Map();
 
   constructor({
     claudeDir = defaultClaudeDir(),
@@ -261,18 +305,51 @@ export class ChatWatcher {
     this.#claudeDir = claudeDir;
     this.#isAlive = isAlive;
     this.#isWindows = isWindows;
+    this.#now = now;
     this.#tail = new TaskTail(path.join(claudeDir, 'projects'), now);
   }
 
   snapshot() {
-    const chats = scanLiveChats({ claudeDir: this.#claudeDir, isAlive: this.#isAlive })
-      .map((entry) => describeChat(entry, this.#tail.taskFor(entry.sessionId)));
+    const live = scanLiveChats({ claudeDir: this.#claudeDir, isAlive: this.#isAlive });
+    // A chat that closed takes its message progress with it.
+    const open = new Set(live.map((entry) => entry.sessionId));
+    for (const chatId of [...this.#sent.keys()]) if (!open.has(chatId)) this.#forget(chatId);
+    const chats = live.map((entry) => {
+      const chat = describeChat(entry, this.#tail.taskFor(entry.sessionId));
+      return { ...chat, lastMessage: this.#progressOf(chat) };
+    });
     const rank = (chat) => (chat.status === 'busy' ? 0 : 1);
     return chats.sort((a, b) => rank(a) - rank(b) || (b.updatedAt ?? 0) - (a.updatedAt ?? 0) || a.name.localeCompare(b.name));
   }
 
-  // `who` is the person at the keyboard, so the chat can see where the message came from.
-  async send(chatId, text, who) {
+  #forget(chatId) {
+    this.#sent.delete(chatId);
+    this.#tail.unwatch(chatId);
+  }
+
+  // How far the last message sent to this chat has got: sent, picked up, finished, or still waiting.
+  // Only the state and when it was sent are reported, never the words of the message.
+  #progressOf(chat) {
+    const sent = this.#sent.get(chat.id);
+    if (!sent) return null;
+    const now = this.#now();
+    const { received, delivered, replied } = sent.progress;
+    if (!sent.finishedAt && delivered && replied && chat.status === 'idle') sent.finishedAt = now;
+    const expired = sent.finishedAt ? now - sent.finishedAt > KEEP_FINISHED_MS : !received && now - sent.sentAt > GIVE_UP_MS;
+    if (expired) {
+      this.#forget(chat.id);
+      return null;
+    }
+    let state = 'sent';
+    if (sent.finishedAt) state = 'finished';
+    else if (received) state = 'picked_up';
+    else if (now - sent.sentAt > STALL_MS) state = 'waiting';
+    return { id: sent.id, state, sentAt: sent.sentAt };
+  }
+
+  // `who` is the person at the keyboard, so the chat can see where the message came from. `messageId`
+  // names this message so a page can tell it from an earlier one.
+  async send(chatId, text, who, messageId = crypto.randomBytes(8).toString('hex')) {
     const entry = scanLiveChats({ claudeDir: this.#claudeDir, isAlive: this.#isAlive }).find((candidate) => candidate.sessionId === chatId);
     if (!entry) return { ok: false, message: 'That chat is not open any more.' };
     if (typeof entry.messagingSocketPath !== 'string' || !entry.messagingSocketPath) {
@@ -280,9 +357,16 @@ export class ChatWatcher {
     }
     const token = this.#isWindows ? peerToken(path.join(this.#claudeDir, 'sessions'), entry.pid) : null;
     const framed = `Message from ${who} in the shared workspace:\n\n${text}`;
+    // Catch up on the chat's record first, so only lines written from here on can count as this message.
+    // Start listening before sending: the chat can answer faster than we get back here.
+    this.#tail.taskFor(chatId);
+    const progress = { received: false, delivered: false, replied: false };
+    this.#sent.set(chatId, { id: String(messageId), sentAt: this.#now(), finishedAt: null, progress });
+    this.#tail.watch(chatId, framed, progress);
     try {
       await postToChat({ path: entry.messagingSocketPath, token }, framed);
     } catch (error) {
+      this.#forget(chatId);
       if (NOT_THERE.has(error.code)) return { ok: false, message: 'That chat closed before the message got there.' };
       return { ok: false, message: `Could not reach that chat (${error.code ?? error.message}).` };
     }

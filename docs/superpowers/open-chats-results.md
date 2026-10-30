@@ -52,6 +52,30 @@ Where it shows: a new "Your open Claude chats" section on the home page, using t
 - Not done: letting a person choose to share a chat with their teammate, and a "doing" line for chats that
   use only the older task folder (`~/.claude/tasks`).
 
+## Message progress (added 2026-10-30, branch `message-status`)
+
+After you send a message to one of your own chats, the row shows three steps: Sent, Chat picked it up,
+Chat finished. If nothing picks it up for two minutes it says it is still waiting and reminds you to approve
+any permission prompt in that chat.
+
+How it works: when the helper sends a message it starts watching that chat's own record (the same file
+used for the "doing" line). Claude Code writes a "queued" line when the chat receives the message and a normal
+turn when it reads it. Picked up means either line appeared. Finished means the chat read the message, then
+answered, and its status went back to idle. The helper reports only the state, an id and the time to the hub,
+never the words, and the hub keeps it in memory with the rest of the list.
+
+Checked: 15 new tests (271 pass in all), including a real helper and hub with a pretend chat; and the real
+page, with a pretend chat, showed all three steps in order with no errors in the browser console. The line
+formats come from a real chat's record on this PC (a message sent to it by this feature).
+
+Not checked: a full run against a real chat from start to finish; the "still waiting" note on screen (only in
+tests); a chat in a terminal window. Sending the same words twice in quick succession can mix up which
+message a line belongs to. Progress is forgotten ten minutes after finishing, half an hour after a message
+nobody picked up, and when the chat closes. Like the rest of this feature, it depends on Claude Code's own
+files, which are not a documented public feature and could change.
+
+Decided against: letting a person share a chat with their teammate (Brennan, 2026-10-30). Not built.
+
 ## A test helper change
 
 `test/helpers.js`: a temp folder that Windows would not let go of no longer fails a test that already passed.

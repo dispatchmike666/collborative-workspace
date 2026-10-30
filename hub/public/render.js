@@ -93,3 +93,25 @@ export function timeAgo(iso, now = Date.now()) {
   const days = Math.round(hours / 24);
   return `${days} day${days === 1 ? '' : 's'} ago`;
 }
+
+// The steps shown under a chat after a message was sent to it. `state` is what the helper reported: sent,
+// picked_up, finished, or waiting (sent but not picked up for a while). Returns null for anything else.
+const MESSAGE_STEPS = ['Sent', 'Chat picked it up', 'Chat finished'];
+const STEPS_DONE = { sent: 1, waiting: 1, picked_up: 2, finished: 3 };
+
+export function messageProgress(state) {
+  const done = STEPS_DONE[state];
+  if (!done) return null;
+  return {
+    line: MESSAGE_STEPS.map((label, index) => `${index < done ? '●' : '○'} ${label}`).join('   '),
+    note: state === 'waiting' ? 'Still waiting for that chat to pick it up. If it is asking for permission, approve it there.' : null,
+  };
+}
+
+// Which state to show for a chat. `sentAfter` is undefined until this page sends a message; after that it is the
+// id of the last message the helper had reported at that moment (or null if none). Until the helper reports
+// a different message, the new one is simply "sent".
+export function progressState(polled, sentAfter) {
+  if (sentAfter !== undefined && (!polled || polled.id === sentAfter)) return 'sent';
+  return polled?.state ?? null;
+}

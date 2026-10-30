@@ -32,7 +32,10 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
   (from the chat's own to-do list). The hub keeps that list in memory only, per person (`hub/chats.js`); a
   person's page never shows anyone else's chats. A person can drop a message into one of their own open chats
   through its private mailbox. Idea and mailbox format come from Reason Network (MIT or Apache): see
-  docs/superpowers/open-chats-results.md. The home page section is `hub/public/chats.js`.
+  docs/superpowers/open-chats-results.md. The home page section is `hub/public/chats.js`. After a message
+  is sent the row steps through Sent, Chat picked it up, Chat finished (`messageProgress` in
+  `hub/public/render.js`). The helper follows the message in the chat's own record and reports only the
+  state, never the words. Chats stay private: Brennan decided against sharing them with Max.
 - `server/` is the Stage 1 single-person page. Its parser, runner and settings are reused by
   the helper.
 - Plans: docs/superpowers/plans/. Results: docs/superpowers/stage-1-results.md,

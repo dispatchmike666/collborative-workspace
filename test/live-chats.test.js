@@ -184,3 +184,146 @@ test('sending says what went wrong in plain words', async (t) => {
   assert.deepEqual(await watcher.send(ID_A, 'hi', 'Max'), { ok: false, message: 'That chat does not take messages from other programs.' });
   assert.deepEqual(await watcher.send(ID_B, 'hi', 'Max'), { ok: false, message: 'That chat closed before the message got there.' });
 });
+
+// ---- following a message after it is sent ----
+
+const SAID = 'Message from Brennan in the shared workspace:\n\nadd a login page';
+const queued = (content = SAID) => `${JSON.stringify({ type: 'queue-operation', operation: 'enqueue', content })}\n`;
+const turnWith = (content = SAID) => `${JSON.stringify({ type: 'user', message: { role: 'user', content: `Another Claude session sent a message:\n${content}\n\nThis came from another Claude session.` } })}\n`;
+const reply = () => `${JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: 'On it.' }] } })}\n`;
+const setChatStatus = (claudeDir, status) => {
+  const file = path.join(claudeDir, 'sessions', '101.json');
+  fs.writeFileSync(file, JSON.stringify({ ...JSON.parse(fs.readFileSync(file, 'utf8')), status }));
+};
+
+// An open chat with a working mailbox, a little earlier history, and a clock the test controls.
+async function chatToMessage(t, { history = true } = {}) {
+  const mailbox = await openMailbox(t);
+  const claudeDir = claudeFolder(t, [{ pid: 101, sessionId: ID_A, name: 'Map site', messagingSocketPath: mailbox.address }]);
+  const file = transcript(claudeDir, ID_A);
+  if (history) fs.writeFileSync(file, `${JSON.stringify({ type: 'user', message: { role: 'user', content: 'earlier work' } })}\n`);
+  const clock = { now: 1_000_000 };
+  const open = new Set([101]);
+  const watcher = new ChatWatcher({ claudeDir, isAlive: (pid) => open.has(pid), isWindows: false, now: () => clock.now });
+  return { claudeDir, file, clock, open, watcher };
+}
+const progress = (watcher) => watcher.snapshot()[0]?.lastMessage?.state;
+
+test('right after a message is sent the chat shows it as sent, without the words of the message', async (t) => {
+  const { watcher, clock } = await chatToMessage(t);
+  assert.equal(watcher.snapshot()[0].lastMessage, null);
+  assert.equal((await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1')).ok, true);
+  const [chat] = watcher.snapshot();
+  assert.deepEqual(chat.lastMessage, { id: 'req-1', state: 'sent', sentAt: clock.now });
+  assert.ok(!JSON.stringify(chat).includes('login page'), 'what you wrote is not reported');
+});
+
+test('a message is picked up once the chat has queued it in its own record', async (t) => {
+  const { watcher, file } = await chatToMessage(t);
+  await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1');
+  assert.equal(progress(watcher), 'sent');
+  fs.appendFileSync(file, queued());
+  assert.equal(progress(watcher), 'picked_up');
+});
+
+test('a message is also picked up when it only shows as a turn in the chat', async (t) => {
+  const { watcher, file } = await chatToMessage(t);
+  await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1');
+  fs.appendFileSync(file, turnWith());
+  assert.equal(progress(watcher), 'picked_up');
+});
+
+test('a message is finished only after the chat started it, answered it, and went idle', async (t) => {
+  const { watcher, file, claudeDir } = await chatToMessage(t);
+  setChatStatus(claudeDir, 'busy');
+  await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1');
+  fs.appendFileSync(file, queued());
+  assert.equal(progress(watcher), 'picked_up');
+
+  // An answer to older work, and an idle chat, do not finish a message the chat has not read yet.
+  fs.appendFileSync(file, reply());
+  setChatStatus(claudeDir, 'idle');
+  assert.equal(progress(watcher), 'picked_up');
+
+  // The chat reads it but has not answered yet.
+  fs.appendFileSync(file, turnWith());
+  assert.equal(progress(watcher), 'picked_up');
+
+  // It answers while still working.
+  setChatStatus(claudeDir, 'busy');
+  fs.appendFileSync(file, reply());
+  assert.equal(progress(watcher), 'picked_up');
+
+  setChatStatus(claudeDir, 'idle');
+  assert.equal(progress(watcher), 'finished');
+  setChatStatus(claudeDir, 'busy');
+  assert.equal(progress(watcher), 'finished', 'later, unrelated work does not undo it');
+});
+
+test('a message nobody picks up for two minutes is reported as waiting, and still counts if it arrives later', async (t) => {
+  const { watcher, file, clock } = await chatToMessage(t);
+  await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1');
+  clock.now += 119_000;
+  assert.equal(progress(watcher), 'sent');
+  clock.now += 2_000;
+  assert.equal(progress(watcher), 'waiting');
+  fs.appendFileSync(file, queued());
+  assert.equal(progress(watcher), 'picked_up');
+});
+
+test('the same words already in the chat\'s history before sending do not count', async (t) => {
+  const { watcher, file } = await chatToMessage(t);
+  fs.appendFileSync(file, queued() + turnWith() + reply());
+  await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1');
+  assert.equal(progress(watcher), 'sent');
+});
+
+test('sending a second message starts the progress over', async (t) => {
+  const { watcher, file } = await chatToMessage(t);
+  await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1');
+  fs.appendFileSync(file, queued());
+  assert.equal(progress(watcher), 'picked_up');
+  await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-2');
+  assert.deepEqual(watcher.snapshot()[0].lastMessage.id, 'req-2');
+  assert.equal(progress(watcher), 'sent');
+});
+
+test('a message that could not be sent leaves no progress behind', async (t) => {
+  const claudeDir = claudeFolder(t, [{ pid: 101, sessionId: ID_A, name: 'Closed mailbox', messagingSocketPath: path.join(tempDir(t), 'gone.sock') }]);
+  const watcher = new ChatWatcher({ claudeDir, isAlive: alive(101), isWindows: false });
+  assert.equal((await watcher.send(ID_A, 'hi', 'Brennan', 'req-1')).ok, false);
+  assert.equal(watcher.snapshot()[0].lastMessage, null);
+});
+
+test('progress is forgotten ten minutes after a message finishes, or half an hour after one nobody picked up', async (t) => {
+  const done = await chatToMessage(t);
+  await done.watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1');
+  fs.appendFileSync(done.file, turnWith() + reply());
+  assert.equal(progress(done.watcher), 'finished');
+  done.clock.now += 599_000;
+  assert.equal(progress(done.watcher), 'finished');
+  done.clock.now += 2_000;
+  assert.equal(done.watcher.snapshot()[0].lastMessage, null);
+
+  const ignored = await chatToMessage(t);
+  await ignored.watcher.send(ID_A, 'add a login page', 'Brennan', 'req-2');
+  ignored.clock.now += 1_801_000;
+  assert.equal(ignored.watcher.snapshot()[0].lastMessage, null);
+});
+
+test('progress is forgotten when the chat closes', async (t) => {
+  const { watcher, open } = await chatToMessage(t);
+  await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1');
+  open.delete(101);
+  assert.deepEqual(watcher.snapshot(), []);
+  open.add(101);
+  assert.equal(watcher.snapshot()[0].lastMessage, null);
+});
+
+test('a chat with no history file yet is noticed as soon as the file appears', async (t) => {
+  const { watcher, file } = await chatToMessage(t, { history: false });
+  watcher.snapshot();
+  await watcher.send(ID_A, 'add a login page', 'Brennan', 'req-1');
+  fs.writeFileSync(file, queued());
+  assert.equal(progress(watcher), 'picked_up');
+});
