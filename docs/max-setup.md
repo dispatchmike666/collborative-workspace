@@ -58,6 +58,14 @@ npm run helper
 
 Your helper token is like a password for your helper, so do not share that file.
 
+**To have it start by itself every time you log in** (hidden, and started again if it stops),
+run this once in that folder instead. It asks for your token and keeps it locked to your
+Windows account. Details: `docs/autostart.md`.
+
+```
+powershell -ExecutionPolicy Bypass -File scripts\autostart\install.ps1 -HelperOnly -HubUrl https://the-address-brennan-sent
+```
+
 ## What the helper does on your computer
 
 - It keeps a copy of each project in a folder called `shared-workspace-projects` inside your

@@ -36,6 +36,9 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
   is sent the row steps through Sent, Chat picked it up, Chat finished (`messageProgress` in
   `hub/public/render.js`). The helper follows the message in the chat's own record and reports only the
   state, never the words. Chats stay private: Brennan decided against sharing them with Max.
+- `scripts/autostart/` starts the hub and helper hidden at Windows login and restarts them if they stop
+  (Task Scheduler task "Glasshouse" -> `start-hidden.vbs` -> `run-glasshouse.ps1`). Settings and the
+  DPAPI-locked helper token live in `%LOCALAPPDATA%\Glasshouse`, never in the repo. Guide: docs/autostart.md.
 - `server/` is the Stage 1 single-person page. Its parser, runner and settings are reused by
   the helper.
 - Plans: docs/superpowers/plans/. Results: docs/superpowers/stage-1-results.md,

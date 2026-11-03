@@ -32,7 +32,14 @@ live. The two Claudes share project files through GitHub and take turns quietly.
    npm run helper
    ```
 
-4. For Max to join from his own computer, see `docs/hosting.md` (making the hub reachable) and
+4. To have the hub and your helper start by themselves, hidden, every time you log in to Windows
+   (and start again if they stop), run this once instead of steps 2 and 3. See `docs/autostart.md`.
+
+   ```
+   powershell -ExecutionPolicy Bypass -File scripts\autostart\install.ps1
+   ```
+
+5. For Max to join from his own computer, see `docs/hosting.md` (making the hub reachable) and
    `docs/max-setup.md` (his steps).
 
 ## Using it
