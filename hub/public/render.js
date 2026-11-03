@@ -125,3 +125,27 @@ export function placeInOrder(parent, nodes) {
     if (current !== node) parent.insertBefore(node, current ?? null);
   });
 }
+
+// How many open chats the home page shows. The rest are on the Chats page (#/chats), so a busy computer with
+// dozens of chats open does not push the team, the feed and the projects off the page.
+export const HOME_CHAT_LIMIT = 3;
+
+// Which open chats to show, most recently active first. `limit` is how many (null for all). A chat named in
+// `keep` (one you are typing a message into) stays in view even after it drops out of the top few, so the
+// box you are typing in is never pulled away. `more` is how many are left out.
+export function pickChats(chats, { limit = null, keep = [] } = {}) {
+  const ordered = chats
+    .map((chat, index) => ({ chat, index }))
+    .sort((a, b) => (b.chat.updatedAt ?? 0) - (a.chat.updatedAt ?? 0) || a.index - b.index)
+    .map(({ chat }) => chat);
+  if (limit == null || ordered.length <= limit) return { shown: ordered, total: ordered.length, more: 0 };
+  const shown = ordered.slice(0, Math.max(0, limit));
+  const kept = new Set(keep);
+  for (const chat of ordered.slice(shown.length)) if (kept.has(chat.id)) shown.push(chat);
+  return { shown, total: ordered.length, more: ordered.length - shown.length };
+}
+
+// The link under the home page's short list of chats.
+export function seeAllChatsLabel(total) {
+  return `See all ${total} chat${total === 1 ? '' : 's'}`;
+}

@@ -1,3 +1,4 @@
+import { showChatsPage } from './chats.js';
 import { brandMark, crewMember } from './crew.js';
 import { icon } from './icons.js';
 import { createPalette } from './palette.js';
@@ -73,6 +74,7 @@ function menuDefinitions() {
       bold: true,
       items: [
         { label: 'All projects', run: go('#/') },
+        { label: 'Your open Claude chats', run: go('#/chats') },
         ...projects.map((project) => ({ label: project.name, run: go(`#/p/${project.id}`), checked: here?.projectId === project.id })),
         '-',
         { label: 'Look and feel…', run: openSettings },
@@ -172,6 +174,7 @@ function buildMenus() {
 const palette = createPalette(() => {
   const commands = [
     { icon: '⌂', label: 'Go to the home page', hint: 'Pulse', run: () => { window.location.hash = '#/'; } },
+    { icon: '○', label: 'See all your open Claude chats', hint: 'only you', run: () => { window.location.hash = '#/chats'; } },
     ...projects.map((project) => ({ icon: '◇', label: `Open ${project.name}`, hint: 'project', run: () => { window.location.hash = `#/p/${project.id}`; } })),
     { icon: '＋', label: 'Start a new project', run: () => { window.location.hash = '#/'; setTimeout(() => document.querySelector('.new-project-card input')?.focus(), 250); } },
   ];
@@ -212,9 +215,9 @@ async function route() {
   try {
     projects = await api('/api/projects');
     const match = /^#\/p\/([a-z0-9-]+)$/.exec(window.location.hash);
-    cleanup = match
-      ? await showProject(viewEl, { me, users, projectId: match[1] })
-      : await showHome(viewEl, { me, users });
+    if (match) cleanup = await showProject(viewEl, { me, users, projectId: match[1] });
+    else if (window.location.hash === '#/chats') cleanup = showChatsPage(viewEl);
+    else cleanup = await showHome(viewEl, { me, users });
   } catch (error) {
     viewEl.replaceChildren(el('div', { class: 'home' }, el('p', { class: 'error', text: error.message })));
   }
