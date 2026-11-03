@@ -14,7 +14,8 @@ so I could not test it. Everything else in this project has been tested.
 
 ## Step 1: start the hub on your PC
 
-1. Open a terminal (a window where you type commands) in the `shared-workspace` folder.
+1. Open a terminal (a window where you type commands) in the Glasshouse folder
+   (`C:\Users\bren_\Glasshouse`, the one with `package.json` in it).
 2. Add yourself and Max (this only needs doing once). Each command writes a private file
    with that person's password and helper token. Nothing secret is shown on the screen.
 

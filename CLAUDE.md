@@ -69,5 +69,10 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
 
 ## Decisions
 
-Settled decisions live in ../DECISIONS.md (the "random projects" folder). Read
-it before changing behavior a past session already ruled on.
+Settled decisions live in `C:\Users\bren_\random projects\DECISIONS.md`, outside this repo (the
+Glasshouse folder itself is now `C:\Users\bren_\Glasshouse`). Read it before changing behavior
+a past session already ruled on.
+
+Nothing in the code depends on where the Glasshouse folder sits: the hub, helper and solo page
+find their own files from the repo itself (`hub-data/` and `workspace-data/` live inside it).
+Anything run on a schedule or at login must start from the Glasshouse folder, not a fixed old path.

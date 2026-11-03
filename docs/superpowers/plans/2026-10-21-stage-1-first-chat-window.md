@@ -43,7 +43,7 @@ Every event is a plain object with a `kind`. The timeline adds `id` (a rising nu
 ## File Structure
 
 ```
-shared-workspace/
+Glasshouse/
   package.json              scripts only, no dependencies
   .gitignore
   CLAUDE.md                 standing rules for this project
@@ -69,7 +69,7 @@ shared-workspace/
   docs/superpowers/stage-1-results.md   measured results, written in Task 10
 ```
 
-All commands run from `C:\Users\bren_\random projects\shared-workspace`.
+All commands run from the repo folder (now `C:\Users\bren_\Glasshouse`).
 
 ---
 
@@ -133,7 +133,7 @@ the project live. Spec: docs/superpowers/specs/2026-10-14-shared-workspace-desig
 
 ## Decisions
 
-Settled decisions live in ../DECISIONS.md (the "random projects" folder). Read
+Settled decisions live in `C:\Users\bren_\random projects\DECISIONS.md` (outside this repo). Read
 it before changing behavior a past session already ruled on.
 ```
 
