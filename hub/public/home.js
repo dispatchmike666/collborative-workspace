@@ -1,7 +1,7 @@
 import { createChats } from './chats.js';
 import { crewMember } from './crew.js';
 import { formatPlan, greeting, initial, projectColor, userColor, weekBars } from './logic.js';
-import { timeAgo } from './render.js';
+import { HOME_CHAT_LIMIT, timeAgo } from './render.js';
 import { crewState, memberState, onCrewChange, setPresence, setWorking } from './state.js';
 import { api, el } from './ui.js';
 
@@ -92,7 +92,7 @@ export async function showHome(viewEl, { me, users }) {
       el('div', { class: 'new-project-card sticker' }, el('h3', { text: 'Start something new' }),
         el('p', { class: 'muted small', text: 'Add a GitHub address if you both should share the files.' }), form)));
 
-  const chats = createChats();
+  const chats = createChats({ limit: HOME_CHAT_LIMIT });
   viewEl.replaceChildren(el('div', { class: 'home' }, hero, stats, chats.element, el('div', { class: 'columns' }, feed, projectsSection)));
 
   const refresh = setInterval(async () => {

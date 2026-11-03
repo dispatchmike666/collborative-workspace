@@ -57,7 +57,10 @@ test('a message goes to the owner\'s helper, and the helper\'s answer comes back
   assert.match((await chats.send({ user: 'Brennan', chatId: ID_A, text: 'hi', deliver: () => false })).message, /helper isn't running/);
 });
 
-test('a helper that never answers, or goes away, ends the wait', async () => {
+test('a helper that never answers, or goes away, ends the wait', async (t) => {
+  // The wait's timer does not hold the hub open on its own, so keep this test alive until it fires.
+  const keepAlive = setInterval(() => {}, 1000);
+  t.after(() => clearInterval(keepAlive));
   const slow = new LiveChats({ requestTimeoutMs: 30 });
   slow.set('Brennan', [chat()]);
   assert.match((await slow.send({ user: 'Brennan', chatId: ID_A, text: 'hi', deliver: () => true })).message, /did not answer in time/);
