@@ -225,7 +225,7 @@ test('team and progress start stacked to the left of the conversation and previe
   assert.ok(team.x + team.w <= chat.x && chat.x + chat.w <= preview.x, 'left to right with no overlap');
   assert.equal(team.x, progress.x);
   assert.ok(team.y + team.h <= progress.y, 'left panels do not overlap');
-  assert.ok(chat.w > team.w && chat.w > preview.w, 'the chat is the widest');
+  assert.ok(chat.w > team.w && chat.h > preview.h, 'the conversation is the tallest window');
   assert.ok(chat.x < bounds.w / 2 && chat.x + chat.w > bounds.w / 2, 'the chat crosses the center');
   const files = startRect('files', bounds, 0);
   const notes = startRect('notes', bounds, 1);

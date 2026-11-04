@@ -226,16 +226,18 @@ export function resizeRect(rect, dir, dx, dy, min = FLOAT_MIN) {
 // Where each window starts: board, chat and preview side by side with chat in the middle, the rest staggered near the edges.
 export function startRect(id, bounds, index = 0) {
   const gap = 14;
-  const tall = Math.max(bounds.h - 6, 240);
-  const side = Math.round((bounds.w - 2 * gap) * 0.23);
-  const middle = Math.round((bounds.w - 2 * gap) * 0.39);
+  const tall = Math.max(Math.round(bounds.h * 0.94), 240);
+  const offset = Math.min(32, Math.round(tall * 0.045));
+  const side = Math.round((bounds.w - 2 * gap) * 0.22);
+  const middle = Math.round((bounds.w - 2 * gap) * 0.385);
   const right = bounds.w - side - middle - 2 * gap;
-  const upper = Math.floor((tall - gap) * 0.53);
+  const stackHeight = tall - offset * 2;
+  const upper = Math.floor((stackHeight - gap) * 0.56);
   const slots = {
-    team: { x: 0, y: 0, w: side, h: upper },
-    progress: { x: 0, y: upper + gap, w: side, h: tall - upper - gap },
+    team: { x: 0, y: offset, w: side, h: upper },
+    progress: { x: 0, y: offset + upper + gap, w: side, h: stackHeight - upper - gap },
     chat: { x: side + gap, y: 0, w: middle, h: tall },
-    preview: { x: side + middle + gap * 2, y: 0, w: right, h: tall },
+    preview: { x: side + middle + gap * 2, y: offset, w: right, h: tall - offset * 1.5 },
   };
   if (slots[id]) return keepReachable(slots[id], bounds, { w: 1, h: 1 });
   const wide = Math.round(Math.min(Math.max(bounds.w * 0.28, 300), 440));

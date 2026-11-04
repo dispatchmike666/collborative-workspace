@@ -215,6 +215,7 @@ function renderSidebar(projectId) {
   const shell = sidebar.parentElement;
   const toggle = row('Collapse sidebar', 'windows', {
     type: 'button',
+    class: 'sidebar-row sidebar-toggle',
     onclick: () => paintCollapsed(!shell.classList.contains('sidebar-collapsed')),
   });
   function paintCollapsed(collapsed) {

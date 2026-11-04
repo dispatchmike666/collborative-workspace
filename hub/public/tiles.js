@@ -79,6 +79,8 @@ export function createTiles({ projectId, defs }) {
     });
     const head = el('header', { class: 'tile-head', tabindex: '0', 'aria-label': `${def.title} bar. Arrow keys move a window, Shift and arrows resize it.` },
       el('div', { class: 'lights' }, closeLight, popLight, zoomLight),
+      el('span', { class: 'tile-grip', 'aria-hidden': 'true' }),
+      el('span', { class: 'tile-heading-icon', 'aria-hidden': 'true' }, icon(def.icon, 17)),
       el('h3', { class: 'tile-title', text: def.title }),
       counter,
       el('span', { class: 'lights-balance', 'aria-hidden': 'true' }));
