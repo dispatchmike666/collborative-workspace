@@ -65,7 +65,7 @@ function menuDefinitions() {
   const here = projectActions.current;
   const mode = prefs.get('mode', 'dark');
   const accent = prefs.get('accent', 'pink');
-  const background = prefs.get('bg', 'coast');
+  const background = prefs.get('tideline-background', 'coast');
   const go = (hash) => () => { window.location.hash = hash; };
   const setLook = (key, value) => () => { prefs.set(key, value); applyLook(); };
   return [
@@ -99,9 +99,9 @@ function menuDefinitions() {
     {
       label: 'Background',
       items: [
-        ...BACKGROUND_GROUPS.flatMap((group) => [{ heading: group.label }, ...group.items.map(([key, label]) => ({ label, checked: background === key, run: setLook('bg', key) }))]),
+        ...BACKGROUND_GROUPS.flatMap((group) => [{ heading: group.label }, ...group.items.map(([key, label]) => ({ label, checked: background === key, run: setLook('tideline-background', key) }))]),
         { heading: 'Your own' },
-        ...(prefs.get('wallpaper', null) ? [{ label: 'Your picture', checked: background === 'picture', run: setLook('bg', 'picture') }, { label: 'Remove my picture', run: removeWallpaper }] : []),
+        ...(prefs.get('wallpaper', null) ? [{ label: 'Your picture', checked: background === 'picture', run: setLook('tideline-background', 'picture') }, { label: 'Remove my picture', run: removeWallpaper }] : []),
         { label: 'Choose a picture…', run: chooseWallpaper },
       ],
     },
@@ -255,6 +255,7 @@ async function route() {
     projects = await api('/api/projects');
     const match = /^#\/p\/([a-z0-9-]+)$/.exec(window.location.hash);
     renderSidebar(match?.[1]);
+    document.getElementById('top-location').textContent = projects.find(({ id }) => id === match?.[1])?.name ?? 'Home';
     cleanup = match
       ? await showProject(viewEl, { me, users, projectId: match[1] })
       : await showHome(viewEl, { me, users });

@@ -1060,3 +1060,91 @@ dialog.new-project-card:not([open]) { display: none; }
 .conversation-status { flex: none; padding: 7px 10px; border-bottom: 1px solid var(--line); }
 .conversation-status .status-bubble { max-width: 100%; white-space: normal; }
 .team-composer .composer-line textarea { min-width: 0; }
+
+/* Keep the Home dock centered in the desktop area, outside its scrolling content. */
+.app-shell { position: relative; --sidebar-size: 174px; }
+.app-shell.sidebar-collapsed { --sidebar-size: 46px; }
+.sidebar, .sidebar-collapsed .sidebar { flex-basis: var(--sidebar-size); }
+.home-dock { left: calc((100% + var(--sidebar-size)) / 2); }
+.home-dock a { text-decoration: none; }
+.tideline-home { padding-bottom: 76px; }
+.top-location {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border-left: 1px solid var(--line-strong); margin-left: 8px; padding-left: 12px; font-weight: 600;
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .sidebar { padding-block: 18px; }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .home-welcome h1 { letter-spacing: -.035em; }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .home-continue .home-card {
+  border: 1px solid var(--rim); padding: 14px; gap: 12px;
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .home-project-card {
+  background: var(--tideline-paper);
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-head {
+  height: 37px; padding-inline: 10px; cursor: grab;
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-title { text-align: left; font-weight: 600; }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-head .lights {
+  order: 2; gap: 7px;
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-head .lights-balance { display: none; }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-head .light {
+  width: 17px; height: 19px; display: grid; place-items: center;
+  border: 0; background: transparent; box-shadow: none; color: var(--ink-soft);
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-head .light svg { opacity: 1; }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-head .light:hover { background: var(--glass-3); }
+@media (max-width: 760px) {
+  .app-shell { --sidebar-size: min(150px, 36vw); }
+  .home-dock { left: auto; right: 12px; bottom: 10px; }
+  .home-dock .dock-item { min-width: 32px; }
+  :root:is([data-bg="coast"], [data-bg="atelier"]) .stage[data-mode="narrow"] .tile-head .lights { display: none; }
+}
+:root[data-bg="coast"] body {
+  background-image: linear-gradient(180deg, rgb(234 247 255 / .34), rgb(235 250 247 / .12)), url('/assets/bg-coast.webp');
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .stage .tile {
+  backdrop-filter: blur(17px) saturate(1.12);
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-head .lights .light {
+  width: 20px; height: 22px; border-radius: 5px;
+  background: transparent;
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-head .lights .light svg { width: 12px; height: 12px; }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .composer {
+  background: transparent; padding: 10px; border-top: 1px solid var(--line);
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) :is(.composer textarea, .composer .btn) {
+  border-radius: 9px; box-shadow: none;
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .btn.primary {
+  border-radius: 10px; background: var(--btn); box-shadow: none;
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .project {
+  padding-inline: clamp(12px, 1.6vw, 24px);
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .dock-space { height: 91px; }
+@media (min-width: 761px) {
+  :root:is([data-bg="coast"], [data-bg="atelier"]) .dock { bottom: 28px; }
+}
+@media (max-width: 760px) {
+  :root:is([data-bg="coast"], [data-bg="atelier"]) .dock-space { height: 63px; }
+}
+.home-feature-link { text-decoration: none; }
+.home-aside .crew-row { display: grid; gap: 0; }
+.home-aside .crew-member {
+  display: grid; grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto; column-gap: 10px; row-gap: 1px;
+  padding: 9px 0; text-align: left; border-bottom: 1px solid var(--line);
+}
+.home-aside .crew-member .crew { --s: 40px; grid-row: 1 / span 2; }
+.home-aside .crew-member .crew-name { grid-column: 2; grid-row: 1; }
+.home-aside .crew-member .crew-status { grid-column: 3; grid-row: 1; }
+.home-aside .crew-member .bubble {
+  grid-column: 2 / span 2; grid-row: 2; justify-self: start;
+  background: transparent; border: 0; padding: 0; box-shadow: none;
+}
+#home-chats { padding: 12px; border-radius: var(--radius); background: var(--glass); }
+:root:is([data-bg="coast"], [data-bg="atelier"]) #home-chats {
+  background: var(--tideline-paper); border: 1px solid var(--rim);
+}

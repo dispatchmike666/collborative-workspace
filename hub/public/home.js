@@ -103,10 +103,17 @@ export async function showHome(viewEl, { me, users }) {
 
   const chats = createChats();
   const privateChats = el('div', { id: 'home-chats' }, chats.element, usage);
+  const dock = el('nav', { class: 'home-dock dock', 'aria-label': 'Home shortcuts' },
+    ...[['Home', 'home', '#/'], ['Chats', 'chat', '#/chats'], ['Activity', 'progress', '#/activity'], ['New project', 'plus', '#/new']]
+      .map(([label, glyph, href]) => el('a', {
+        class: `dock-item${(window.location.hash || '#/') === href ? ' open' : ''}`,
+        href, 'aria-label': label, 'data-label': label,
+        onclick: href === '#/new' ? (event) => { event.preventDefault(); newProject.showModal(); } : undefined,
+      }, el('span', { class: 'dock-icon' }, icon(glyph, 18)))));
   viewEl.replaceChildren(el('div', { class: 'home tideline-home' }, hero,
     el('div', { class: 'home-grid' },
       el('div', { class: 'home-main' }, projectsSection, privateChats),
-      el('div', { class: 'home-aside' }, crew, feed)), newProject));
+      el('div', { class: 'home-aside' }, crew, feed)), newProject), dock);
 
   if (featured) {
     api(`/api/projects/${featured.id}`).then(({ previewUrl, previewVersion }) => {

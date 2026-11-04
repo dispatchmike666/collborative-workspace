@@ -10,7 +10,7 @@ const DRAG_FROM = 6;
 // can be snapped into a tidy wall, or hidden. A dock at the bottom brings them back.
 // defs: [{ id, title, icon, element }]. The tiles keep their own elements, so nothing reloads when they move.
 export function createTiles({ projectId, defs }) {
-  const storeKey = `layout3.${projectId}`;
+  const storeKey = `tideline-layout.${projectId}`;
   let layout = normalizeLayout(prefs.get(storeKey, null));
   const narrowQuery = window.matchMedia(NARROW);
   let activeNarrow = 'chat';
