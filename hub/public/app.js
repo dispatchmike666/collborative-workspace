@@ -11,6 +11,7 @@ applyLook();
 enableProximityGlow();
 
 const viewEl = document.getElementById('view');
+const sidebar = document.getElementById('sidebar');
 let me = null;
 let users = [];
 let projects = [];
@@ -64,7 +65,7 @@ function menuDefinitions() {
   const here = projectActions.current;
   const mode = prefs.get('mode', 'dark');
   const accent = prefs.get('accent', 'pink');
-  const background = prefs.get('bg', 'bands');
+  const background = prefs.get('bg', 'coast');
   const go = (hash) => () => { window.location.hash = hash; };
   const setLook = (key, value) => () => { prefs.set(key, value); applyLook(); };
   return [
@@ -173,7 +174,8 @@ const palette = createPalette(() => {
   const commands = [
     { icon: '⌂', label: 'Go to the home page', hint: 'Pulse', run: () => { window.location.hash = '#/'; } },
     ...projects.map((project) => ({ icon: '◇', label: `Open ${project.name}`, hint: 'project', run: () => { window.location.hash = `#/p/${project.id}`; } })),
-    { icon: '＋', label: 'Start a new project', run: () => { window.location.hash = '#/'; setTimeout(() => document.querySelector('.new-project-card input')?.focus(), 250); } },
+    { icon: '＋', label: 'Start a new project', run: () => { if (window.location.hash === '#/new') document.getElementById('home-new')?.showModal();
+      else window.location.hash = '#/new'; } },
   ];
   if (projectActions.current) {
     const here = projectActions.current;
@@ -203,6 +205,46 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
+// ---------- navigation ----------
+
+function renderSidebar(projectId) {
+  const hash = window.location.hash || '#/';
+  const row = (label, glyph, props) => el(props.href ? 'a' : 'button', {
+    class: 'sidebar-row', title: label, 'aria-label': label, ...props,
+  }, icon(glyph, 16), el('span', { text: label }));
+  const shell = sidebar.parentElement;
+  const toggle = row('Collapse sidebar', 'windows', {
+    type: 'button',
+    onclick: () => paintCollapsed(!shell.classList.contains('sidebar-collapsed')),
+  });
+  function paintCollapsed(collapsed) {
+    shell.classList.toggle('sidebar-collapsed', collapsed);
+    const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+    toggle.title = label;
+    toggle.setAttribute('aria-label', label);
+    toggle.setAttribute('aria-expanded', String(!collapsed));
+    prefs.set('sidebar-collapsed', collapsed);
+  }
+  paintCollapsed(prefs.get('sidebar-collapsed', window.innerWidth <= 760));
+  sidebar.replaceChildren(toggle,
+    row('Search', 'search', { type: 'button', onclick: () => palette.open() }),
+    el('nav', { 'aria-label': 'Pages' },
+      ...[['Home', 'home', '#/'], ['Chats', 'chat', '#/chats'], ['Activity', 'brief', '#/activity']]
+        .map(([label, glyph, href]) => row(label, glyph, { href, 'aria-current': href === hash ? 'page' : null }))),
+    el('div', { class: 'sidebar-heading' },
+      el('span', { text: 'Projects' }),
+      el('a', { href: '#/new', title: 'New project', 'aria-label': 'New project', onclick: (event) => {
+        if (window.location.hash !== '#/new') return;
+        event.preventDefault();
+        document.getElementById('home-new')?.showModal();
+      } }, icon('plus', 16))),
+    el('nav', { class: 'sidebar-projects', 'aria-label': 'Projects' }, projects.map((project) =>
+      row(project.name, 'files', { href: `#/p/${project.id}`, 'aria-current': project.id === projectId ? 'page' : null }))),
+    el('div', { class: 'sidebar-bottom' },
+      row('Appearance', 'preview', { type: 'button', onclick: openSettings }),
+      row('Settings', 'tiles', { type: 'button', onclick: openSettings })));
+}
+
 // ---------- routing ----------
 
 async function route() {
@@ -212,9 +254,16 @@ async function route() {
   try {
     projects = await api('/api/projects');
     const match = /^#\/p\/([a-z0-9-]+)$/.exec(window.location.hash);
+    renderSidebar(match?.[1]);
     cleanup = match
       ? await showProject(viewEl, { me, users, projectId: match[1] })
       : await showHome(viewEl, { me, users });
+    const section = { '#/chats': 'home-chats', '#/activity': 'home-activity', '#/new': 'home-new' }[window.location.hash];
+    if (section) {
+      const target = document.getElementById(section);
+      if (section === 'home-new') target?.showModal();
+      else target?.scrollIntoView({ block: 'start' });
+    }
   } catch (error) {
     viewEl.replaceChildren(el('div', { class: 'home' }, el('p', { class: 'error', text: error.message })));
   }

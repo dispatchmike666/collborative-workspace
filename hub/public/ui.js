@@ -73,6 +73,7 @@ export const ACCENTS = ['blue', 'pink', 'mint', 'tangerine', 'grape'];
 export const ACCENT_LABELS = { blue: 'Azure', pink: 'Coral', mint: 'Teal', tangerine: 'Amber', grape: 'Violet' };
 
 export const BACKGROUND_GROUPS = [
+  { label: 'Tideline', items: [['coast', 'Coast'], ['atelier', 'Atelier']] },
   { label: 'Lights', items: [['bands', 'Light bands'], ['spotlight', 'Spotlight'], ['silk', 'Silk'], ['horizon', 'Horizon'], ['beams', 'Beams'], ['cosmos', 'Cosmos'], ['contours', 'Contours'], ['plain', 'Plain black']] },
   { label: 'Mac-style', items: [['dusk', 'Dusk ridges'], ['ribbon', 'Flowing ribbons'], ['curtains', 'Blue curtains'], ['valley', 'Morning valley']] },
   { label: 'Space', items: [['nebula', 'Nebula'], ['galaxy', 'Spiral galaxy'], ['earth', 'Earth at sunrise'], ['planet', 'Ringed planet'], ['eclipse', 'Eclipse'], ['deepfield', 'Deep field']] },
@@ -80,12 +81,12 @@ export const BACKGROUND_GROUPS = [
 export const BACKGROUNDS = BACKGROUND_GROUPS.flatMap((group) => group.items);
 
 // A wallpaper decides for itself whether the page should be light or dark, as on a Mac.
-const WALLPAPER_MODE = { dusk: 'dark', ribbon: 'dark', curtains: 'dark', valley: 'light', nebula: 'dark', galaxy: 'dark', earth: 'dark', planet: 'dark', eclipse: 'dark', deepfield: 'dark' };
+const WALLPAPER_MODE = { coast: 'light', atelier: 'light', dusk: 'dark', ribbon: 'dark', curtains: 'dark', valley: 'light', nebula: 'dark', galaxy: 'dark', earth: 'dark', planet: 'dark', eclipse: 'dark', deepfield: 'dark' };
 
 export function applyLook() {
   const root = document.documentElement;
   root.setAttribute('data-accent', prefs.get('accent', 'pink'));
-  let background = prefs.get('bg', 'bands');
+  let background = prefs.get('bg', 'coast');
   const picture = prefs.get('wallpaper', null);
   let forced = WALLPAPER_MODE[background] ?? null;
   if (background === 'picture' && typeof picture === 'string') {
@@ -212,6 +213,7 @@ export function openSettings() {
   });
   const mode = prefs.get('mode', 'dark');
   const accent = prefs.get('accent', 'pink');
+  const appearance = prefs.get('bg', 'coast');
   const toggle = (label, key, fallback) => {
     const box = el('input', { type: 'checkbox' });
     box.checked = prefs.get(key, fallback);
@@ -220,6 +222,8 @@ export function openSettings() {
   };
   dialog.append(el('div', { class: 'settings-box' },
     el('h2', { text: 'Look and feel' }),
+    el('div', { class: 'segmented', role: 'group', 'aria-label': 'Tideline appearance' },
+      choice('Coast', 'bg', 'coast', appearance), choice('Atelier', 'bg', 'atelier', appearance)),
     el('div', { class: 'segmented', role: 'group', 'aria-label': 'Light or dark' },
       choice('Match my computer', 'mode', 'auto', mode), choice('Light', 'mode', 'light', mode), choice('Dark', 'mode', 'dark', mode)),
     el('div', { class: 'swatches', role: 'group', 'aria-label': 'Accent colour' },

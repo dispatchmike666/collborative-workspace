@@ -139,12 +139,12 @@ export function projectColor(projectId) {
 // ---- the tile wall ----
 
 // Every piece of the project screen is a tile. Chat sits in the middle; the others go on either side of it.
-export const TILE_IDS = ['chat', 'board', 'preview', 'files', 'brief', 'notes'];
-export const WALL_ORDER = ['board', 'preview', 'files', 'brief', 'notes'];
+export const TILE_IDS = ['chat', 'team', 'progress', 'board', 'preview', 'files', 'brief', 'notes'];
+export const WALL_ORDER = ['team', 'progress', 'board', 'preview', 'files', 'brief', 'notes'];
 const FLOAT_MIN = { w: 300, h: 200 };
 const SIDE_ROWS = 12;
 // Which side of the chat each tile prefers. Anything else goes to whichever side has fewer.
-const SIDE_OF = { board: 'left', files: 'left', preview: 'right', brief: 'right' };
+const SIDE_OF = { team: 'left', progress: 'left', board: 'left', files: 'left', preview: 'right', brief: 'right' };
 
 // Splits `total` rows between `count` tiles as evenly as possible.
 function shareRows(count, total) {
@@ -227,15 +227,17 @@ export function resizeRect(rect, dir, dx, dy, min = FLOAT_MIN) {
 export function startRect(id, bounds, index = 0) {
   const gap = 14;
   const tall = Math.max(bounds.h - 6, 240);
-  const side = Math.round(Math.min(Math.max(bounds.w * 0.25, 280), 420));
-  const middle = Math.round(Math.min(Math.max(bounds.w - 2 * side - 2 * gap, 440), 860));
-  const left = Math.max(0, Math.round((bounds.w - (side * 2 + middle + gap * 2)) / 2));
+  const side = Math.round((bounds.w - 2 * gap) * 0.23);
+  const middle = Math.round((bounds.w - 2 * gap) * 0.39);
+  const right = bounds.w - side - middle - 2 * gap;
+  const upper = Math.floor((tall - gap) * 0.53);
   const slots = {
-    board: { x: left, y: 0, w: side, h: tall },
-    chat: { x: left + side + gap, y: 0, w: middle, h: tall },
-    preview: { x: left + side + gap + middle + gap, y: 0, w: side, h: tall },
+    team: { x: 0, y: 0, w: side, h: upper },
+    progress: { x: 0, y: upper + gap, w: side, h: tall - upper - gap },
+    chat: { x: side + gap, y: 0, w: middle, h: tall },
+    preview: { x: side + middle + gap * 2, y: 0, w: right, h: tall },
   };
-  if (slots[id]) return keepReachable(slots[id], bounds);
+  if (slots[id]) return keepReachable(slots[id], bounds, { w: 1, h: 1 });
   const wide = Math.round(Math.min(Math.max(bounds.w * 0.28, 300), 440));
   const high = Math.round(Math.min(Math.max(bounds.h * 0.6, 260), 560));
   const x = id === 'brief' ? bounds.w - wide - 24 - index * 30 : 24 + index * 30;
@@ -250,7 +252,7 @@ export function cascadeRect(index, bounds) {
   return clampRect({ x: 40 + step, y: 24 + step, w, h }, bounds);
 }
 
-const DEFAULT_MODES = { chat: 'float', board: 'float', preview: 'float', files: 'closed', brief: 'closed', notes: 'closed' };
+const DEFAULT_MODES = { chat: 'float', team: 'float', progress: 'float', board: 'closed', preview: 'float', files: 'closed', brief: 'closed', notes: 'closed' };
 const MODES = new Set(['tiled', 'float', 'closed']);
 
 // Turns whatever was saved last time (or nothing) into a layout that is safe to use.
@@ -259,7 +261,10 @@ export function normalizeLayout(saved) {
   const tiles = {};
   for (const id of TILE_IDS) {
     const old = source.tiles?.[id];
-    const mode = MODES.has(old?.mode) ? old.mode : DEFAULT_MODES[id];
+    // Existing arrangements keep their open windows. New panes are available in the dock.
+    const addedPane = id === 'team' || id === 'progress';
+    const fallback = source.tiles && addedPane ? 'closed' : DEFAULT_MODES[id];
+    const mode = MODES.has(old?.mode) ? old.mode : fallback;
     const rect = old?.rect && ['x', 'y', 'w', 'h'].every((key) => Number.isFinite(old.rect[key])) ? { x: old.rect.x, y: old.rect.y, w: old.rect.w, h: old.rect.h } : null;
     tiles[id] = { mode, rect, auto: !rect || old?.auto === true, z: Number.isFinite(old?.z) ? old.z : 0 };
   }

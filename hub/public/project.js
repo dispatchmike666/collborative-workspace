@@ -67,12 +67,14 @@ export async function showProject(viewEl, { me, users, projectId }) {
   const reactionState = new Map();
   const typing = new Map();
   let live = false;
-  let target = 'ai';
   let shelf = prompts;
 
   // ---------- timeline ----------
 
   const timelineEl = el('div', { class: 'timeline', role: 'log', 'aria-live': 'polite', 'aria-label': 'Conversation' });
+
+  const teamLog = el('div', { class: 'timeline team-log', role: 'log', 'aria-label': 'Team messages' });
+  const progressLog = el('ol', { class: 'progress-log', role: 'log', 'aria-label': 'Agent activity' });
 
   function renderReactions(targetId) {
     const entry = rows.get(targetId);
@@ -105,7 +107,8 @@ export async function showProject(viewEl, { me, users, projectId }) {
   }
 
   function addRow(event, view) {
-    const stick = timelineEl.scrollHeight - timelineEl.scrollTop - timelineEl.clientHeight < 90;
+    const log = event.kind === 'team-chat' ? teamLog : timelineEl;
+    const stick = log.scrollHeight - log.scrollTop - log.clientHeight < 90;
     const row = el('div', { class: `row ${view.cls}` });
     if (CHATTY.has(event.kind)) {
       const reactions = el('div', { class: 'reactions' });
@@ -152,18 +155,20 @@ export async function showProject(viewEl, { me, users, projectId }) {
       }
       row.append(el('span', { class: 'gutter', 'aria-hidden': 'true', text: GUTTER[view.cls.split(' ')[0]] ?? '' }), body);
     }
-    timelineEl.append(row);
+    log.append(row);
     if (event.id) renderReactions(event.id);
-    if (stick) timelineEl.scrollTop = timelineEl.scrollHeight;
+    if (stick) log.scrollTop = log.scrollHeight;
   }
   const approvals = new Map();
 
   // ---------- status, typing, banner ----------
 
   const statusEl = el('span', { class: 'status-bubble' });
+  const progressStatus = el('span', { class: 'status-bubble' });
   function renderStatus() {
     const who = crewState.working;
-    statusEl.replaceChildren(
+    sendButton.textContent = who ? 'Add to queue' : 'Send';
+    for (const status of [statusEl, progressStatus]) status.replaceChildren(
       creature({ color: who ? userColor(who, users) : 'blue', size: 'mini', mood: who ? 'working' : 'awake', label: '' }),
       el('span', { text: who ? `${who}'s Claude is working…` : 'Nobody is waiting on Claude' }),
     );
@@ -185,65 +190,57 @@ export async function showProject(viewEl, { me, users, projectId }) {
 
   // ---------- composer ----------
 
-  const input = el('textarea', { rows: '1', 'aria-label': 'Message', placeholder: '' });
-  const segments = [
-    el('button', { type: 'button', class: 'chip active', 'data-to': 'ai', text: 'My Claude', 'aria-pressed': 'true' }),
-    ...others.map((name) => el('button', { type: 'button', class: 'chip', 'data-to': name, text: `Just ${name}`, 'aria-pressed': 'false' })),
-  ];
-  function setTarget(to) {
-    target = to;
-    for (const segment of segments) {
-      const on = segment.dataset.to === to;
-      segment.classList.toggle('active', on);
-      segment.setAttribute('aria-pressed', String(on));
-    }
-    input.placeholder = to === 'ai' ? 'Tell your Claude what to do…' : `Message ${to}. No AI will see this.`;
+  const input = el('textarea', { rows: '1', 'aria-label': 'Message your Claude', placeholder: 'Message your Claude…' });
+  const teamInput = el('textarea', { rows: '1', 'aria-label': 'Message your team', placeholder: 'Message your team…' });
+  const sendButton = el('button', { type: 'button', class: 'btn primary', text: 'Send', onclick: () => send(input, 'ai') });
+  const teamButton = el('button', { type: 'button', class: 'btn', text: 'Send', onclick: () => send(teamInput, teamRecipient.value) });
+  const teamRecipient = el('select', { 'aria-label': 'Send team message to', hidden: others.length < 2 },
+    others.map((name) => el('option', { value: name, text: name })));
+  teamInput.disabled = teamButton.disabled = !others.length;
+
+  function grow(field) {
+    field.style.height = 'auto';
+    field.style.height = `${Math.min(field.scrollHeight, 180)}px`;
   }
-  for (const segment of segments) segment.addEventListener('click', () => setTarget(segment.dataset.to));
-  setTarget('ai');
 
-  const grow = () => {
-    input.style.height = 'auto';
-    input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
-  };
   let lastTyping = 0;
-  input.addEventListener('input', () => {
-    grow();
-    if (input.value.trim() && Date.now() - lastTyping > 2500) {
-      lastTyping = Date.now();
-      api(`/api/projects/${projectId}/typing`, { method: 'POST', body: {} }).catch(() => {});
-    }
-  });
+  for (const field of [input, teamInput]) {
+    field.addEventListener('input', () => {
+      grow(field);
+      if (field.value.trim() && Date.now() - lastTyping > 2500) {
+        lastTyping = Date.now();
+        api(`/api/projects/${projectId}/typing`, { method: 'POST', body: {} }).catch(() => {});
+      }
+    });
+    field.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+      event.preventDefault();
+      (field === input ? sendButton : teamButton).click();
+    });
+  }
 
-  async function send() {
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-    grow();
+  async function send(field, to) {
+    const text = field.value.trim();
+    if (!text || !to) return;
+    field.value = '';
+    grow(field);
     try {
-      await api(`/api/projects/${projectId}/send`, { method: 'POST', body: { text, to: target } });
+      await api(`/api/projects/${projectId}/send`, { method: 'POST', body: { text, to } });
       playSound('nudge');
     } catch (error) {
-      input.value = text;
-      grow();
+      field.value = field.value ? `${text}\n${field.value}` : text;
+      grow(field);
       toast(`Couldn't send that: ${error.message}`, 'bad');
     }
   }
-  input.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
-      event.preventDefault();
-      send();
-    }
-  });
 
   // ---------- the prompt shelf ----------
 
   const shelfEl = el('div', { class: 'shelf', role: 'group', 'aria-label': 'Quick prompts', hidden: true });
   const addBox = el('form', { class: 'add-prompt sticker', hidden: true });
   function insert(text) {
-    setTarget('ai');
     input.value = input.value ? `${input.value}\n${text}` : text;
-    grow();
+    grow(input);
     input.focus();
   }
   function renderShelf() {
@@ -302,17 +299,23 @@ export async function showProject(viewEl, { me, users, projectId }) {
   const note = details.project.repoUrl ? `Files are shared through ${details.project.repoUrl}` : 'No GitHub address, so the files stay on whichever computer does the work.';
 
   const chatContent = el('div', { class: 'chat' },
-    timelineEl,
+    el('div', { class: 'conversation-status' }, statusEl), timelineEl,
     typingEl,
     bannerEl,
     el('div', { class: 'composer' }, shelfEl, addBox,
-      el('div', { class: 'composer-top' }, el('div', { class: 'segmented', role: 'group', 'aria-label': 'Send to' }, segments), promptsToggle),
-      el('div', { class: 'composer-line' }, input, el('button', { type: 'button', class: 'btn primary', text: 'Send', onclick: send }))));
+      el('div', { class: 'composer-top' }, el('span', { class: 'muted small', text: 'My Claude' }), promptsToggle),
+      el('div', { class: 'composer-line' }, input, sendButton)));
 
+  const teamContent = el('div', { class: 'team-content' }, teamLog,
+    el('div', { class: 'composer team-composer' }, teamRecipient,
+      el('div', { class: 'composer-line' }, teamInput, teamButton)));
+  const progressContent = el('div', { class: 'progress-content' }, progressStatus, progressLog);
   const tiles = createTiles({
     projectId,
     defs: [
-      { id: 'chat', title: 'Chat', icon: 'chat', element: chatContent },
+      { id: 'chat', title: 'Conversation', icon: 'chat', element: chatContent },
+      { id: 'team', title: 'Team', icon: 'team', element: teamContent },
+      { id: 'progress', title: 'Progress', icon: 'progress', element: progressContent },
       ...TABS.map(([key, label]) => ({ id: key, title: label, icon: key, element: panels[key].element })),
     ],
   });
@@ -334,8 +337,7 @@ export async function showProject(viewEl, { me, users, projectId }) {
     el('a', { class: 'crumb', href: '#/', 'aria-label': 'All projects', title: 'All projects' }, icon('home', 16)),
     el('span', { class: 'crumb-sep', 'aria-hidden': 'true', text: '/' }),
     el('div', { class: 'switch-wrap' }, switchButton, menu),
-    el('span', { class: 'spacer' }),
-    statusEl);
+    el('span', { class: 'spacer' }));
 
   const root = el('div', { class: 'project' }, projectBar, tiles.stage, el('div', { class: 'dock-space' }), tiles.dock);
   viewEl.replaceChildren(root);
@@ -386,7 +388,15 @@ export async function showProject(viewEl, { me, users, projectId }) {
       renderTyping();
     }
     const view = eventToView(event, { me });
-    if (view) addRow(event, view);
+    if (view) {
+      addRow(event, view);
+      if (['status', 'claude-step', 'claude-step-result', 'run-done', 'sync', 'error'].includes(event.kind)) {
+        const stick = progressLog.scrollHeight - progressLog.scrollTop - progressLog.clientHeight < 60;
+        progressLog.append(el('li', { text: view.text }));
+        if (progressLog.childElementCount > 80) progressLog.firstElementChild.remove();
+        if (stick) progressLog.scrollTop = progressLog.scrollHeight;
+      }
+    }
   }
 
   const stream = new EventSource(`/api/projects/${projectId}/stream`);
@@ -416,17 +426,17 @@ export async function showProject(viewEl, { me, users, projectId }) {
     arrange: (mode) => tiles.setArrange(mode),
     reset: () => tiles.reset(),
     snapAll: (layoutId) => tiles.arrangeAll(layoutId),
-    windows: () => [['chat', 'Chat'], ...TABS].map(([key, label]) => ({ key, label, open: tiles.isOpen(key) })),
+    windows: () => [['chat', 'Conversation'], ['team', 'Team'], ['progress', 'Progress'], ...TABS].map(([key, label]) => ({ key, label, open: tiles.isOpen(key) })),
     toggleWindow: (key) => (tiles.isOpen(key) ? tiles.hide(key) : tiles.focus(key)),
-    tabs: TABS,
+    tabs: [['team', 'Team'], ['progress', 'Progress'], ...TABS],
   };
 
   // Close click-away reaction menus.
   const closeMenus = (event) => {
     if (!event.target.closest?.('.switch-wrap')) closeSwitcher();
     if (event.target.closest?.('.react-btn, .react-menu')) return;
-    for (const menu of timelineEl.querySelectorAll('.react-menu')) menu.hidden = true;
-    for (const button of timelineEl.querySelectorAll('.react-btn')) button.setAttribute('aria-expanded', 'false');
+    for (const menu of root.querySelectorAll('.react-menu')) menu.hidden = true;
+    for (const button of root.querySelectorAll('.react-btn')) button.setAttribute('aria-expanded', 'false');
   };
   document.addEventListener('click', closeMenus);
 

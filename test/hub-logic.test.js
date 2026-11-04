@@ -179,15 +179,16 @@ test('a floating window stays inside the stage and keeps a usable size', async (
 test('a saved layout is repaired before use, and a missing one gets the usual start', async () => {
   const { normalizeLayout, TILE_IDS } = await import('../hub/public/logic.js');
   const fresh = normalizeLayout(null);
-  assert.deepEqual(TILE_IDS.filter((id) => fresh.tiles[id].mode === 'closed'), ['files', 'brief', 'notes']);
+  assert.deepEqual(TILE_IDS.filter((id) => fresh.tiles[id].mode === 'closed'), ['board', 'files', 'brief', 'notes']);
   assert.equal(fresh.arrange, 'windows');
-  assert.deepEqual(['chat', 'board', 'preview'].map((id) => fresh.tiles[id].mode), ['float', 'float', 'float']);
+  assert.deepEqual(['chat', 'team', 'progress', 'preview'].map((id) => fresh.tiles[id].mode), ['float', 'float', 'float', 'float']);
   assert.equal(fresh.tiles.chat.auto, true);
   const messy = normalizeLayout({ arrange: 'sideways', z: 'x', tiles: { chat: { mode: 'float', rect: { x: 1, y: 2, w: 300, h: 200 }, z: 4 }, board: { mode: 'banana', rect: { x: 'a' } } } });
   assert.equal(messy.arrange, 'windows');
   assert.equal(messy.tiles.chat.mode, 'float');
   assert.deepEqual(messy.tiles.chat.rect, { x: 1, y: 2, w: 300, h: 200 });
-  assert.equal(messy.tiles.board.mode, 'float');
+  assert.equal(messy.tiles.board.mode, 'closed');
+  assert.equal(messy.tiles.team.mode, 'closed');
   assert.equal(messy.tiles.board.rect, null);
   assert.equal(messy.z, 4);
 });
@@ -214,15 +215,18 @@ test('a window can be resized from any edge or corner, and the opposite edge sta
   assert.equal(squeezed.y + squeezed.h, 400, 'the bottom edge did not move');
 });
 
-test('windows start side by side with the chat in the middle', async () => {
+test('team and progress start stacked to the left of the conversation and preview', async () => {
   const { startRect } = await import('../hub/public/logic.js');
   const bounds = { w: 1500, h: 800 };
-  const board = startRect('board', bounds);
+  const team = startRect('team', bounds);
+  const progress = startRect('progress', bounds);
   const chat = startRect('chat', bounds);
   const preview = startRect('preview', bounds);
-  assert.ok(board.x + board.w <= chat.x && chat.x + chat.w <= preview.x, 'left to right with no overlap');
-  assert.ok(chat.w > board.w && chat.w > preview.w, 'the chat is the widest');
-  assert.ok(Math.abs((chat.x + chat.w / 2) - bounds.w / 2) < 6, 'the chat is in the middle');
+  assert.ok(team.x + team.w <= chat.x && chat.x + chat.w <= preview.x, 'left to right with no overlap');
+  assert.equal(team.x, progress.x);
+  assert.ok(team.y + team.h <= progress.y, 'left panels do not overlap');
+  assert.ok(chat.w > team.w && chat.w > preview.w, 'the chat is the widest');
+  assert.ok(chat.x < bounds.w / 2 && chat.x + chat.w > bounds.w / 2, 'the chat crosses the center');
   const files = startRect('files', bounds, 0);
   const notes = startRect('notes', bounds, 1);
   assert.ok(notes.x > files.x && notes.y > files.y, 'extra windows are staggered');

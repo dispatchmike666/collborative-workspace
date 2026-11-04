@@ -918,3 +918,145 @@ canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-
 /* The pale valley needs a little shade on top so light text stays readable in dark mode, and none in light mode. */
 :root[data-bg="valley"] body::after { background: linear-gradient(180deg, rgb(6 8 18 / 0.5), rgb(6 8 18 / 0.28) 55%, rgb(0 0 0 / 0.2)); }
 :root[data-mode="light"][data-bg="valley"] body::after { background: none; }
+
+/* Tideline desktop */
+:root:is([data-bg="coast"], [data-bg="atelier"]) {
+  --bg: #c0dbe6;
+  --ink: #1b2731;
+  --ink-soft: #435363;
+  --ink-faint: #526374;
+  --tideline-glass: rgb(237 249 255 / .46);
+  --tideline-paper: rgb(251 253 254 / .90);
+  --glass: var(--tideline-glass);
+  --win: var(--tideline-glass);
+  --win-bar: rgb(255 255 255 / .20);
+  --dock-bg: var(--tideline-glass);
+  --ring: rgb(255 255 255 / .72);
+  --radius: 16px;
+  --pink: #c74736;
+}
+:root[data-bg="atelier"] {
+  --bg: #ead1b6;
+  --ink: #31241e;
+  --ink-soft: #5d493c;
+  --ink-faint: #695344;
+  --tideline-glass: rgb(255 239 219 / .50);
+  --tideline-paper: rgb(255 249 241 / .91);
+  --glass-solid: #fff7ed;
+  --field: #fffcf7;
+  --bubble: #fff9f1;
+  --pink: #b74f30;
+}
+:root[data-bg="coast"] body { background: var(--bg) url('/assets/bg-coast.webp') center / cover fixed; }
+:root[data-bg="atelier"] body { background: var(--bg) url('/assets/bg-atelier.webp') center / cover fixed; }
+
+.app-shell { display: flex; flex: 1; min-height: 0; }
+.app-shell #view { min-width: 0; }
+.sidebar {
+  display: flex; flex: 0 0 174px; flex-direction: column; gap: 6px;
+  min-height: 0; padding: 12px 9px; border-right: 1px solid var(--edge);
+  background: var(--glass); backdrop-filter: blur(22px);
+}
+.sidebar nav { display: grid; gap: 2px; }
+.sidebar-row, .sidebar-heading a {
+  display: flex; align-items: center; gap: 9px; min-width: 0; min-height: 34px;
+  padding: 5px 8px; border: 0; border-radius: 8px; background: none;
+  text-align: left; text-decoration: none; cursor: pointer; color: var(--ink);
+}
+.sidebar-row svg { flex: none; }
+.sidebar-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-row:hover, .sidebar-row[aria-current="page"], .sidebar-heading a:hover { background: var(--glass-3); }
+.sidebar-row[aria-current="page"] { font-weight: 650; }
+.sidebar-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-left: 8px; color: var(--ink-soft); }
+.sidebar-projects { overflow: auto; }
+.sidebar-bottom { display: grid; gap: 2px; margin-top: auto; }
+.sidebar-collapsed .sidebar { flex-basis: 46px; padding-inline: 5px; }
+.sidebar-collapsed .sidebar-row { justify-content: center; padding-inline: 0; }
+.sidebar-collapsed .sidebar-row span, .sidebar-collapsed .sidebar-heading span { display: none; }
+.sidebar-collapsed .sidebar-heading { justify-content: center; padding: 0; }
+
+:root:is([data-bg="coast"], [data-bg="atelier"]) .topbar {
+  margin: 8px 12px 0; min-height: 36px; border: 1px solid var(--ring);
+  border-radius: 20px; background: var(--tideline-glass); box-shadow: none;
+}
+.tideline-home { max-width: 1460px; gap: 22px; padding: 28px clamp(15px, 3vw, 48px) 42px; }
+.home-welcome { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.home-welcome h1, .home-feature h3 { font: 400 clamp(25px, 3.1vw, 46px)/1.12 Georgia, serif; }
+.home-welcome em { font-style: normal; color: var(--accent-ink); }
+.home-welcome p { margin-top: 5px; }
+.home-welcome .btn { flex: none; }
+.home-grid { display: grid; grid-template-columns: minmax(0, 2.65fr) minmax(225px, 1fr); gap: 18px; }
+.home-main, .home-aside, .home-continue { display: grid; align-content: start; gap: 14px; min-width: 0; }
+.home-card { padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.tideline-home h2 { font: 400 22px/1.2 Georgia, serif; }
+.home-feature { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: center; }
+.home-feature-link { display: block; border-radius: 10px; }
+.home-feature-preview {
+  aspect-ratio: 16 / 9; display: grid; place-content: center; justify-items: center; gap: 8px;
+  overflow: hidden; position: relative; color: var(--ink-soft); border-radius: 10px;
+  background: linear-gradient(135deg, var(--glass-3), var(--glass)); border: 1px solid var(--line);
+}
+.home-preview-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.home-feature-copy { display: grid; justify-items: start; gap: 8px; overflow-wrap: anywhere; }
+.home-feature h3 { font-size: clamp(23px, 2.4vw, 36px); }
+.home-feature-copy > p.muted, .home-project-card p { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.home-projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr)); gap: 8px; }
+.home-project-card {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  padding: 10px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none;
+  background: var(--glass-2); overflow-wrap: anywhere;
+}
+.home-project-card:hover { background: var(--glass-3); }
+.home-project-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 9px; background: var(--glass-3); }
+.home-aside .crew-row { flex-wrap: wrap; justify-content: flex-start; }
+.home-aside .feed, .home-aside .empty { box-shadow: none; }
+.home-usage { padding: 9px 4px 0; }
+dialog.new-project-card { width: min(420px, calc(100% - 28px)); background: var(--glass-solid); color: var(--ink); border: 1px solid var(--line-strong); }
+dialog.new-project-card:not([open]) { display: none; }
+
+:root:is([data-bg="coast"], [data-bg="atelier"]) :is(.home-card, #home-chats .sticker) {
+  background: var(--tideline-paper); box-shadow: 0 8px 22px rgb(30 30 30 / .09);
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .stage .tile {
+  padding: 5px; background: var(--tideline-glass); border: 1px solid var(--ring);
+  box-shadow: inset 0 1px 0 var(--rim), 0 8px 24px rgb(30 30 30 / .14);
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-head { background: transparent; border-bottom: 0; }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-title { color: var(--ink); }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .tile-body { background: var(--tideline-paper); border-radius: 11px; }
+.tile:is([data-tile="team"], [data-tile="progress"]) .tile-body { display: flex; padding: 0; overflow: hidden; }
+.team-content, .progress-content { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; }
+.team-log { flex: 1; min-height: 0; padding: 10px; }
+.team-composer { padding: 8px; }
+.team-composer select { max-width: 100%; margin-bottom: 5px; }
+.progress-content { gap: 8px; padding: 10px; }
+.progress-content .status-bubble { align-self: flex-start; max-width: 100%; white-space: normal; }
+.progress-log { margin: 0; padding: 0; min-height: 0; overflow: auto; list-style: none; overflow-wrap: anywhere; }
+.progress-log li { padding: 6px 0; border-top: 1px solid var(--line); color: var(--ink-soft); }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .dock {
+  border-radius: 22px; gap: 3px; padding: 3px 8px; box-shadow: 0 4px 16px rgb(30 30 30 / .10);
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .dock .dock-icon {
+  width: 34px; height: 29px; background: transparent; box-shadow: none; color: var(--ink);
+}
+:root:is([data-bg="coast"], [data-bg="atelier"]) .dock .dock-item:hover .dock-icon { background: var(--glass-3); }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .dock .dock-item.open::after { box-shadow: none; }
+:root:is([data-bg="coast"], [data-bg="atelier"]) .dock-space { height: 63px; }
+@media (min-width: 761px) {
+  :root:is([data-bg="coast"], [data-bg="atelier"]) .dock :is(.dock-mode, .dock-sep) { display: none; }
+}
+@media (max-width: 1050px) {
+  .home-grid { grid-template-columns: minmax(0, 1fr); }
+  .home-aside { grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr)); }
+}
+@media (max-width: 760px) {
+  .sidebar { flex-basis: min(150px, 36vw); padding-inline: 5px; }
+  .home-welcome, .home-feature { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .home-welcome .btn { justify-self: start; }
+  :root:is([data-bg="coast"], [data-bg="atelier"]) .dock .dock-icon { width: auto; }
+  :root:is([data-bg="coast"], [data-bg="atelier"]) .dock .dock-label { font-size: 8px; overflow: hidden; max-width: 100%; text-overflow: ellipsis; }
+}
+
+.conversation-status { flex: none; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+.conversation-status .status-bubble { max-width: 100%; white-space: normal; }
+.team-composer .composer-line textarea { min-width: 0; }

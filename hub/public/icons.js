@@ -2,6 +2,8 @@
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 const SHAPES = {
+  team: [['circle', { cx: 9, cy: 7, r: 3 }], ['path', { d: 'M3 20v-2a6 6 0 0 1 12 0v2M17 4a3 3 0 0 1 0 6m1 3a5 5 0 0 1 3 5v2' }]],
+  progress: [['path', { d: 'M2 12h4l3-7 5 14 3-7h5' }]],
   chat: [['path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' }]],
   board: [['rect', { x: 3, y: 3, width: 5, height: 18, rx: 1 }], ['rect', { x: 10, y: 3, width: 5, height: 11, rx: 1 }], ['rect', { x: 17, y: 3, width: 4, height: 7, rx: 1 }]],
   brief: [['path', { d: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z' }], ['path', { d: 'M14 3v5h5' }], ['path', { d: 'M9 13h6M9 17h6' }]],
